@@ -1,9 +1,9 @@
-                                   SPEY V0.2.1
-                                   ===========
+                                    SPEY V0.3
+                                    =========
 
                                   Beta release
                               (C) 2004 David Given
-                                   2004-05-19
+                                   2004-05-30
 
 INTRODUCTION
 ============
@@ -23,10 +23,10 @@ so you'll need that before you can use it.
 IF YOU'VE USED SPEY BEFORE
 ==========================
 
-The database files used by 0.2 are NOT compatible with those used by 0.1. You
-will have to delete the file and recreate it using speyctl (the new speyctl
-that comes with 0.2, of course). If you try to run spey with a 0.1
-configuration file... well, on your own head be it.
+The database files used by 0.3 are NOT compatible with those used by 0.1 (but
+ARE compatible with 0.2). You will have to delete the file and recreate it
+using speyctl (the new speyctl that comes with 0.3, of course). If you try to
+run spey with a 0.1 configuration file... well, on your own head be it.
 
 INSTALLATION
 ============
@@ -123,10 +123,24 @@ DOCUMENTATION
 
 Man pages are provided. They may or may not contain useful information.
 
+BUGS
+====
+
+What, all of them? Big job...
+
+These are the ones I know about and think are significant:
+
+* For obscure and mysterious reasons, spey will not build on gcc 3.3. I develop
+  on 2.95, and that works fine. I have no idea why this is so; the vast
+  diagnostics it gives me make no sense.
+
+* If spey cannot write to its database, it has a tendency to crash. The fix for
+  this could well just be to refuse to start up if the database is read only.
+  
 DISCLAIMER
 ==========
 
-Spey is ALPHA SOFTWARE!
+Spey is BETA SOFTWARE!
 
 It is NOT RELIABLE!
 
@@ -150,6 +164,10 @@ the file COPYING.
 REVISION HISTORY
 ================
 
+Spey 0.3: 2004-05-30: Major internal rearrangements to support processing of
+multiple connections at once. It should now be far more usable when dealing
+with heavy loads.
+
 Spey 0.2.1: 2004-05-19. Maintenance releasing fixing a small bug in 0.2's
 speyctl.
 
@@ -165,6 +183,9 @@ CVS history for this file
 $Source$
 $State$
 $Log$
+Revision 1.5  2004/05/19 19:38:18  dtrg
+Added the banner for 0.2.1.
+
 Revision 1.4  2004/05/14 23:30:53  dtrg
 Forgot to update the banner announcing the new version!
 

@@ -13,6 +13,7 @@
 #include "spey.h"
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <unistd.h>
 
 SocketServer::SocketServer(SocketAddress& address)
@@ -23,6 +24,9 @@ SocketServer::SocketServer(SocketAddress& address)
 	DetailLog() << "master socket created on fd "
 		    << this->fd
 		    << flush;
+
+	int i = 1;
+	setsockopt(this->fd, IPPROTO_TCP, SO_REUSEADDR, &i, sizeof(i));
 
 	if (address.bindto(this->fd) == -1)
 		throw NetworkException("Error binding server socket", errno);
@@ -38,13 +42,29 @@ SocketServer::~SocketServer()
 	close(this->fd);
 }
 
-Socket SocketServer::accept()
+int SocketServer::accept()
 {
-	SocketAddress sa;
-	int fd = sa.acceptfrom(this->fd);
-	return Socket(fd, sa);
+	/* Wait for an incoming socket. */
+
+	for (;;) {
+		struct pollfd p;
+		p.fd = fd;
+		p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
+		if (poll(&p, 1, 0) != 0)
+			break;
+
+		/* No data. Deschedule. */
+
+		Threadlet::addrdfd(fd);
+		Threadlet::current()->deschedule();
+		Threadlet::subrdfd(fd);
+	}
+
+	return ::accept(fd, NULL, 0);
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */

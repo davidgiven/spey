@@ -79,7 +79,8 @@ SQLQuery::~SQLQuery()
 {
 	if (sqlite_finalize(this->handle, &error))
 	{
-		DetailLog() << "SQL query finalization failure --- may be leaking handles"
+		DetailLog() << "SQL query finalization failure: "
+		            << error
 			    << flush;
 	}
 }
@@ -123,6 +124,11 @@ int SQLQuery::getint(int i)
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/09 18:23:16  dtrg
+ * SQL server now accessed asynchronously; backed out fix for mysterious SQL crash
+ * and instead put in some code that should recover sanely from it. Don't know
+ * what's going on here.
+ *
  * Revision 1.2  2004/05/09 14:17:48  dtrg
  * No longer throws an exception when an SQLQuery is destructed (very evil!). Put
  * in failsafe code so that if the sql_step() returns an error code, keep retrying

@@ -30,6 +30,19 @@ inline ostream& operator << (ostream& stream, Exception& e)
 	return stream;
 }
 
+struct InternalException: Exception
+{
+	InternalException(string reason): Exception(reason)
+	{
+	}
+};
+
+struct IOException: Exception
+{
+	IOException(string reason, int errno): Exception(reason, errno)
+	{}
+};
+
 struct SQLException: Exception
 {
 	SQLException(string reason): Exception(reason)
@@ -97,4 +110,6 @@ struct ParseErrorException: Exception
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */

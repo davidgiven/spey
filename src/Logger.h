@@ -38,7 +38,8 @@ enum {
 	LOGLEVEL_MESSAGE,
 	LOGLEVEL_PARSING,
 	LOGLEVEL_DETAIL,
-	LOGLEVEL_SMTP
+	LOGLEVEL_SMTP,
+	LOGLEVEL_THREADS
 };
 
 #define _LOG(_n, _l, _t) \
@@ -53,11 +54,15 @@ _LOG(MessageLog,	LOGLEVEL_MESSAGE,	LOG_INFO);
 _LOG(ParseLog,		LOGLEVEL_PARSING,	LOG_DEBUG);
 _LOG(DetailLog,		LOGLEVEL_DETAIL,	LOG_DEBUG);
 _LOG(SMTPLog,		LOGLEVEL_SMTP,		LOG_DEBUG);
+_LOG(ThreadLog,		LOGLEVEL_THREADS,	LOG_DEBUG);
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:33:25  dtrg
+ * Added the ability to log through syslog, rather than just to stderr.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

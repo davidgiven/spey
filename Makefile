@@ -13,7 +13,8 @@ PREFIX = /usr
 
 EXE = bin/spey
 
-CFLAGS = -Wall -g -O3 -I.
+CFLAGS = -Wall -g -I.
+CC = g++-2.95
 
 LIBS = \
 	-lsqlite
@@ -28,10 +29,12 @@ OBJS = \
 	src/Statistics.o \
 	src/Settings.o \
 	src/CLI.o \
-	src/MessageProcessor.o \
 	src/Parser.o \
 	src/SMTPResponse.o \
 	src/SMTPCommand.o \
+	src/Threadlet.o \
+	src/MessageProcessor.o \
+	src/ServerProcessor.o \
 	src/greylist.o \
 	src/main.o
 
@@ -46,14 +49,14 @@ install:
 	install -D doc/spey.8 $(PREFIX)/man/man8/spey.8
 
 $(EXE): $(OBJS)
-	mkdir bin
-	g++ -s $(CFLAGS) -o $@ $(OBJS) $(LIBS)
+	mkdir -p bin
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
 
 clean:
 	$(RM) -f $(OBJS) $(EXE) 
 
 %.o: %.cc src/spey.h
-	g++ $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 src/CLI.cc src/CLI.h: src/CLI.gp
 	genparse -l c++ -o src/CLI -p CLI $<
@@ -74,6 +77,10 @@ src/spey.h: \
 
 # Revision history
 # $Log$
+# Revision 1.2  2004/05/01 15:44:52  dtrg
+# Now strips binary before installing; creates missing bin directory when
+# linking.
+#
 # Revision 1.1  2004/05/01 12:20:20  dtrg
 # Initial version.
 #

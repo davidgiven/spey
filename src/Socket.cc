@@ -11,22 +11,12 @@
  */
 
 #include "spey.h"
+#include <stdint.h>
 #include <errno.h>
 #include <unistd.h>
 #include <sys/poll.h>
-
-Socket::Socket(int fd, SocketAddress address)
-{
-	this->fd = fd;
-	this->address = address;
-	_timeout = 0;
-
-	DetailLog() << "new slave connection from "
-		    << address
-		    << " on "
-		    << fd
-		    << flush;
-}
+#include <sys/time.h>
+#include <time.h>
 
 Socket::Socket(int fd):
 	address(fd)
@@ -41,12 +31,12 @@ Socket::Socket(int fd):
 		    << flush;
 }
 
-Socket::Socket(SocketAddress address)
+Socket::Socket(SocketAddress& address)
 {
 	this->fd = socket(PF_INET, SOCK_STREAM, 0);
 	if (this->fd == -1)
-		throw NetworkException("Error creating client socket", errno);
-	DetailLog() << "client socket created on fd "
+		throw NetworkException("Error creating outbound socket", errno);
+	DetailLog() << "outbound socket created on fd "
 		    << this->fd
 		    << flush;
 
@@ -65,15 +55,40 @@ Socket::~Socket()
 	close(this->fd);
 }
 
+/* Return the current time in milliseconds since epoch. */
+
+static uint64_t now()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+
+	return ((uint64_t)tv.tv_sec)*1000 + (tv.tv_usec/1000);
+}
+	
 int Socket::read(void* buffer, int buflength)
 {
-	if (_timeout > 0)
-	{
+	/* When does the timeout take place? */
+
+	uint64_t timeout = now() + (uint64_t)_timeout*1000;
+
+	/* Wait for incoming data. */
+
+	for (;;) {
 		struct pollfd p;
 		p.fd = fd;
 		p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
-		if (poll(&p, 1, _timeout*1000) == 0)
+		if (poll(&p, 1, 0) != 0)
+			break;
+
+		/* No data. Deschedule. */
+
+		int delay = timeout - now();
+		if (delay < 0)
 			throw NetworkTimeoutException();
+
+		Threadlet::addrdfd(fd);
+		Threadlet::current()->deschedule(delay);
+		Threadlet::subrdfd(fd);
 	}
 
 	return ::read(fd, buffer, buflength);
@@ -81,6 +96,21 @@ int Socket::read(void* buffer, int buflength)
 
 int Socket::write(void* buffer, int buflength)
 {
+	/* Wait for the socket becoming writable. */
+
+	for (;;) {
+		struct pollfd p;
+		p.fd = fd;
+		p.events = POLLOUT | POLLERR | POLLHUP;
+		if (poll(&p, 1, 0) != 0)
+			break;
+
+		/* No data. Deschedule. */
+
+		Threadlet::addwrfd(fd);
+		Threadlet::current()->deschedule();
+		Threadlet::subwrfd(fd);
+	}
 	return ::write(fd, buffer, buflength);
 }
 
@@ -134,7 +164,10 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:28:22  dtrg
+ * Added the ability to create a Socket from a raw file descriptor (needed for
+ * inetd mode, where we're going to have a socket passed to us on fd 0).
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
- *
  */

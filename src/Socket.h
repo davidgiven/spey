@@ -10,13 +10,15 @@
  * $State$
  */
 
-#ifndef SOCKETSESSION_H
-#define SOCKETSESSION_H
+#ifndef SOCKET_H
+#define SOCKET_H
+
+struct SocketServer;
 
 struct Socket {
-	Socket(int fd, SocketAddress address);
 	Socket(int fd);
-	Socket(SocketAddress address);
+	Socket(SocketAddress& address);
+	Socket(int fd, SocketAddress& address);
 	~Socket();
 
 	int read(void* buffer, int buflength);
@@ -28,6 +30,8 @@ struct Socket {
 	int timeout() { return _timeout; }
 	void timeout(int t) { _timeout = t; }
 
+	int getfd() { return fd; }
+
 protected:
 	SocketAddress address;
 	int fd;
@@ -38,6 +42,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/14 23:11:44  dtrg
+ * Added decent relaying support. Also converted SocketAddress to use references a
+ * lot rather than pass-by-value, out of general tidiness and the hope that it
+ * will improve performance a bit.
+ *
  * Revision 1.2  2004/05/14 21:28:22  dtrg
  * Added the ability to create a Socket from a raw file descriptor (needed for
  * inetd mode, where we're going to have a socket passed to us on fd 0).

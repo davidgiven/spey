@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH spey 8 "29 April 2004" "0.2" "SMTP preprocessor"
+.TH spey 8 "29 April 2004" "0.3" "SMTP preprocessor"
 .SH NAME
 spey \- a smart, spam-blocking SMTP proxy
 
@@ -35,6 +35,9 @@ or
 or 
 .B \-\-verbose
 .IR verbosity \|]
+.RB [\| \-x
+or
+.BR \-\-foreground \|]
 .RB [\| \-i
 or
 .BR \-\-inetd \|]
@@ -101,12 +104,27 @@ number will produce more and more detailed tracing. Tracing is always sent to
 
 Forces spey into inetd mode. When running like this, spey will process a single
 message and exit; it will assume that stdin/stdout is connected to the external
-SMTP client. The from and to settings are ignored.
+SMTP client. The
+.BR from ,
+.B to
+and
+.B foreground
+settings are ignored.
 
 This mode is not recommended as there is considerable overhead in starting up
 and shutting down, due to sqlite opening and closing the database. However, it
 may be useful if you do not wish to have spey running all the time, or wish to
 force true multithreaded mode.
+
+.TP
+.BI --foreground
+
+Prevents spey from detaching itself from the console. Instead, it will run in
+the foreground and all tracing will be sent to
+.BR stderr .
+This is frequently useful for debugging. This flag is ignored in
+.B inetd
+mode.
 
 .SH "CONFIGURATION VARIABLES"
 Spey uses a number of configuration variables, stored in the database, to
@@ -260,6 +278,12 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.2  2004/05/13 23:36:01  dtrg
+.\" Rewrote speyctl in awk, a much better scripting language than the Bourne shell.
+.\" It now works way better, is much easier to understand, and is probably much
+.\" faster. Added the interface to allow modification of the relay table with
+.\" speyctl, and wrote all the documentation.
+.\"
 .\" Revision 1.1  2004/05/01 12:20:20  dtrg
 .\" Initial version.
 .\"

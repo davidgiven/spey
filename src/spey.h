@@ -10,8 +10,10 @@
  * $State$
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <ucontext.h>
 #include <string>
 #include <sstream>
 
@@ -27,7 +29,9 @@
 #include "Parser.h"
 #include "SMTPResponse.h"
 #include "SMTPCommand.h"
+#include "Threadlet.h"
 #include "MessageProcessor.h"
+#include "ServerProcessor.h"
 
 extern SQL Sql;
 extern SocketAddress FromAddress;
@@ -38,7 +42,10 @@ extern bool greylist(unsigned int sender,
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:33:25  dtrg
+ * Added the ability to log through syslog, rather than just to stderr.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
- *
  */
+
