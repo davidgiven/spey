@@ -65,10 +65,10 @@ int main(int argc, char* argv[])
 				MessageLog() << "message processing aborted"
 					     << flush;
 			} catch (SQLException e) {
-				WarningLog() << "SQL error: "
+				SystemLog() << "SQL error: "
 				             << e
 					     << flush;
-				WarningLog() << "attempting to recover"
+				SystemLog() << "attempting to recover"
 					     << flush;
 				Sql.close();
 				Sql.open(cli.d());
@@ -92,6 +92,11 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/09 18:23:16  dtrg
+ * SQL server now accessed asynchronously; backed out fix for mysterious SQL crash
+ * and instead put in some code that should recover sanely from it. Don't know
+ * what's going on here.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  *
