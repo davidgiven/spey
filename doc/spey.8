@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH spey 8 "29 April 2004" "0.1" "SMTP preprocessor"
+.TH spey 8 "29 April 2004" "0.2" "SMTP preprocessor"
 .SH NAME
 spey \- a smart, spam-blocking SMTP proxy
 
@@ -35,6 +35,9 @@ or
 or 
 .B \-\-verbose
 .IR verbosity \|]
+.RB [\| \-i
+or
+.BR \-\-inetd \|]
 
 .SH DESCRIPTION
 .B spey
@@ -93,6 +96,18 @@ Specifies the verbosity level. Use 0 to suppress all output; increasing the
 number will produce more and more detailed tracing. Tracing is always sent to
 .BR stdout .
 
+.TP
+.BI --inetd
+
+Forces spey into inetd mode. When running like this, spey will process a single
+message and exit; it will assume that stdin/stdout is connected to the external
+SMTP client. The from and to settings are ignored.
+
+This mode is not recommended as there is considerable overhead in starting up
+and shutting down, due to sqlite opening and closing the database. However, it
+may be useful if you do not wish to have spey running all the time, or wish to
+force true multithreaded mode.
+
 .SH "CONFIGURATION VARIABLES"
 Spey uses a number of configuration variables, stored in the database, to
 control itself. You can list and change these with the
@@ -102,8 +117,10 @@ command.
 .TP
 .B identity
 
-Sets your 'home' domain. This is the domain that Spey will announce itself as
-being from; in addition, Spey will only accept email addressed to this domain.
+Sets how spey announces itself to incoming connections in the initial banner.
+Technically this should be the name of your mail domain; in the real world,
+frequently this is set to a dummy value. SMTP connections do not use this value
+for any useful purpose other than diagnostics.
 
 .TP
 .B quarantine-time
@@ -145,6 +162,43 @@ Controls how long Spey should keep unused tuples that have been seen more than
 once in the database. An integer, in seconds. When the database is purged, any
 tuples that have not been seen for longer than the specified time will be
 discarded. The default is a week.
+
+.SH "MESSAGE RELAYING"
+
+Before greylisting is done, spey matches messages against a table to determine
+whether to accept them or not. This provides an overall access control
+mechanism necessary to prevent abuse of your mail server. This table can be
+manipulated by
+.BR speyctl(8) ,
+and contains zero or more keys.
+
+Keys are of the form
+.B ipaddress/width
+or
+.BR address@domain .
+The first form specifies allowed senders. Any connections from an address that
+matches the key will be allowed to relay to any address. It is recommended that
+.B 127.0.0.1/32
+is added, so that mail may be sent from the local machine. The author has
+.B 10.0.0.0/8
+so that any machine in his private network can send mail.
+Another useful example is
+.BR 172.16.0.0/16 .
+.B 0.0.0.0/0
+will allow connections to be made from any host, disabling the relay checking
+completely. Don't do this unless you are absolutely sure about what you are
+doing!
+
+The second form specifies allowed recipients. Either the address or domain part
+may be blank, which acts as a wildcard. Unless you have configured spey as an
+open relay above, you will want at least one entry; the author has
+.BR @cowlark.com ,
+meaning that all messages to an address at the
+.B cowlark.com
+domain will be accepted. A key of
+.B @
+will match all messages and will disable the relay checking.
+
 
 .SH BUGS
 Spey is alpha software. It has bugs. Spey is not guaranteed to do anything
@@ -206,3 +260,6 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.1  2004/05/01 12:20:20  dtrg
+.\" Initial version.
+.\"

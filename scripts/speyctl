@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/awk -Wexec
 # Script for manipulating the Spey configuration database.
 #
 # Copyright (C) 2004 David Given
@@ -9,219 +9,303 @@
 # $Source$
 # $State$
 
-version=0
-configfile=/var/lib/misc/spey.db
-command=none
-arg1=
-arg2=
-
 function usage()
 {
-cat <<EOF
-speyctl (c) 2004 David Given
-Syntax: speyctl [<options>...] <command> [<parameters>...]
-Options:
-    --help    -h                   Displays this message.
-    --db      -d <filename>        Use specified configuration file.
-                                     default: $configfile
-
-Commands:
-    init                 Create a new configuration file.
-    set <key> [<value>]  Set/display a single configuration value.
-    list                 List all configuration values to stdout.
-    read                 Read in configuration values from stdin.
-    stats                List statistics.
-    showdb               Show address database. (Warning --- can be large!)
-    purge                Purge stale addresses.
-EOF
+	print "speyctl (c) 2004 David Given"
+	print "Syntax: speyctl [<options>...] <command> [<parameters>...]"
+	print "Options:"
+	print "    --help    -h                   Displays this message."
+	print "    --db      -d <filename>        Use specified configuration file."
+	print "                                     default: " configfile
+	print ""
+	print "Commands:"
+	print "    init                 Create a new configuration file."
+	print "    set <key> [<value>]  Set/display a single configuration value."
+	print "    list                 List all configuration values to stdout."
+	print "    relay <cmd> [<spec>] Perform a relaying operation."
+	print "    stats                List statistics."
+	print "    showdb               Show address database. (Warning --- can be large!)"
+	print "    purge                Purge stale addresses."
 }
 
-function error()
+function error(s)
 {
-	echo speyctl: "$*" >/dev/null >&2
+	print "speyctl: " s > "/dev/stderr"
+	exit(1)
 }
 
-function parseargs()
+function relaysyntaxerror(s)
 {
-	while true; do
-		if [ "X$1" = "X" ]; then
-			error "syntax error --- you must specify a command."
-			exit 1
-		fi
-
-		case "$1" in
-			-d|--db)
-				configfile="$2"
-				shift
-				;;
-
-			-h|--help)
-				usage
-				exit 0
-				;;
-				
-			init|set|list|read|stats|showdb|purge)
-				command="$1"
-				arg1="$2"
-				arg2="$3"
-				if [ "X$4" != "X" ]; then
-					error "syntax error --- too many parameters."
-					exit 1
-				fi
-				return
-				;;
-
-			*)
-				error "syntax error --- unknown argument $1."
-				exit 1
-				;;
-		esac
-		shift
-	done
+	error("syntax error: speyctl relay [add or sub or list] [<spec>]")
 }
 
-parseargs "$@"
+function sqlstart()
+{
+	sqlitecmd = "sqlite '" configfile "'"
+	print "BEGIN;" | sqlitecmd
+}
 
-# Create new database?
+function sql(s)
+{
+	print s | sqlitecmd
+}
 
-if [ "$command" = init ]; then
-	if [ -f "$configfile" ]; then
-		error "configuration file already exists."
-		exit 1
-	fi
+function sqlend(tail)
+{
+	print "COMMIT;" | sqlitecmd
+	print tail | sqlitecmd
+	close(sqlitecmd)
+}
+	
+function cmd_init()
+{
+	if (system("test -f " configfile) == 0)
+		error("configuration file already exists")
 
-	sqlite "$configfile" <<-EOF
-		CREATE TABLE triples (
-			id INTEGER PRIMARY KEY,
-			sender INTEGER NOT NULL,
-			fromaddress VARCHAR NOT NULL,
-			toaddress VARCHAR NOT NULL,
-			timesseen INTEGER NOT NULL,
-			firstseen INTEGER NOT NULL,
-			lastseen INTEGER NOT NULL);
+	sqlstart()
+	sql("CREATE TABLE triples (				\
+			id INTEGER PRIMARY KEY,			\
+			sender INTEGER NOT NULL,		\
+			fromaddress VARCHAR NOT NULL,		\
+			toaddress VARCHAR NOT NULL,		\
+			timesseen INTEGER NOT NULL,		\
+			firstseen INTEGER NOT NULL,		\
+			lastseen INTEGER NOT NULL);")
 
-		CREATE TABLE settings (
-			key VARCHAR PRIMARY KEY, 
-			value VARCHAR);
-		INSERT INTO settings VALUES
-			("identity",		"yourdomain.invalid");
-		INSERT INTO settings VALUES
-			("intolerant",		"1");
-		INSERT INTO settings VALUES
-			("quarantine-time",	"60");
-		INSERT INTO settings VALUES
-			("socket-timeout",	"30");
-		INSERT INTO settings VALUES
-			("invalid-expiry",	"86400");
-		INSERT INTO settings VALUES
-			("valid-expiry",	"1209600");
+	sql("CREATE TABLE allowrelayingfrom ( 			\
+			left INTEGER NOT NULL, 			\
+			right INTEGER NOT NULL);")
+		
+	sql("CREATE TABLE allowrelayingto ( 			\
+			left VARCHAR, 				\
+			right VARCHAR);")
 
-		CREATE TABLE statistics (
-			key VARCHAR PRIMARY KEY, 
-			value INTEGER);
-		INSERT INTO statistics VALUES
-			("malformed-domain",	0);
-		INSERT INTO statistics VALUES
-			("malformed-address",	0);
-		INSERT INTO statistics VALUES
-			("illegal-relay",	0);
-		INSERT INTO statistics VALUES
-			("timeout",		0);
-		INSERT INTO statistics VALUES
-			("greylisted",		0);
-		INSERT INTO statistics VALUES
-			("accepted",		0);
-	EOF
-	if [ $? -ne 0 ]; then
-		error "configuration file initialisation failed."
-		exit 1
-	fi
-else
-	if [ ! -f "$configfile" ]; then
-		error "configuration file does not exist."
-		exit 1
-	fi
-fi
+	sql("CREATE TABLE settings ( 				\
+			key VARCHAR PRIMARY KEY,  		\
+			value VARCHAR); 			\
+		INSERT INTO settings VALUES 			\
+			('identity',		'yourdomain.invalid'); \
+		INSERT INTO settings VALUES 			\
+			('intolerant',		'1'); 		\
+		INSERT INTO settings VALUES 			\
+			('quarantine-time',	'60'); 		\
+		INSERT INTO settings VALUES 			\
+			('socket-timeout',	'30'); 		\
+		INSERT INTO settings VALUES 			\
+			('invalid-expiry',	'86400'); 	\
+		INSERT INTO settings VALUES 			\
+			('valid-expiry',	'1209600');")
 
-case "$command" in
-	stats)
-		sqlite -separator "=" "$configfile" "SELECT * FROM statistics"
-		exit 0
-		;;
+	sql("CREATE TABLE statistics ( 				\
+			key VARCHAR PRIMARY KEY,  		\
+			value INTEGER); 			\
+		INSERT INTO statistics VALUES 			\
+			('malformed-domain',	0); 		\
+		INSERT INTO statistics VALUES 			\
+			('malformed-address',	0); 		\
+		INSERT INTO statistics VALUES 			\
+			('illegal-relay',	0); 		\
+		INSERT INTO statistics VALUES 			\
+			('timeout',		0); 		\
+		INSERT INTO statistics VALUES 			\
+			('greylisted',		0); 		\
+		INSERT INTO statistics VALUES 			\
+			('accepted',		0);")
+	sqlend()
+}
 
-	list)
-		sqlite -separator "=" "$configfile" "SELECT * FROM settings"
-		exit 0
-		;;
+function cmd_set(key, value)
+{
+	sqlstart()
+	if (value == "")
+		sql("DELETE FROM settings WHERE key='" key "';")
+	else
+	{
+		sql("DELETE FROM settings WHERE key='" key "';")
+		sql("INSERT INTO settings VALUES ('" key "', '" value "');")
+	}
+	sqlend()
+}
 
-	read)
-		sed -e 's/^\(.*\)=\(.*\)$/\1 \2/' | (
-			while read key value; do
-				cat <<-EOF
-					DELETE FROM settings WHERE
-						key = '$key';
-				EOF
+function cmd_list()
+{
+	cmd = "sqlite -separator ' ' " configfile " 'SELECT * FROM settings'"
+	print "Variable                 Value"
+	print "----------------------------------------------------------"
+	while (cmd|getline == 1)
+		printf "%-25s%s\n", $1, $2
+}
 
-				if [ "X$value" != "X" ]; then
-					cat <<-EOF
-						INSERT INTO settings VALUES
-							('$key', '$value');
-					EOF
-				fi
-			done
-		) | sqlite "$configfile"
-		exit 0
-		;;
+function cmd_stats()
+{
+	cmd = "sqlite -separator ' ' " configfile " 'SELECT * FROM statistics'"
+	print "Counter                  Value"
+	print "----------------------------------------------------------"
+	while (cmd|getline == 1)
+		printf "%-25s%s\n", $1, $2
+}
 
-	set)
-		if [ "X$arg2" = "X" ]; then
-			sqlite "$configfile" <<-EOF
-				DELETE FROM settings WHERE
-					key = '$arg1';
-			EOF
+function cmd_showdb()
+{
+	cmd = "sqlite -separator ' ' " configfile " 'SELECT * FROM triples ORDER BY timesseen'"
+	while (cmd|getline == 1)
+		printf "%04X%04X %4d %65s\n", $2/65536, $2%65536, $5, $3 "->" $4
+}
+
+function cmd_purge()
+{
+	sqlstart();
+	sql("DELETE FROM triples WHERE 					\
+			timesseen=1 AND					\
+			lastseen<(STRFTIME('%s', 'now') -		\
+				(SELECT value FROM settings WHERE	\
+					key = 'invalid-expiry')		\
+				);")
+	
+	sql("DELETE FROM triples WHERE					\
+			timesseen>1 AND					\
+			lastseen<(STRFTIME('%s', 'now') -		\
+				(SELECT value FROM settings WHERE	\
+					key = 'valid-expiry')		\
+				);")
+	sqlend();
+}
+
+function cmd_relay(op, value)
+{
+	if (op ~ /list/)
+	{
+		FS = ","
+		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM allowrelayingfrom'"
+		while (cmd|getline == 1)
+		{
+			b1 = ($1 / (256*256*256)) % 256
+			b2 = ($1 / (256*256)) % 256
+			b3 = ($1 / 256) % 256
+			b4 = $1 % 256
+			printf "%d.%d.%d.%d/%d\n", b1, b2, b3, b4, $2
+		}
+		
+		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM allowrelayingto'"
+		while (cmd|getline == 1)
+			printf "%s@%s\n", $1, $2
+		return
+	}
+
+	if (value ~ /.*\/.*/)
+	{
+		if (split(value, array, /\//) > 2)
+			relaysyntaxerror()
+		left = array[1]
+		right = array[2]
+		if (right == "")
+			right = 32
+
+		if (split(left, array, /\./) != 4)
+			relaysyntaxerror()
+		left = ((array[1]*256 + array[2])*256 + array[3])*256 + array[4]
+		table = "allowrelayingfrom"
+	}
+	else if (value ~ /.*@.*/)
+	{
+		if (split(value, array, /@/) > 2)
+			relaysyntaxerror()
+		left = array[1]
+		right = array[2]
+		table = "allowrelayingto"
+	}
+	else
+		relaysyntaxerror()
+
+	sqlstart()
+	sql("DELETE FROM " table " WHERE "			\
+		"left='" left "' AND right='" right "';")
+	if (op ~ /add/)
+		sql("INSERT INTO " table " VALUES "		\
+			"('" left "', '" right "');")
+	sqlend()
+}
+
+function parseargs(  i)
+{
+	for (i=1; i<ARGC; i++)
+	{
+		opt = ARGV[i]
+		if (opt ~ /(-h)|(--help)/)
+			usage()
+		else if (opt ~ /(-d)|(--db)/)
+			configfile = ARGV[++i]
+		else if (opt ~ /init/)
+		{
+			if (i != (ARGC - 1))
+				error("too many parameters (try --help)")
+			cmd_init()
+			exit(0)
+		}
+		else if (opt ~ /set/)
+		{
+			key = ARGV[++i]
+			value = ARGV[++i]
+			if (i < (ARGC - 1))
+				error("too many parameters (try --help)")
+			if (key == "")
+				error("syntax: speyctl set <key> [<value>]")
+			cmd_set(key, value)
+			exit(0)
+		}
+		else if (opt ~ /list/)
+		{
+			if (i != (ARGC - 1))
+				error("too many parameters (try --help)")
+			cmd_list()
+			exit(0)
+		}
+		else if (opt ~ /relay/)
+		{
+			op = ARGV[++i]
+			value = ARGV[++i]
+			if (i < (ARGC - 1))
+				error("too many parameters (try --help)")
+			if ((op != "list") && (op != "add") && (op != "sub"))
+				relaysyntaxerror()
+			cmd_relay(op, value)
+			exit(0)
+		}
+		else if (opt ~ /stats/)
+		{
+			if (i != (ARGC - 1))
+				error("too many parameters (try --help)")
+			cmd_stats()
+			exit(0)
+		}
+		else if (opt ~ /showdb/)
+		{
+			if (i != (ARGC - 1))
+				error("too many parameters (try --help)")
+			cmd_showdb()
+			exit(0)
+		}
+		else if (opt ~ /purge/)
+		{
+			if (i != (ARGC - 1))
+				error("too many parameters (try --help)")
+			cmd_purge()
+			exit(0)
+		}
 		else
-			sqlite "$configfile" <<-EOF
-				BEGIN;
-				DELETE FROM settings WHERE
-					key = '$arg1';
-				INSERT INTO settings VALUES
-					('$arg1', '$arg2');
-				COMMIT;
-			EOF
-		fi
-		exit 0
-		;;
+			error("unrecognised option (try --help)")
+	}
+}
 
-	showdb)
-		sqlite -separator ' ' "$configfile" "SELECT * FROM triples ORDER BY timesseen" | (
-			while read id sender fromaddress toaddress timesseen firstseen lastseen; do
-				printf '%08X %4d %65s\n' $sender "$timesseen" "$fromaddress -> $toaddress"
-			done
-		)
-		exit 0
-		;;
-
-	purge)
-		sqlite "$configfile" <<-EOF
-			BEGIN;
-			DELETE FROM triples WHERE
-				timesseen=1 AND
-				lastseen<(STRFTIME('%s', 'now') -
-					(SELECT value FROM settings WHERE
-						key = 'invalid-expiry')
-					);
-			DELETE FROM triples WHERE
-				timesseen>1 AND
-				lastseen<(STRFTIME('%s', 'now') -
-					(SELECT value FROM settings WHERE
-						key = 'valid-expiry')
-					);
-			COMMIT;
-			VACUUM;
-		EOF
-		exit 0
-		;;
-esac
+BEGIN {
+	configfile = "/var/lib/misc/spey.db"
+	arg1 = ""
+	arg2 = ""
+	parseargs()
+	exit(0)
+}
 
 # Revision history
 # $Log$
+# Revision 1.1  2004/05/01 12:20:20  dtrg
+# Initial version.
