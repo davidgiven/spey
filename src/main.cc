@@ -64,6 +64,14 @@ int main(int argc, char* argv[])
 					     << flush;
 				MessageLog() << "message processing aborted"
 					     << flush;
+			} catch (SQLException e) {
+				WarningLog() << "SQL error: "
+				             << e
+					     << flush;
+				WarningLog() << "attempting to recover"
+					     << flush;
+				Sql.close();
+				Sql.open(cli.d());
 			}
 		}
 
@@ -84,4 +92,7 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */
