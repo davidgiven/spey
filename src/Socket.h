@@ -16,26 +16,28 @@
 struct SocketServer;
 
 struct Socket {
-	Socket(int fd);
-	Socket(SocketAddress& address);
-	Socket(int fd, SocketAddress& address);
+	Socket();
 	~Socket();
+
+	void init(int fd);
+	void init(SocketAddress& address);
+	void init(int fd, SocketAddress& address);
+	void deinit();
 
 	int read(void* buffer, int buflength);
 	int write(void* buffer, int buflength);
 	string readline();
 	void writeline(string l);
 
-	void setaddress(const SocketAddress& address);
 	const SocketAddress& getaddress() { return _address; }
 	int timeout() { return _timeout; }
 	void timeout(int t) { _timeout = t; }
 
-	int getfd() { return fd; }
+	int getfd() { return _fd; }
 
 protected:
 	SocketAddress _address;
-	int fd;
+	int _fd;
 	int _timeout;
 };
 
@@ -43,6 +45,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2004/06/09 18:40:36  dtrg
+ * Fixed some tracing where the address of incoming connections was being reported
+ * incorrectly in the logs (but correctly in the Received lines of incoming
+ * messages).
+ *
  * Revision 1.5  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
  * address of *this* end of the connection, not the other end. In the process,

@@ -18,11 +18,27 @@
 #include <sys/time.h>
 #include <time.h>
 
-/* Create a new incoming socket from the given file descriptor. */
+/* Create a new, uninitialised socket. */
 
-Socket::Socket(int fd)
+Socket::Socket()
 {
-	this->fd = fd;
+	_fd = -1;
+	_timeout = 0;
+}
+
+/* Destroy an existing socket. */
+
+Socket::~Socket()
+{
+	deinit();
+}
+
+/* Initialise socket from the given file descriptor. */
+
+void Socket::init(int fd)
+{
+	deinit();
+	_fd = fd;
 	_timeout = 0;
 
 	DetailLog() << "new explicit slave connection on "
@@ -30,46 +46,55 @@ Socket::Socket(int fd)
 		    << flush;
 }
 
-/* Create a new outgoing socket connected to the specified address. */
+/* Initialise the socket from the given file descriptor, but also mark it as
+ * coming from the specified address. */
 
-Socket::Socket(SocketAddress& address)
+void Socket::init(int fd, SocketAddress& address)
 {
-	this->fd = socket(PF_INET, SOCK_STREAM, 0);
-	if (this->fd == -1)
-		throw NetworkException("Error creating outbound socket", errno);
-	DetailLog() << "outbound socket created on fd "
-		    << this->fd
-		    << " to "
-		    << address
-		    << flush;
+	deinit();
 
-	if (address.connectto(this->fd) != 0)
-	{
-		close(this->fd);
-		throw NetworkException("Error connecting to remote server", errno);
-	}
-}
-
-Socket::~Socket()
-{
-	DetailLog() << "closing socket connection "
-		    << fd
-		    << flush;
-	close(this->fd);
-}
-
-/* Explicitly set the address (used for incoming connections). */
-	
-void Socket::setaddress(const SocketAddress& address)
-{
-	DetailLog() << "connection on "
+	DetailLog() << "new explicit incoming connection on "
 		    << fd
 		    << " marked as being from "
 		    << (string) address
 		    << flush;
+	_fd = fd;
 	_address = address;
 }
-	
+
+/* Initialise the socket to be an outgoing connection to the specified address.
+ * */
+
+void Socket::init(SocketAddress& address)
+{
+	deinit();
+
+	_fd = socket(PF_INET, SOCK_STREAM, 0);
+	if (_fd == -1)
+		throw NetworkException("Error creating outbound socket", errno);
+	DetailLog() << "outbound socket created on fd "
+		    << _fd
+		    << " to "
+		    << address
+		    << flush;
+
+	if (address.connectto(_fd) != 0)
+	{
+		close(_fd);
+		_fd = -1;
+		throw NetworkException("Error connecting to remote server", errno);
+	}
+}
+
+void Socket::deinit()
+{
+	if (_fd != -1)
+	{
+		close(_fd);
+		_fd = -1;
+	}
+}
+
 /* Return the current time in milliseconds since epoch. */
 
 static uint64_t now()
@@ -92,7 +117,7 @@ int Socket::read(void* buffer, int buflength)
 
 	for (;;) {
 		struct pollfd p;
-		p.fd = fd;
+		p.fd = _fd;
 		p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
 		if (poll(&p, 1, 0) != 0)
 			break;
@@ -103,12 +128,12 @@ int Socket::read(void* buffer, int buflength)
 		if (delay < 0)
 			throw NetworkTimeoutException();
 
-		Threadlet::addrdfd(fd);
+		Threadlet::addrdfd(_fd);
 		Threadlet::current()->deschedule(delay);
-		Threadlet::subrdfd(fd);
+		Threadlet::subrdfd(_fd);
 	}
 
-	return ::read(fd, buffer, buflength);
+	return ::read(_fd, buffer, buflength);
 }
 
 /* Write data to the socket. */
@@ -119,18 +144,18 @@ int Socket::write(void* buffer, int buflength)
 
 	for (;;) {
 		struct pollfd p;
-		p.fd = fd;
+		p.fd = _fd;
 		p.events = POLLOUT | POLLERR | POLLHUP;
 		if (poll(&p, 1, 0) != 0)
 			break;
 
 		/* No data. Deschedule. */
 
-		Threadlet::addwrfd(fd);
+		Threadlet::addwrfd(_fd);
 		Threadlet::current()->deschedule();
-		Threadlet::subwrfd(fd);
+		Threadlet::subwrfd(_fd);
 	}
-	return ::write(fd, buffer, buflength);
+	return ::write(_fd, buffer, buflength);
 }
 
 /* Read a line of text from the socket; doesn't include the newline (or CRLF)
@@ -188,6 +213,11 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/06/09 18:40:34  dtrg
+ * Fixed some tracing where the address of incoming connections was being reported
+ * incorrectly in the logs (but correctly in the Received lines of incoming
+ * messages).
+ *
  * Revision 1.4  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
  * address of *this* end of the connection, not the other end. In the process,

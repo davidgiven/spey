@@ -13,9 +13,9 @@
 #include "spey.h"
 #include <unistd.h>
 
-ServerProcessor::ServerProcessor():
-	_mastersocket(FromAddress)
+ServerProcessor::ServerProcessor()
 {
+	_mastersocket.init(FromAddress);
 	Threadlet::addthreadlet(this);
 }
 
@@ -68,6 +68,10 @@ void ServerProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/06/28 18:57:56  dtrg
+ * Added a fix where spey no longer exits if it cannot contact the downstream mail
+ * server.
+ *
  * Revision 1.2  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
  * address of *this* end of the connection, not the other end. In the process,
