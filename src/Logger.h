@@ -14,17 +14,21 @@
 #define LOGGER_H
 
 struct Logger: public stringstream {
-	Logger(int level);
+	Logger(int level, int type);
 	~Logger();
 
 	static void setlevel(int desired);
+	static void detach();
 
 	void flush();
 
 private:
 	static int desired;
+	static bool syslogopened;
+	static bool detached;
 	
-	int level;
+	int _level;
+	int _syslevel;
 };
 
 enum {
@@ -37,23 +41,23 @@ enum {
 	LOGLEVEL_SMTP
 };
 
-#define _LOG(_n, _l) \
+#define _LOG(_n, _l, _t) \
 	struct _n: public Logger { \
-		_n(): Logger(_l) \
+		_n(): Logger(_l, _t) \
 		{} \
 	}
 
-_LOG(SystemLog, LOGLEVEL_SYSTEM);
-_LOG(WarningLog, LOGLEVEL_WARNING);
-_LOG(MessageLog, LOGLEVEL_MESSAGE);
-_LOG(ParseLog, LOGLEVEL_PARSING);
-_LOG(DetailLog, LOGLEVEL_DETAIL);
-_LOG(SMTPLog, LOGLEVEL_SMTP);
-
-#undef _LOG
+_LOG(SystemLog, 	LOGLEVEL_SYSTEM,	LOG_NOTICE);
+_LOG(WarningLog,	LOGLEVEL_WARNING,	LOG_WARNING);
+_LOG(MessageLog,	LOGLEVEL_MESSAGE,	LOG_INFO);
+_LOG(ParseLog,		LOGLEVEL_PARSING,	LOG_DEBUG);
+_LOG(DetailLog,		LOGLEVEL_DETAIL,	LOG_DEBUG);
+_LOG(SMTPLog,		LOGLEVEL_SMTP,		LOG_DEBUG);
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
