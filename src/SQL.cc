@@ -42,6 +42,7 @@ void SQL::open(string filename)
 	this->handle = sqlite_open(filename.c_str(), 0, &error);
 	if (!this->handle)
 		sqlerror("Database open failure");
+	sqlite_busy_timeout(this->handle, 1000);
 }
 
 bool SQL::checktable(string name)
@@ -69,11 +70,15 @@ SQLQuery::SQLQuery(SQL& sql, string statement)
 SQLQuery::~SQLQuery()
 {
 	if (sqlite_finalize(this->handle, &error))
-		sqlerror("SQL query finalization failure");
+	{
+		DetailLog() << "SQL query finalization failure --- may be leaking handles"
+			    << flush;
+	}
 }
 
 bool SQLQuery::step()
 {
+	int tries = 0;
 	int r;
 
 	do {
@@ -82,21 +87,20 @@ bool SQLQuery::step()
 
 		switch (r)
 		{
-			case SQLITE_BUSY:
-				usleep(250000);
-				break;
-
 			case SQLITE_MISUSE:
 			case SQLITE_ERROR:
 			{
-				string s = "SQL data access error";
-				error = NULL;
-				throw s;
+				tries++;
+				if (tries > 10)
+					sqlerror("SQL data access error");
+				usleep(1000000);
+				break;
 			}
 
 			case SQLITE_DONE:
 				return 0;
 		}
+		/* SQLITE_BUSY falls through and repeats */
 	} while (r != SQLITE_ROW);
 	return 1;
 }
@@ -118,4 +122,6 @@ int SQLQuery::getint(int i)
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
