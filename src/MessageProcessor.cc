@@ -207,7 +207,8 @@ void MessageProcessor::process()
 					deferrederror.msgoverride(s.str());
 					errorstate = 1;
 
-					Statistics::greylisted();
+					Statistics::blacklisted();
+					break;
 				}
 
 			greymessage:
@@ -221,6 +222,7 @@ void MessageProcessor::process()
 					errorstate = 1;
 
 					Statistics::greylisted();
+					break;
 				}
 		}
 
@@ -303,6 +305,9 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/06/21 23:12:46  dtrg
+ * Added blacklisting and whitelisting support.
+ *
  * Revision 1.4  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
  * address of *this* end of the connection, not the other end. In the process,

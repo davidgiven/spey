@@ -53,11 +53,11 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 		{
 			DetailLog() << "matches whitelist"
 				    << flush;
-			goto whitelisted;
+			return Accepted;
 		}
 	}
 
-	/* Then check the whitelist. */
+	/* Then check the blacklist. */
 
 	{
 		stringstream s;
@@ -75,7 +75,7 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 		{
 			DetailLog() << "matches blacklist"
 				    << flush;
-			goto blacklisted;
+			return BlackListed;
 		}
 	}
 
@@ -151,18 +151,13 @@ notfound:
 	}
 
 	return GreyListed;
-
-whitelisted:
-	Statistics::whitelisted();
-	return Accepted;
-
-blacklisted:
-	Statistics::blacklisted();
-	return BlackListed;
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/06/21 23:12:47  dtrg
+ * Added blacklisting and whitelisting support.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */
