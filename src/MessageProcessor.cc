@@ -12,13 +12,10 @@
 
 #include "spey.h"
 
-MessageProcessor::MessageProcessor(int fd, SocketAddress& address):
-	inside(ToAddress),
-	outside(fd)
+MessageProcessor::MessageProcessor(int fd, SocketAddress& address)
 {
-	outside.setaddress(address);
-	inside.timeout(Settings::sockettimeout());
-	outside.timeout(Settings::sockettimeout());
+	_outside.init(fd, address);
+	_outside.timeout(Settings::sockettimeout());
 
 	Threadlet::addthreadlet(this);
 }
@@ -29,33 +26,33 @@ MessageProcessor::~MessageProcessor()
 
 void MessageProcessor::readinside()
 {
-	this->response.set(this->inside);
+	_response.set(_inside);
 	SMTPLog() << "s<i "
-		  << this->response
+		  << _response
 		  << flush;
 }
 
 void MessageProcessor::writeinside()
 {
-	this->inside.writeline(this->command);
+	_inside.writeline(_command);
 	SMTPLog() << "s>i "
-		  << this->command
+		  << _command
 		  << flush;
 }
 
 void MessageProcessor::readoutside()
 {
-	this->command.set(this->outside);
+	_command.set(_outside);
 	SMTPLog() << "o>s "
-		  << this->command
+		  << _command
 		  << flush;
 }
 
 void MessageProcessor::writeoutside()
 {
-	this->outside.writeline(this->response);
+	_outside.writeline(_response);
 	SMTPLog() << "o<s "
-		  << this->response
+		  << _response
 		  << flush;
 }
 
@@ -82,11 +79,11 @@ void MessageProcessor::verifyrelay(string address)
 	DetailLog() << "checking "
 		    << address
 		    << " from "
-		    << outside.getaddress().getname()
+		    << _outside.getaddress().getname()
 		    << " for relaying"
 		    << flush;
 
-	if (!Settings::testrelay(outside.getaddress(), address))
+	if (!Settings::testrelay(_outside.getaddress(), address))
 		throw IllegalRelayingException();
 }
 
@@ -94,10 +91,10 @@ void MessageProcessor::process()
 {
 	SMTPResponse deferrederror;
 	bool errorstate = 0;
+	bool connected = 0;
 	
-	readinside();
-	response.check(220, "Invalid banner");
-	response.parmoverride(Settings::identity());
+	_response.set(220);
+	_response.parmoverride(Settings::identity());
 	writeoutside();
 
 	for (;;)
@@ -106,24 +103,47 @@ void MessageProcessor::process()
 			readoutside();
 		} catch (InvalidSMTPCommandException e)
 		{
-			response.set(500);
+			_response.set(500);
 			writeoutside();
 			if (Settings::intolerant())
 				goto abort;
 			continue;
 		}
 
-		switch (command.cmd())
+		/* Make sure we're connected to the downstream SMTP server. */
+
+		if (!connected)
+		{
+			try {
+				_inside.init(ToAddress);
+				_inside.timeout(Settings::sockettimeout());
+
+				/* Check it's okay. */
+
+				readinside();
+				_response.check(220, "Invalid banner");
+				connected = 1;
+			} catch (NetworkException e) {
+				/* Something didn't work while making the
+				 * connection to the downstream SMTP server.
+				 * Bail out cleanly. */
+				_response.set(421);
+				writeoutside();
+				throw e;
+			}
+		}
+
+		switch (_command.cmd())
 		{
 			case SMTPCommand::HELP:
-				response.set(214);
+				_response.set(214);
 				writeoutside();
 				continue;
 
 			case SMTPCommand::HELO:
 			case SMTPCommand::EHLO:
 				try {
-					verifydomain(command.arg());
+					verifydomain(_command.arg());
 				} catch (MalformedDomainException e)
 				{
 					deferrederror.set(554);
@@ -135,9 +155,9 @@ void MessageProcessor::process()
 
 			case SMTPCommand::MAIL:
 				try {
-					from = command.arg();
-					if (from != "")
-						verifyaddress(from);
+					_from = _command.arg();
+					if (_from != "")
+						verifyaddress(_from);
 				} catch (MalformedAddressException e)
 				{
 					deferrederror.set(551);
@@ -150,13 +170,13 @@ void MessageProcessor::process()
 
 			case SMTPCommand::RCPT:
 				try {
-					string address = command.arg();
+					string address = _command.arg();
 
 					verifyaddress(address);
 					verifyrelay(address);
 
-					switch(greylist(outside.getaddress() & 0xFFFFFF00,
-							from, address))
+					switch(greylist(_outside.getaddress() & 0xFFFFFF00,
+							_from, address))
 					{
 						case Accepted:
 							break;
@@ -190,7 +210,7 @@ void MessageProcessor::process()
 				break;
 
 			case SMTPCommand::RSET:
-				from = "";
+				_from = "";
 				break;
 
 			case SMTPCommand::DATA:
@@ -231,14 +251,14 @@ void MessageProcessor::process()
 		readinside();
 		writeoutside();
 
-		if (response.iserror() && Settings::intolerant())
+		if (_response.iserror() && Settings::intolerant())
 			goto abort;
 		
-		switch (command.cmd())
+		switch (_command.cmd())
 		{
 			case SMTPCommand::DATA:
 			{
-				if (!response.issuccess())
+				if (!_response.issuccess())
 					break;
 
 				SMTPLog() << "transferring message body"
@@ -249,19 +269,19 @@ void MessageProcessor::process()
 				{
 					stringstream s;
 					s << "Received: from "
-					  << outside.getaddress().getname()
+					  << _outside.getaddress().getname()
 					  << " and verified by Spey"
 					  << "\n\tconnected from "
-					  << (string) outside.getaddress()
+					  << (string) _outside.getaddress()
 					  << "\n\twith envelope "
-					  << from;
-					this->inside.writeline(s.str());
+					  << _from;
+					_inside.writeline(s.str());
 				}
 
 				for (;;)
 				{
-					string s = this->outside.readline();
-					this->inside.writeline(s);
+					string s = _outside.readline();
+					_inside.writeline(s);
 					if (s == ".")
 						break;
 				}
@@ -281,7 +301,7 @@ void MessageProcessor::process()
 		continue;
 
 	error:
-		response = deferrederror;
+		_response = deferrederror;
 		writeoutside();
 		if (Settings::intolerant())
 			goto abort;
@@ -295,7 +315,7 @@ abort:
 
 int MessageProcessor::debugid()
 {
-	return outside.getfd();
+	return _outside.getfd();
 }
 
 void MessageProcessor::run()
@@ -305,6 +325,10 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2004/06/22 10:05:37  dtrg
+ * Fixed some more logic flow bugs in the blacklist code. (Blacklisted messages
+ * were being reported as greylisted.)
+ *
  * Revision 1.5  2004/06/21 23:12:46  dtrg
  * Added blacklisting and whitelisting support.
  *
