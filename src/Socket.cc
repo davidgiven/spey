@@ -20,15 +20,12 @@
 
 /* Create a new incoming socket from the given file descriptor. */
 
-Socket::Socket(int fd):
-	_address(fd)
+Socket::Socket(int fd)
 {
 	this->fd = fd;
 	_timeout = 0;
 
-	DetailLog() << "new explicit slave connection from "
-		    << _address
-		    << " on "
+	DetailLog() << "new explicit slave connection on "
 		    << fd
 		    << flush;
 }
@@ -61,6 +58,18 @@ Socket::~Socket()
 	close(this->fd);
 }
 
+/* Explicitly set the address (used for incoming connections). */
+	
+void Socket::setaddress(const SocketAddress& address)
+{
+	DetailLog() << "connection on "
+		    << fd
+		    << " marked as being from "
+		    << (string) address
+		    << flush;
+	_address = address;
+}
+	
 /* Return the current time in milliseconds since epoch. */
 
 static uint64_t now()
@@ -179,6 +188,11 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/06/08 19:58:04  dtrg
+ * Fixed a bug where the address of incoming connections was thought to be the
+ * address of *this* end of the connection, not the other end. In the process,
+ * changed some this->blah instance variables to _blah.
+ *
  * Revision 1.3  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of
