@@ -1,9 +1,9 @@
-                                   SPEY V0.3.0
+                                   SPEY V0.3.1
                                    ===========
 
                                   Beta release
                               (C) 2004 David Given
-                                   2004-06-22
+                                   2004-06-30
 
 INTRODUCTION
 ============
@@ -178,6 +178,12 @@ the file COPYING.
 
 REVISION HISTORY
 ================
+
+Spey 0.3.1: 2004-06-30: No longer shuts down prematurely if the downstream SMTP
+server can't be contacted; added hardening against DoS attacks by flooding spey
+with incoming connections. This also has the side effect of making spey a bit
+more efficient in dealing with erroneous (or malicious) connections from
+non-SMTP devices.
 
 Spey 0.3.0: 2004-06-22: Added whitelist and blacklist support. Now compiles
 under gcc 3.3. Several minor bugfixes.
