@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH speyctl 8 "29 April 2004" "0.2.9" "SMTP preprocessor"
+.TH speyctl 8 "22 June 2004" "0.3.0" "SMTP preprocessor"
 .SH NAME
 speyctl \- an interface to the Spey configuration database
 
@@ -42,6 +42,7 @@ to confuse Spey.
 
 The configuration may be changed at any time. Spey will reread the
 configuration every time a message arrives.
+
 
 .SH COMMANDS
 
@@ -138,10 +139,12 @@ manpage for more information.
 .B purge
 should be run on a regular basis, or Spey's database will grow without limit!
 
+
 .SH FILES
 .TP
 .I /var/lib/misc/spey.db
 Default database.
+
 
 .SH "AUTHOR & LICENSE"
 Spey and speyctl are (C) 2004 David Given. Comments and criticism to
@@ -152,6 +155,9 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.5  2004/06/21 23:12:46  dtrg
+.\" Added blacklisting and whitelisting support.
+.\"
 .\" Revision 1.4  2004/05/30 13:43:45  dtrg
 .\" Decided to make new version 0.2.9, not 0.3, as there are no actual user-visible
 .\" new features. Plus I want a delay for bugfixing.
@@ -170,4 +176,4 @@ full copy can be found in the Spey source distribution, or at
 .\"
 .\" Revision 1.1  2004/05/01 12:20:20  dtrg
 .\" Initial version.
-.\"
+
