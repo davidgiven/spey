@@ -1,5 +1,5 @@
-                                    SPEY V0.3
-                                    =========
+                                   SPEY V0.2.9
+                                   ===========
 
                                   Beta release
                               (C) 2004 David Given
@@ -23,10 +23,10 @@ so you'll need that before you can use it.
 IF YOU'VE USED SPEY BEFORE
 ==========================
 
-The database files used by 0.3 are NOT compatible with those used by 0.1 (but
-ARE compatible with 0.2). You will have to delete the file and recreate it
-using speyctl (the new speyctl that comes with 0.3, of course). If you try to
-run spey with a 0.1 configuration file... well, on your own head be it.
+The database files used by 0.2 are NOT compatible with those used by 0.1.  You
+will have to delete the file and recreate it using speyctl (the new speyctl
+that comes with 0.2, of course). If you try to run spey with a 0.1
+configuration file... well, on your own head be it.
 
 INSTALLATION
 ============
@@ -164,7 +164,7 @@ the file COPYING.
 REVISION HISTORY
 ================
 
-Spey 0.3: 2004-05-30: Major internal rearrangements to support processing of
+Spey 0.2.9: 2004-05-30: Major internal rearrangements to support processing of
 multiple connections at once. It should now be far more usable when dealing
 with heavy loads.
 
@@ -183,6 +183,12 @@ CVS history for this file
 $Source$
 $State$
 $Log$
+Revision 1.6  2004/05/30 01:55:13  dtrg
+Numerous and major alterations to implement a system for processing more than
+one message at a time, based around coroutines. Fairly hefty rearrangement of
+constructors and object ownership semantics. Assorted other structural
+modifications.
+
 Revision 1.5  2004/05/19 19:38:18  dtrg
 Added the banner for 0.2.1.
 
