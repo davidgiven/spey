@@ -16,7 +16,7 @@
 struct Exception {
 	Exception();
 	Exception(string reason);
-	Exception(string reason, int errno);
+	Exception(string reason, int errnum);
 
 	operator string () { return this->reason; }
 
@@ -39,7 +39,7 @@ struct InternalException: Exception
 
 struct IOException: Exception
 {
-	IOException(string reason, int errno): Exception(reason, errno)
+	IOException(string reason, int errnum): Exception(reason, errnum)
 	{}
 };
 
@@ -54,7 +54,7 @@ struct NetworkException: Exception
 	NetworkException(string reason): Exception(reason)
 	{}
 
-	NetworkException(string reason, int errno): Exception(reason, errno)
+	NetworkException(string reason, int errnum): Exception(reason, errnum)
 	{}
 };
 
@@ -110,6 +110,12 @@ struct ParseErrorException: Exception
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

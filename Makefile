@@ -14,7 +14,7 @@ PREFIX = /usr
 EXE = bin/spey
 
 CFLAGS = -Wall -g -I.
-CC = g++-2.95
+CC = g++
 
 LIBS = \
 	-lsqlite
@@ -77,6 +77,12 @@ src/spey.h: \
 
 # Revision history
 # $Log$
+# Revision 1.3  2004/05/30 01:55:13  dtrg
+# Numerous and major alterations to implement a system for processing more than
+# one message at a time, based around coroutines. Fairly hefty rearrangement of
+# constructors and object ownership semantics. Assorted other structural
+# modifications.
+#
 # Revision 1.2  2004/05/01 15:44:52  dtrg
 # Now strips binary before installing; creates missing bin directory when
 # linking.
