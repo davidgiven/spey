@@ -22,6 +22,14 @@ t / to			string {"localhost:2525"}
 v / verbose		int 999 [0...]
 	"Set the verbosity level."
 
+x / foreground		flag
+	"Run in the foreground instead of as a daemon."
+
+i / inetd		flag
+	"Run in inetd mode instead of as a daemon."
+
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
