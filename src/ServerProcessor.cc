@@ -38,14 +38,21 @@ void ServerProcessor::run()
 
 		/* Wait for an incoming connection. */
 
-		int fd = _mastersocket.accept();
+		SocketAddress address;
+		int fd = _mastersocket.accept(&address);
 
 		/* Automatically added to scheduler */
-		(void) new MessageProcessor(fd);
+		(void) new MessageProcessor(fd, address);
 	}
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  */
 

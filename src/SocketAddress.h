@@ -20,6 +20,7 @@
 struct SocketAddress {
 	SocketAddress();
 	SocketAddress(int fd);
+	SocketAddress(const sockaddr_in& sa);
 	SocketAddress(const string& name, int port);
 	SocketAddress(const string& name);
 	~SocketAddress();
@@ -27,6 +28,7 @@ struct SocketAddress {
 	void setname(const string& name);
 	void setport(int port);
 	void set(const string& name);
+	void set(const sockaddr_in& address);
 
 	int connectto(int fd);
 	int bindto(int fd);
@@ -37,7 +39,7 @@ struct SocketAddress {
 	operator unsigned int () const;
 
 private:
-	sockaddr_in sa;
+	sockaddr_in _sa;
 };
 
 inline ostream& operator << (ostream& s, SocketAddress& sa)
@@ -50,6 +52,11 @@ inline ostream& operator << (ostream& s, SocketAddress& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/14 23:11:44  dtrg
+ * Added decent relaying support. Also converted SocketAddress to use references a
+ * lot rather than pass-by-value, out of general tidiness and the hope that it
+ * will improve performance a bit.
+ *
  * Revision 1.2  2004/05/14 21:28:22  dtrg
  * Added the ability to create a Socket from a raw file descriptor (needed for
  * inetd mode, where we're going to have a socket passed to us on fd 0).

@@ -12,10 +12,11 @@
 
 #include "spey.h"
 
-MessageProcessor::MessageProcessor(int fd):
+MessageProcessor::MessageProcessor(int fd, SocketAddress& address):
 	inside(ToAddress),
 	outside(fd)
 {
+	outside.setaddress(address);
 	inside.timeout(Settings::sockettimeout());
 	outside.timeout(Settings::sockettimeout());
 
@@ -281,6 +282,12 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.2  2004/05/14 23:11:44  dtrg
  * Added decent relaying support. Also converted SocketAddress to use references a
  * lot rather than pass-by-value, out of general tidiness and the hope that it

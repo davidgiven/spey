@@ -13,42 +13,59 @@
 #include "spey.h"
 #include <netdb.h>
 
+/* Create a generic socket address. */
+
 SocketAddress::SocketAddress()
 {
-	this->sa.sin_family = AF_INET;
-	this->sa.sin_addr.s_addr = INADDR_ANY;
-	this->sa.sin_port = 0;
+	_sa.sin_family = AF_INET;
+	_sa.sin_addr.s_addr = INADDR_ANY;
+	_sa.sin_port = 0;
 }
+
+/* Create an address from the given sockaddr_in structure. */
+
+SocketAddress::SocketAddress(const sockaddr_in& sa)
+{
+	_sa = sa;
+}
+	
+/* Create an address from *this* end of the supplied file descriptor. */
 
 SocketAddress::SocketAddress(int fd)
 {
-	socklen_t i = sizeof(this->sa);
-	(void)getsockname(fd, (sockaddr*) &this->sa, &i);
-	if (i != sizeof(this->sa))
+	socklen_t i = sizeof(_sa);
+	(void)getsockname(fd, (sockaddr*) &_sa, &i);
+	if (i != sizeof(_sa))
 		WarningLog() << "Warning: socket size changed from "
-			     << sizeof(this->sa)
+			     << sizeof(_sa)
 			     << " to "
 			     << i
 			     << " during call to getsockname()!"
 			     << flush;
 }
 
+/* Create an address from the given hostname and port. */
+
 SocketAddress::SocketAddress(const string& name, int port)
 {
-	this->sa.sin_family = AF_INET;
+	_sa.sin_family = AF_INET;
 	this->setname(name);
 	this->setport(port);
 }
 
+/* Create an address from the combined hostname and port. */
+
 SocketAddress::SocketAddress(const string& name)
 {
-	this->sa.sin_family = AF_INET;
+	_sa.sin_family = AF_INET;
 	this->set(name);
 }
 
 SocketAddress::~SocketAddress()
 {
 }
+
+/* Set the hostname part of the address to the supplied string. */
 
 void SocketAddress::setname(const string& server)
 {
@@ -61,13 +78,17 @@ void SocketAddress::setname(const string& server)
 		throw NetworkException(s);
 	}
 
-	memcpy(&this->sa.sin_addr.s_addr, he->h_addr, he->h_length);
+	memcpy(&_sa.sin_addr.s_addr, he->h_addr, he->h_length);
 }
+
+/* Set the port part of the address to the supplied string. */
 
 void SocketAddress::setport(int port)
 {
-	this->sa.sin_port = htons(port);
+	_sa.sin_port = htons(port);
 }
+
+/* Set the complete address to the supplied string. */
 
 void SocketAddress::set(const string& name)
 {
@@ -86,25 +107,32 @@ void SocketAddress::set(const string& name)
 	this->setport(atoi(port.c_str()));
 }
 
+/* Set the complete address to the supplied sockaddr_in structure. */
+
+void SocketAddress::set(const sockaddr_in& sa)
+{
+	_sa = sa;
+}
+	
 int SocketAddress::connectto(int fd)
 {
-	return connect(fd, (sockaddr*) &this->sa,
-			(socklen_t) sizeof(this->sa));
+	return connect(fd, (sockaddr*) &_sa,
+			(socklen_t) sizeof(_sa));
 }
 
 int SocketAddress::bindto(int fd)
 {
-	return bind(fd, (sockaddr*) &this->sa,
-			(socklen_t) sizeof(this->sa));
+	return bind(fd, (sockaddr*) &_sa,
+			(socklen_t) sizeof(_sa));
 }
 
 int SocketAddress::acceptfrom(int fd)
 {
-	socklen_t i = sizeof(this->sa);
-	int r = accept(fd, (sockaddr*) &this->sa, &i);
-	if (i != sizeof(this->sa))
+	socklen_t i = sizeof(_sa);
+	int r = accept(fd, (sockaddr*) &_sa, &i);
+	if (i != sizeof(_sa))
 		WarningLog() << "Warning: socket size changed from "
-			     << sizeof(this->sa)
+			     << sizeof(_sa)
 			     << " to "
 			     << i
 			     << " during call to accept()!"
@@ -114,15 +142,15 @@ int SocketAddress::acceptfrom(int fd)
 
 string SocketAddress::getname() const
 {
-	struct hostent* he = gethostbyaddr(&this->sa.sin_addr.s_addr,
-			sizeof(this->sa.sin_addr.s_addr), AF_INET);
+	struct hostent* he = gethostbyaddr(&_sa.sin_addr.s_addr,
+			sizeof(_sa.sin_addr.s_addr), AF_INET);
 	stringstream s;
 
 	if (he)
 		s << he->h_name;
 	else
 	{
-		unsigned int addr = this->sa.sin_addr.s_addr;
+		unsigned int addr = _sa.sin_addr.s_addr;
 
 		s << ((addr >>  0) & 0xFF)
 		  << '.'
@@ -141,18 +169,23 @@ SocketAddress::operator string () const
 	stringstream s;
 	s << getname()
 	  << ':'
-	  << ntohs(this->sa.sin_port);
+	  << ntohs(_sa.sin_port);
 
 	return s.str();
 }
 
 SocketAddress::operator unsigned int () const
 {
-	return ntohl(sa.sin_addr.s_addr);
+	return ntohl(_sa.sin_addr.s_addr);
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/14 23:11:44  dtrg
+ * Added decent relaying support. Also converted SocketAddress to use references a
+ * lot rather than pass-by-value, out of general tidiness and the hope that it
+ * will improve performance a bit.
+ *
  * Revision 1.2  2004/05/14 21:28:22  dtrg
  * Added the ability to create a Socket from a raw file descriptor (needed for
  * inetd mode, where we're going to have a socket passed to us on fd 0).
