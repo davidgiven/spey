@@ -24,7 +24,7 @@ SMTPResponse::SMTPResponse()
 	set();
 }
 
-SMTPResponse::SMTPResponse(int code, string parameter="")
+SMTPResponse::SMTPResponse(int code, string parameter)
 {
 	set(code, parameter);
 }
@@ -40,7 +40,7 @@ void SMTPResponse::set()
 	_parameter = "";
 }
 
-void SMTPResponse::set(int code, string parameter="")
+void SMTPResponse::set(int code, string parameter)
 {
 	_code = code;
 	_parameter = parameter;
@@ -213,4 +213,7 @@ bool SMTPResponse::iserror()
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
+

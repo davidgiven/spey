@@ -18,7 +18,7 @@ SMTPCommand::SMTPCommand()
 	set();
 }
 
-SMTPCommand::SMTPCommand(int command, string parameter="")
+SMTPCommand::SMTPCommand(int command, string parameter)
 {
 	set(command, parameter);
 }
@@ -34,7 +34,7 @@ void SMTPCommand::set()
 	this->parameter = "";
 }
 
-void SMTPCommand::set(int command, string parameter="")
+void SMTPCommand::set(int command, string parameter)
 {
 	this->command = command;
 	this->parameter = parameter;
@@ -187,4 +187,7 @@ SMTPCommand::operator string ()
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
+
