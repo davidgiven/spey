@@ -179,10 +179,10 @@ function cmd_relay(op, value)
 		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM allowrelayingfrom'"
 		while (cmd|getline == 1)
 		{
-			b1 = ($1 / (256*256*256)) % 256
-			b2 = ($1 / (256*256)) % 256
-			b3 = ($1 / 256) % 256
-			b4 = $1 % 256
+			b1 = int($1 / (256*256*256)) % 256
+			b2 = int($1 / (256*256)) % 256
+			b3 = int($1 / 256) % 256
+			b4 = int($1) % 256
 			printf "%d.%d.%d.%d/%d\n", b1, b2, b3, b4, $2
 		}
 		
@@ -204,6 +204,7 @@ function cmd_relay(op, value)
 		if (split(left, array, /\./) != 4)
 			relaysyntaxerror()
 		left = ((array[1]*256 + array[2])*256 + array[3])*256 + array[4]
+		left = sprintf("%.0f", left)
 		table = "allowrelayingfrom"
 	}
 	else if (value ~ /.*@.*/)
@@ -307,5 +308,11 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.2  2004/05/13 23:36:01  dtrg
+# Rewrote speyctl in awk, a much better scripting language than the Bourne shell.
+# It now works way better, is much easier to understand, and is probably much
+# faster. Added the interface to allow modification of the relay table with
+# speyctl, and wrote all the documentation.
+#
 # Revision 1.1  2004/05/01 12:20:20  dtrg
 # Initial version.
