@@ -259,11 +259,11 @@ function cmd_Xlist(op, list, value,    array, sender, recipient)
 	{
 		FS = ","
 		cmd = "sqlite -separator ',' " configfile " 'SELECT sender, recipient FROM " list "'"
-		print "              Sender   Recipient"
-		print "--------------------   --------------------"
+		print "                        Sender   Recipient"
+		print "------------------------------   ------------------------------"
 		while (cmd|getline == 1)
 		{
-			printf "% 20s : %s\n", $1, $2
+			printf "% 30s : %s\n", $1, $2
 		}
 		return
 	}
@@ -374,6 +374,10 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.5  2004/06/21 23:16:00  dtrg
+# Now explicitly specifies mawk, as neither gawk nor traditional awk support
+# -Wexec (or equivalent).
+#
 # Revision 1.4  2004/06/21 23:12:46  dtrg
 # Added blacklisting and whitelisting support.
 #
