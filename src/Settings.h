@@ -22,7 +22,8 @@ struct Settings {
 	static int quarantinetime() { return _quarantinetime; }
 	static int sockettimeout() { return _sockettimeout; }
 	
-	static bool testrelay(string domain);
+	static bool testrelay(const SocketAddress& sender,
+			const string& recipient);
 	
 protected:
 	static string _identity;
@@ -35,4 +36,7 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */

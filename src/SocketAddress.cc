@@ -33,14 +33,14 @@ SocketAddress::SocketAddress(int fd)
 			     << flush;
 }
 
-SocketAddress::SocketAddress(string name, int port)
+SocketAddress::SocketAddress(const string& name, int port)
 {
 	this->sa.sin_family = AF_INET;
 	this->setname(name);
 	this->setport(port);
 }
 
-SocketAddress::SocketAddress(string name)
+SocketAddress::SocketAddress(const string& name)
 {
 	this->sa.sin_family = AF_INET;
 	this->set(name);
@@ -50,7 +50,7 @@ SocketAddress::~SocketAddress()
 {
 }
 
-void SocketAddress::setname(string server)
+void SocketAddress::setname(const string& server)
 {
 	struct hostent* he = gethostbyname(server.c_str());
 	if (!he)
@@ -69,7 +69,7 @@ void SocketAddress::setport(int port)
 	this->sa.sin_port = htons(port);
 }
 
-void SocketAddress::set(string name)
+void SocketAddress::set(const string& name)
 {
 	string::size_type i = name.find(':');
 	if (i == string::npos)
@@ -79,10 +79,10 @@ void SocketAddress::set(string name)
 	}
 
 	string port = name.substr(i+1);
-	name = name.substr(0, i);
+	string host = name.substr(0, i);
 	
-	if (name != "")
-		this->setname(name);
+	if (host != "")
+		this->setname(host);
 	this->setport(atoi(port.c_str()));
 }
 
@@ -112,7 +112,7 @@ int SocketAddress::acceptfrom(int fd)
 	return r;
 }
 
-string SocketAddress::name()
+string SocketAddress::getname() const
 {
 	struct hostent* he = gethostbyaddr(&this->sa.sin_addr.s_addr,
 			sizeof(this->sa.sin_addr.s_addr), AF_INET);
@@ -136,23 +136,27 @@ string SocketAddress::name()
 	return s.str();
 }
 
-SocketAddress::operator string ()
+SocketAddress::operator string () const
 {
 	stringstream s;
-	s << name()
+	s << getname()
 	  << ':'
 	  << ntohs(this->sa.sin_port);
 
 	return s.str();
 }
 
-SocketAddress::operator unsigned int ()
+SocketAddress::operator unsigned int () const
 {
 	return ntohl(sa.sin_addr.s_addr);
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:28:22  dtrg
+ * Added the ability to create a Socket from a raw file descriptor (needed for
+ * inetd mode, where we're going to have a socket passed to us on fd 0).
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

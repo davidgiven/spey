@@ -24,7 +24,7 @@ struct Socket {
 	string readline();
 	void writeline(string l);
 
-	SocketAddress getaddress() { return address; }
+	const SocketAddress& getaddress() { return address; }
 	int timeout() { return _timeout; }
 	void timeout(int t) { _timeout = t; }
 
@@ -38,6 +38,10 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:28:22  dtrg
+ * Added the ability to create a Socket from a raw file descriptor (needed for
+ * inetd mode, where we're going to have a socket passed to us on fd 0).
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */
