@@ -19,7 +19,7 @@ OPTIONS=
 
 test -x $DAEMON || exit 0
 
-function stop()
+stop()
 {
 	echo -n "Stopping SMTP proxy: "
 	if [ -f $PIDFILE ]; then
@@ -29,7 +29,7 @@ function stop()
 	echo "spey."
 }
 
-function start()
+start()
 {
 	echo -n "Starting SMTP proxy: "
 	$DAEMON $OPTIONS
@@ -64,6 +64,9 @@ exit 0
 
 # Revision history
 # $Log$
+# Revision 1.2  2004/05/14 22:01:40  dtrg
+# Added inetd mode, where one message is processed from stdin and then spey exits. Also added proper daemon functionality where spey detaches itself cleanly from the console to go into the background.
+#
 # Revision 1.1  2004/05/01 12:20:20  dtrg
 # Initial version.
 
