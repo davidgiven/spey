@@ -19,6 +19,7 @@
 
 struct SocketAddress {
 	SocketAddress();
+	SocketAddress(int fd);
 	SocketAddress(string name, int port);
 	SocketAddress(string name);
 	~SocketAddress();
@@ -49,4 +50,7 @@ inline ostream& operator << (ostream& s, SocketAddress& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */

@@ -28,6 +28,19 @@ Socket::Socket(int fd, SocketAddress address)
 		    << flush;
 }
 
+Socket::Socket(int fd):
+	address(fd)
+{
+	this->fd = fd;
+	_timeout = 0;
+
+	DetailLog() << "new explicit slave connection from "
+		    << address
+		    << " on "
+		    << fd
+		    << flush;
+}
+
 Socket::Socket(SocketAddress address)
 {
 	this->fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -121,4 +134,7 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */
