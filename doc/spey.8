@@ -1,0 +1,208 @@
+'\" t
+.\" ** The above line should force tbl to be a preprocessor **
+.\" Man page for Spey
+.\"
+.\" Copyright (C) 2004 David Given
+.\" You may distribute under the terms of the GNU General Public
+.\" License version 2 as specified in the file COPYING that comes with the
+.\" Spey distribution.
+.\"
+.\" $Source$
+.\" $State$
+.\"
+.TH spey 8 "29 April 2004" "0.1" "SMTP preprocessor"
+.SH NAME
+spey \- a smart, spam-blocking SMTP proxy
+
+.SH SYNOPSIS
+.B spey
+.RB [\| \-h
+or
+.BR \-\-help \|]
+.RB [\| \-f 
+or 
+.B \-\-from
+.IR listenaddress \|]
+.RB [\| \-t 
+or 
+.B \-\-to
+.IR destinationaddress \|]
+.RB [\| \-d 
+or 
+.B \-\-db
+.IR database \|]
+.RB [\| \-v 
+or 
+.B \-\-verbose
+.IR verbosity \|]
+
+.SH DESCRIPTION
+.B spey
+is a smart smtp proxy that implements greylisting as a spam prevention measure.
+it acts as a layer between the outside world and your ordinary mail server; it
+monitors the transaction, and hijacks it if necessary to prevent messages being
+retrieved.
+
+for more information on greylisting, see
+.br http://projects.puremagic.com/greylisting/ .
+
+Spey stores all of its configuration settings (other than those specified on
+the command line) in a
+.B sqlite
+database. By default this is stored in
+.br /var/lib/misc/spey.db ,
+although it can be overridden if necessary. To manipulate the database, for
+example to set or change one of Spey's configuration variables, use the
+.b speyctl(8)
+command.
+
+.SH OPTIONS
+Spey understands the following options:
+
+.TP
+.BI --from\  address
+
+Specifies the source address to listen on, in the standard
+.IR address : port
+format. Use 0.0.0.0 for the address to tell Spey to listen on all interfaces.
+The default is
+.BR 0.0.0.0:25 .
+
+.TP
+.BI --to\  address
+
+Specifies the address to connect to; this is where your real mail server is
+listening. The address is specified as for the source address. The default is
+.BR localhost:2525 .
+
+allows you to manipulate the spey's configuration, as well as examining and
+manipulating the address database.
+
+.TP
+.BI --db\  filename
+
+Specifies the database file to use. The file must have already have been created with
+.BR speyctl(8) .
+The default is
+.BR /var/lib/misc/spey.db .
+
+.TP
+.BI --verbose\  level
+
+Specifies the verbosity level. Use 0 to suppress all output; increasing the
+number will produce more and more detailed tracing. Tracing is always sent to
+.BR stdout .
+
+.SH "CONFIGURATION VARIABLES"
+Spey uses a number of configuration variables, stored in the database, to
+control itself. You can list and change these with the
+.B speyctl(8)
+command.
+
+.TP
+.B identity
+
+Sets your 'home' domain. This is the domain that Spey will announce itself as
+being from; in addition, Spey will only accept email addressed to this domain.
+
+.TP
+.B quarantine-time
+
+Controls the delay between a message arriving and Spey marking that particular
+address/sender/receiver tuple as valid. This is an integer, in seconds.
+
+.TP
+.B intolerant
+
+Controls whether Spey is intolerant of SMTP errors or not. An integer, either 0
+or 1. If set, then Spey will automatically disconnect from the potential
+spammer whenever an SMTP error occurs (after reporting the error, of course).
+While this does violate the RFC, SMTP errors do not usually occur during
+legitimate mail transactions. Setting this will reduce the amount of time taken
+to deal with any particular spammer.
+
+.TP
+.B socket-timeout
+
+Controls how long Spey will wait on a socket when there is no traffic. An
+integer, in seconds. The RFC dictates from between 60 and 300 seconds; it
+defaults to 30. See
+.B BUGS
+below. Set to 0 if you want to disable the timeout completely.
+
+.TP
+.B invalid-expiry
+
+Controls how long Spey should keep tuples that have been seen only once in the
+database. An integer, in seconds. When the database is purged, any tuples where
+the hit count is 1 and the time last seen is older than this value will be
+discarded. The default is 24 hours.
+
+.TP
+.B valid-expiry
+
+Controls how long Spey should keep unused tuples that have been seen more than
+once in the database. An integer, in seconds. When the database is purged, any
+tuples that have not been seen for longer than the specified time will be
+discarded. The default is a week.
+
+.SH BUGS
+Spey is alpha software. It has bugs. Spey is not guaranteed to do anything
+useful with your email. It may throw it all away into a big, black box and you
+will never see it again. Do not use Spey in a mission-critical environment
+unless you are willing to take all responsibility for the consequences.
+
+Spey's major flaw is that it is entirely single-threaded. (I have a plan to
+work around this.) This means it can only process one message at a time;
+connections made while a message is being processed will be queued until Spey
+is ready.
+
+This means that Spey is trivial to DoS: all a malicious client has to do is to
+connect and do nothing. The
+.B socket-timeout
+variable is crucial here. If a connection remains idle for too long, Spey will
+drop the connection. This doesn't help if the client is actively sending
+keepalive packets, but that doesn't seem to happen very often, while clients
+.I do
+exist that connect and then never disconnect again. Whether these are spammers,
+portscanners, script kiddies or just badly written software is yet to be
+determined.
+
+Spey is also quite inefficient. It was written to be robust and reliable rather
+than fast; optimisation will occur at a later stage. In particular, every time
+a client connects a new connection is made to the local mail server. There's no
+reason why Spey couldn't keep reusing the same connection, which would reduce
+quite a lot of overhead.
+
+Spey assumes only one instance of it will be running on any one system. This is
+incorrect, but easily fixed.
+
+Spey plays fast and loose with the RFC. There are a number of places where it
+is actively violating it, but I've had good reason in each instance. It appears
+to interoperate happily with most mail software; the author is using it and
+doesn't seem to have lost any mail yet (that he's noticed). It even gets on
+well with SMTP callbacks.
+
+That said, there are almost certainly major problems with it. Please report them!
+
+.SH FILES
+.TP
+.I /var/lib/misc/spey.db
+The default database.
+
+.TP
+.I /var/run/spey.pid
+The process ID of the currently running daemon is written here on startup.
+
+.SH "AUTHOR & LICENSE"
+.B spey
+and
+.B speyctl
+are (C) 2004 David Given. Comments and criticism to
+.BR dg@cowlark.com .
+They are distributable under the terms of the GNU General Public License V2. A
+full copy can be found in the Spey source distribution, or at
+.BR http://www.fsf.org/copyleft/gpl.html .
+
+.\" Revision history
+.\" $Log$

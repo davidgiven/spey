@@ -1,0 +1,116 @@
+'\" t
+.\" ** The above line should force tbl to be a preprocessor **
+.\" Man page for Spey
+.\"
+.\" Copyright (C) 2004 David Given
+.\" You may distribute under the terms of the GNU General Public
+.\" License version 2 as specified in the file COPYING that comes with the
+.\" Spey distribution.
+.\"
+.\" $Source$
+.\" $State$
+.\"
+.TH speyctl 8 "29 April 2004" "0.1" "SMTP preprocessor"
+.SH NAME
+speyctl \- an interface to the Spey configuration database
+
+.SH SYNOPSIS
+.B speyctl
+.RB [\| \-h
+or
+.BR \-\-help \|]
+.RB [\| \-d 
+or 
+.B \-\-db
+.IR database \|]
+.I command 
+.RI [\| arguments \|.\|.\|.\|]
+
+.SH DESCRIPTION
+.B speyctl
+allows you to manipulate the spey's configuration, as well as examining and
+manipulating the address database.
+
+By default, the database is stored in
+.BR /var/lib/misc/spey.db ,
+although this can be overridden with the
+.B \-d
+option. The database is a standard
+.B sqlite
+file and may be altered manually if desired, although you should be careful not
+to confuse Spey.
+
+The configuration may be changed at any time. Spey will reread the
+configuration every time a message arrives.
+
+.SH COMMANDS
+
+The following commands are available.
+
+.TP
+.B init
+Initialise a new database. If the file already exists, the command will fail.
+
+.TP 
+.BI set\  key\ value
+Set a configuration variable. For the list of available variables, see the
+.B spey(8)
+man page. If
+.I value
+is omitted, the key will be deleted.
+
+.TP
+.B list
+List out all configuration variables.
+
+.TP
+.B read
+Read in a set of configuration variables from
+.BR stdin .
+The format is the same as emitted by the
+.B list
+command, so it is possible to list out the configuration to a file, edit it,
+and read it back in. The new variables are merged in to the existing database;
+you can remove a variable by leaving the value blank.
+
+.TP
+.B stats
+Display a summary of the number of messages processed so far, and what
+categories they fall in to.
+
+.TP
+.B showdb
+Lists out the current address database. The three columns are: network address
+of sender, the number of times this particular address/sender/recipient tuple
+has been seen, and the sender/recipient. The list is sorted by the number of
+times seen, most recent tuples first.
+
+.TP
+.B purge
+Discards any stale entries from the database. 'Stale' refers to network
+address/sender/recipient tuples that have not been seen for longer than a
+certain limit. The limit differs depending whether the tuple has been seen once
+(likely spam) or more than once (likely real mail). See the
+.B invalid-expiry
+and
+.B valid-expiry
+configuration variables in the
+.B spey(8)
+manpage for more information.
+.B purge
+should be run on a regular basis, or Spey's database will grow without limit!
+
+.SH FILES
+.TP
+.I /var/lib/misc/spey.db
+Default database.
+
+.SH "AUTHOR & LICENSE"
+Spey and speyctl are (C) 2004 David Given. Comments and criticism to
+.BR dg@cowlark.com .
+They are distributable under the terms of the GNU General Public License v2. A
+full copy can be found in the Spey source distribution, or at
+.BR http://www.fsf.org/copyleft/gpl.html .
+
+.\" Revision history
+.\" $Log$

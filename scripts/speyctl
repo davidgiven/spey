@@ -1,0 +1,227 @@
+#!/bin/sh
+# Script for manipulating the Spey configuration database.
+#
+# Copyright (C) 2004 David Given
+# You may distribute under the terms of the GNU General Public
+# License version 2 as specified in the file COPYING that comes with the
+# Spey distribution.
+#
+# $Source$
+# $State$
+
+version=0
+configfile=/var/lib/misc/spey.db
+command=none
+arg1=
+arg2=
+
+function usage()
+{
+cat <<EOF
+speyctl (c) 2004 David Given
+Syntax: speyctl [<options>...] <command> [<parameters>...]
+Options:
+    --help    -h                   Displays this message.
+    --db      -d <filename>        Use specified configuration file.
+                                     default: $configfile
+
+Commands:
+    init                 Create a new configuration file.
+    set <key> [<value>]  Set/display a single configuration value.
+    list                 List all configuration values to stdout.
+    read                 Read in configuration values from stdin.
+    stats                List statistics.
+    showdb               Show address database. (Warning --- can be large!)
+    purge                Purge stale addresses.
+EOF
+}
+
+function error()
+{
+	echo speyctl: "$*" >/dev/null >&2
+}
+
+function parseargs()
+{
+	while true; do
+		if [ "X$1" = "X" ]; then
+			error "syntax error --- you must specify a command."
+			exit 1
+		fi
+
+		case "$1" in
+			-d|--db)
+				configfile="$2"
+				shift
+				;;
+
+			-h|--help)
+				usage
+				exit 0
+				;;
+				
+			init|set|list|read|stats|showdb|purge)
+				command="$1"
+				arg1="$2"
+				arg2="$3"
+				if [ "X$4" != "X" ]; then
+					error "syntax error --- too many parameters."
+					exit 1
+				fi
+				return
+				;;
+
+			*)
+				error "syntax error --- unknown argument $1."
+				exit 1
+				;;
+		esac
+		shift
+	done
+}
+
+parseargs "$@"
+
+# Create new database?
+
+if [ "$command" = init ]; then
+	if [ -f "$configfile" ]; then
+		error "configuration file already exists."
+		exit 1
+	fi
+
+	sqlite "$configfile" <<-EOF
+		CREATE TABLE triples (
+			id INTEGER PRIMARY KEY,
+			sender INTEGER NOT NULL,
+			fromaddress VARCHAR NOT NULL,
+			toaddress VARCHAR NOT NULL,
+			timesseen INTEGER NOT NULL,
+			firstseen INTEGER NOT NULL,
+			lastseen INTEGER NOT NULL);
+
+		CREATE TABLE settings (
+			key VARCHAR PRIMARY KEY, 
+			value VARCHAR);
+		INSERT INTO settings VALUES
+			("identity",		"yourdomain.invalid");
+		INSERT INTO settings VALUES
+			("intolerant",		"1");
+		INSERT INTO settings VALUES
+			("quarantine-time",	"60");
+		INSERT INTO settings VALUES
+			("socket-timeout",	"30");
+		INSERT INTO settings VALUES
+			("invalid-expiry",	"86400");
+		INSERT INTO settings VALUES
+			("valid-expiry",	"1209600");
+
+		CREATE TABLE statistics (
+			key VARCHAR PRIMARY KEY, 
+			value INTEGER);
+		INSERT INTO statistics VALUES
+			("malformed-domain",	0);
+		INSERT INTO statistics VALUES
+			("malformed-address",	0);
+		INSERT INTO statistics VALUES
+			("illegal-relay",	0);
+		INSERT INTO statistics VALUES
+			("timeout",		0);
+		INSERT INTO statistics VALUES
+			("greylisted",		0);
+		INSERT INTO statistics VALUES
+			("accepted",		0);
+	EOF
+	if [ $? -ne 0 ]; then
+		error "configuration file initialisation failed."
+		exit 1
+	fi
+else
+	if [ ! -f "$configfile" ]; then
+		error "configuration file does not exist."
+		exit 1
+	fi
+fi
+
+case "$command" in
+	stats)
+		sqlite -separator "=" "$configfile" "SELECT * FROM statistics"
+		exit 0
+		;;
+
+	list)
+		sqlite -separator "=" "$configfile" "SELECT * FROM settings"
+		exit 0
+		;;
+
+	read)
+		sed -e 's/^\(.*\)=\(.*\)$/\1 \2/' | (
+			while read key value; do
+				cat <<-EOF
+					DELETE FROM settings WHERE
+						key = '$key';
+				EOF
+
+				if [ "X$value" != "X" ]; then
+					cat <<-EOF
+						INSERT INTO settings VALUES
+							('$key', '$value');
+					EOF
+				fi
+			done
+		) | sqlite "$configfile"
+		exit 0
+		;;
+
+	set)
+		if [ "X$arg2" = "X" ]; then
+			sqlite "$configfile" <<-EOF
+				DELETE FROM settings WHERE
+					key = '$arg1';
+			EOF
+		else
+			sqlite "$configfile" <<-EOF
+				BEGIN;
+				DELETE FROM settings WHERE
+					key = '$arg1';
+				INSERT INTO settings VALUES
+					('$arg1', '$arg2');
+				COMMIT;
+			EOF
+		fi
+		exit 0
+		;;
+
+	showdb)
+		sqlite -separator ' ' "$configfile" "SELECT * FROM triples ORDER BY timesseen" | (
+			while read id sender fromaddress toaddress timesseen firstseen lastseen; do
+				printf '%08X %4d %65s\n' $sender "$timesseen" "$fromaddress -> $toaddress"
+			done
+		)
+		exit 0
+		;;
+
+	purge)
+		sqlite "$configfile" <<-EOF
+			BEGIN;
+			DELETE FROM triples WHERE
+				timesseen=1 AND
+				lastseen<(STRFTIME('%s', 'now') -
+					(SELECT value FROM settings WHERE
+						key = 'invalid-expiry')
+					);
+			DELETE FROM triples WHERE
+				timesseen>1 AND
+				lastseen<(STRFTIME('%s', 'now') -
+					(SELECT value FROM settings WHERE
+						key = 'valid-expiry')
+					);
+			COMMIT;
+			VACUUM;
+		EOF
+		exit 0
+		;;
+esac
+
+# Revision history
+# $Log$
