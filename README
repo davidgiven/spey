@@ -1,0 +1,144 @@
+                                    SPEY V0.1
+                                    =========
+
+                                  Alpha release
+                              (C) 2004 David Given
+                                   2004-04-28
+
+INTRODUCTION
+============
+
+Spey is a smart SMTP proxy whose main function in life is to block spam by
+implementing greylisting. Greylisting is a really simple but effective way of
+determining which messages are real and which aren't by relying on the fact
+that spammers can't usually afford to run real mail servers; see:
+
+	http://projects.puremagic.com/greylisting/
+
+...for more information.
+
+Spey uses the Sqlite library to keep track of which addresses its seen before,
+so you'll need that before you can use it.
+
+INSTALLATION
+============
+
+The installation process is, unfortunately, very primitive. There's a simple
+makefile. Run it. Spey should build. If you're the superuser, 'make install'
+will install everything into, probably, the wrong place. A startup/shutdown
+script will also be placed in /etc/init.d/spey.
+
+All the code should, ideally, use standard Posix and C++ features. There might
+be some Linuxisms or gccisms that have crept in; if you find any, these are
+bugs, so please inform me.
+
+CONFIGURATION
+=============
+
+Spey works by listening on one port, normally your convention SMTP port, and
+forwarding the connections to another port, where your real mail server is
+listening.  If you like you can run the mail server on another machine than you
+run Spey; Spey itself doesn't care.
+
+I'm assuming that you've reconfigured your mail server to listen on the address
+localhost:2525 and that it's happy to receive mail from localhost.
+
+Step 1
+------
+
+You need to configure Spey. Spey stores all its configuration information in
+its database, which by default lives in /var/lib/misc/spey.db. You need to
+create this before you can do anything. You can do this with the command:
+
+	speyctl init
+
+Now you need to tell Spey who it is, so it knows which messages to accept.
+(Because as far as your mail server is concerned, all the connections will be
+coming from localhost, you've effectively short-circuited its own relay
+authentication code. Spey has to do this itself.)
+
+There's a Spey configuration variable called 'identity' that controls this. You
+can see the current configuration with:
+
+	speyctl list
+
+...and you can set the identity with:
+
+	speyctl set identity 'mydomain.com'
+
+Step 2
+------
+
+Now all you need to do is to run Spey itself. As superuser, do this:
+
+	spey -f 0.0.0.0:25 -t localhost:2525 -v 999
+
+Spey will start up, with maximum logging to stdout, listing on all interfaces
+on port 25 and connecting to localhost:2525 (your real mail server).
+
+Step 3
+------
+
+Test it!
+
+Try sending some mail to your machine. If your machine is connected to the
+'net, you'll probably be getting spam coming in. You should see copious amounts
+of tracing appear detailing exactly what's happening.
+
+After it's been running for a while, you can do:
+
+	speyctl showdb
+or	speyctl stats
+
+...to show information about the database.
+
+Step 4
+------
+
+You need to set up a cron job or some other way of periodically running the
+command:
+
+	speyctl purge
+
+This will clear out stale entries from the database. If you don't do this, then
+the database will grow unboundedly as Spey keeps track of every single piece of
+spam you ever retrieve from a billion and one throwaway email addresses... and
+while this won't do any harm, and indeed you might want to keep it as a record
+(and it won't even slow Spey down much thanks to the magic of Sqlite), it is a
+bit of a waste of space.
+
+DOCUMENTATION
+=============
+
+Man pages are provided. They may or may not contain useful information.
+
+DISCLAIMER
+==========
+
+Spey is ALPHA SOFTWARE!
+
+It is NOT RELIABLE!
+
+DO NOT USE IT for mission-critical data because IT WILL LOST YOUR MAIL!
+
+If it goes wrong DO NOT BLAME ME because YOU HAVE BEEN WARNED!
+
+(It hasn't yet for me, but that's no guarantee.)
+
+I have attempted to write it with robustness and security in mind --- for
+example, it does not use explicit dynamic memory allocation *anywhere*, which
+means it has no buffers to overflow --- but I'm new at this, okay?
+
+LEGAL STUFF
+===========
+
+Spey is (C) 2004 David Given. It is distributable under the conditions laid out
+by the GNU Public License, version 2. You can find a copy of this license in
+the file COPYING.
+
+REVISION HISTORY
+================
+
+$Source$
+$State$
+$Log$
