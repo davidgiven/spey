@@ -39,13 +39,14 @@ all: $(EXE)
 
 install:
 	install -D $(EXE) $(PREFIX)/sbin/spey
-	#strip $(PREFIX)/sbin/spey
+	strip $(PREFIX)/sbin/spey
 	install -D scripts/speyctl $(PREFIX)/sbin/speyctl
 	install -D scripts/init.d.script /etc/init.d/spey
 	install -D doc/speyctl.8 $(PREFIX)/man/man8/speyctl.8
 	install -D doc/spey.8 $(PREFIX)/man/man8/spey.8
 
 $(EXE): $(OBJS)
+	mkdir bin
 	g++ -s $(CFLAGS) -o $@ $(OBJS) $(LIBS)
 
 clean:
@@ -73,3 +74,6 @@ src/spey.h: \
 
 # Revision history
 # $Log$
+# Revision 1.1  2004/05/01 12:20:20  dtrg
+# Initial version.
+#
