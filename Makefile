@@ -13,7 +13,11 @@ PREFIX = /usr
 
 EXE = bin/spey
 
-CFLAGS = -Wall -g -I. -O3
+MAJORVERSION := unknown
+BUILDCOUNT := 1
+include version
+
+CFLAGS = -Wall -g -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
 CC = g++
 
 LIBS = \
@@ -51,6 +55,8 @@ install:
 $(EXE): $(OBJS)
 	mkdir -p bin
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
+	echo "MAJORVERSION := $(MAJORVERSION)" > version
+	echo "BUILDCOUNT :=" `expr $(BUILDCOUNT) + 1` >> version
 
 clean:
 	$(RM) -f $(OBJS) $(EXE) 
@@ -75,8 +81,15 @@ src/spey.h: \
 	src/SMTPResponse.h \
 	src/SMTPCommand.h
 
+version:
+	echo "MAJORVERSION := $(MAJORVERSION)" > version
+	echo "BUILDCOUNT := $(BUILDCOUNT)" >> version
+
 # Revision history
 # $Log$
+# Revision 1.5  2004/06/22 21:19:28  dtrg
+# Turned optimisation on.
+#
 # Revision 1.4  2004/06/22 21:00:59  dtrg
 # Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
 # closer to the C++ standard than 2.95 is; plus, the standard library is now

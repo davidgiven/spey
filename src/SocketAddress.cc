@@ -40,8 +40,7 @@ SocketAddress::SocketAddress(int fd)
 			     << sizeof(_sa)
 			     << " to "
 			     << i
-			     << " during call to getsockname()!"
-			     << flush;
+			     << " during call to getsockname()!";
 }
 
 /* Create an address from the given hostname and port. */
@@ -135,8 +134,7 @@ int SocketAddress::acceptfrom(int fd)
 			     << sizeof(_sa)
 			     << " to "
 			     << i
-			     << " during call to accept()!"
-			     << flush;
+			     << " during call to accept()!";
 	return r;
 }
 
@@ -181,6 +179,11 @@ SocketAddress::operator unsigned int () const
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/06/08 19:58:04  dtrg
+ * Fixed a bug where the address of incoming connections was thought to be the
+ * address of *this* end of the connection, not the other end. In the process,
+ * changed some this->blah instance variables to _blah.
+ *
  * Revision 1.3  2004/05/14 23:11:44  dtrg
  * Added decent relaying support. Also converted SocketAddress to use references a
  * lot rather than pass-by-value, out of general tidiness and the hope that it

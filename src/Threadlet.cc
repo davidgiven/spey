@@ -41,21 +41,16 @@ void Threadlet::trampoline(Threadlet* threadlet)
 		threadlet->run();
 	} catch (NetworkTimeoutException e) {
 		Statistics::timeout();
-		MessageLog() << "Socket timeout; aborting"
-			     << flush;
+		MessageLog() << "Socket timeout; aborting";
 	} catch (NetworkException e) {
 		MessageLog() << "exception caught: "
-			     << e
-			     << flush;
-		MessageLog() << "message processing aborted"
-			     << flush;
+			     << e;
+		MessageLog() << "message processing aborted";
 	} catch (SQLException e) {
 		SystemLog() << "SQL error: "
-			     << e
-			     << flush;
+			     << e;
 	} catch (...) {
-		SystemLog() << "Uncaught exception in threadlet!"
-		            << flush;
+		SystemLog() << "Uncaught exception in threadlet!";
 	}
 	threadlet->_running = 0;
 }
@@ -193,8 +188,7 @@ void Threadlet::startScheduler()
 			if (!t->_running)
 			{
 				ThreadLog() << "destoying threadlet "
-				            << t->debugid()
-					    << flush;
+				            << t->debugid();
 				processes.remove(t);
 				delete t;
 				goto restartloop;
@@ -216,13 +210,18 @@ void Threadlet::startScheduler()
 		tv.tv_usec = (timeout % 1000) * 1000;
 		ThreadLog() << "waiting for "
 		            << timeout
-			    << "ms"
-			    << flush;
+			    << "ms";
 		select(maxfd, &reads, &writes, NULL, &tv);
 	}
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  */
 

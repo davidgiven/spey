@@ -32,8 +32,7 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 		    << ", "
 		    << toaddress
 		    << " at "
-		    << tv.tv_sec
-		    << flush;
+		    << tv.tv_sec;
 
 	/* First check the whitelist. */
 
@@ -51,8 +50,7 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 			goto notfound;
 		if (q.getint(0))
 		{
-			DetailLog() << "matches whitelist"
-				    << flush;
+			DetailLog() << "matches whitelist";
 			return Accepted;
 		}
 	}
@@ -73,8 +71,7 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 			goto notfound;
 		if (q.getint(0))
 		{
-			DetailLog() << "matches blacklist"
-				    << flush;
+			DetailLog() << "matches blacklist";
 			return BlackListed;
 		}
 	}
@@ -155,6 +152,10 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/06/22 10:05:37  dtrg
+ * Fixed some more logic flow bugs in the blacklist code. (Blacklisted messages
+ * were being reported as greylisted.)
+ *
  * Revision 1.2  2004/06/21 23:12:47  dtrg
  * Added blacklisting and whitelisting support.
  *

@@ -47,7 +47,7 @@ void Logger::detach()
 
 void Logger::flush()
 {
-	stringstream::flush();
+	_data.flush();
 	if (_level < Logger::desired)
 	{
 		stringstream s;
@@ -63,8 +63,9 @@ void Logger::flush()
 		else
 			strcpy(buf, "[master]: ");
 
+		const string data = _data.str();
 		s << buf
-		  << str();
+		  << data;
 
 		if (Logger::detached)
 			syslog(_syslevel, s.str().c_str());
@@ -72,11 +73,17 @@ void Logger::flush()
 			cerr << s.str()
 			     << endl;
 	}
-	this->str("");
+	_data.str("");
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.2  2004/05/14 21:33:25  dtrg
  * Added the ability to log through syslog, rather than just to stderr.
  *

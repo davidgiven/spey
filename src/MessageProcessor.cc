@@ -28,32 +28,28 @@ void MessageProcessor::readinside()
 {
 	_response.set(_inside);
 	SMTPLog() << "s<i "
-		  << _response
-		  << flush;
+		  << _response;
 }
 
 void MessageProcessor::writeinside()
 {
 	_inside.writeline(_command);
 	SMTPLog() << "s>i "
-		  << _command
-		  << flush;
+		  << _command;
 }
 
 void MessageProcessor::readoutside()
 {
 	_command.set(_outside);
 	SMTPLog() << "o>s "
-		  << _command
-		  << flush;
+		  << _command;
 }
 
 void MessageProcessor::writeoutside()
 {
 	_outside.writeline(_response);
 	SMTPLog() << "o<s "
-		  << _response
-		  << flush;
+		  << _response;
 }
 
 void MessageProcessor::verifydomain(string domain)
@@ -80,8 +76,7 @@ void MessageProcessor::verifyrelay(string address)
 		    << address
 		    << " from "
 		    << _outside.getaddress().getname()
-		    << " for relaying"
-		    << flush;
+		    << " for relaying";
 
 	if (!Settings::testrelay(_outside.getaddress(), address))
 		throw IllegalRelayingException();
@@ -261,8 +256,7 @@ void MessageProcessor::process()
 				if (!_response.issuccess())
 					break;
 
-				SMTPLog() << "transferring message body"
-					  << flush;
+				SMTPLog() << "transferring message body";
 
 				/* Add our Received: header. */
 
@@ -286,8 +280,7 @@ void MessageProcessor::process()
 						break;
 				}
 
-				SMTPLog() << "body transferred"
-					  << flush;
+				SMTPLog() << "body transferred";
 
 				readinside();
 				writeoutside();
@@ -325,6 +318,17 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2004/06/30 20:18:49  dtrg
+ * Changed the way sockets are initialised; instead of doing it from the Socket
+ * and SocketServer constructors, they're set up as zombies and initialised later
+ * with an init() method. This is cleaner, and also allows a cunning new feature:
+ * the connection to the downstream SMTP server is now only made once the first
+ * valid SMTP command is received from the upstream SMTP server. This means that
+ * connections are only made once we're reasonably sure that there's going to be a
+ * valid SMTP conversation, which should harden spey against DoS attacks like the
+ * ones I get every so often. Also took the opportunity to convert more this->blah
+ * instance variables into _blah.
+ *
  * Revision 1.6  2004/06/22 10:05:37  dtrg
  * Fixed some more logic flow bugs in the blacklist code. (Blacklisted messages
  * were being reported as greylisted.)

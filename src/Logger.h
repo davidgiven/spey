@@ -13,7 +13,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-struct Logger: public stringstream {
+struct Logger {
 	Logger(int level, int type);
 	~Logger();
 
@@ -27,8 +27,40 @@ private:
 	static bool syslogopened;
 	static bool detached;
 	
+	stringstream _data;
 	int _level;
 	int _syslevel;
+
+public:
+	Logger& operator<< (const char* value)
+	{
+		_data << value;
+		return *this;
+	};
+
+	Logger& operator<< (const string& value)
+	{
+		_data << value;
+		return *this;
+	};
+
+	Logger& operator<< (int value)
+	{
+		_data << value;
+		return *this;
+	};
+
+	Logger& operator<< (unsigned int value)
+	{
+		_data << value;
+		return *this;
+	};
+
+	Logger& operator<< (long value)
+	{
+		_data << value;
+		return *this;
+	};
 };
 
 enum {
@@ -60,6 +92,12 @@ _LOG(ThreadLog,		LOGLEVEL_THREADS,	LOG_DEBUG);
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.2  2004/05/14 21:33:25  dtrg
  * Added the ability to log through syslog, rather than just to stderr.
  *
