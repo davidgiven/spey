@@ -21,6 +21,7 @@ struct SQL
 	~SQL();
 
 	void open(string filename);
+	void close();
 	bool checktable(string name);
 
 	operator sqlite* () { return this->handle; }
@@ -49,4 +50,7 @@ private:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */

@@ -31,8 +31,7 @@ SQL::SQL()
 
 SQL::~SQL()
 {
-	if (this->handle)
-		sqlite_close(handle);
+	this->close();
 }
 
 void SQL::open(string filename)
@@ -43,6 +42,15 @@ void SQL::open(string filename)
 	if (!this->handle)
 		sqlerror("Database open failure");
 	sqlite_busy_timeout(this->handle, 1000);
+
+	SQLQuery q(*this, "PRAGMA synchronous=OFF;");
+	q.step();
+}
+
+void SQL::close()
+{
+	if (this->handle)
+		sqlite_close(handle);
 }
 
 bool SQL::checktable(string name)
@@ -78,7 +86,6 @@ SQLQuery::~SQLQuery()
 
 bool SQLQuery::step()
 {
-	int tries = 0;
 	int r;
 
 	do {
@@ -89,13 +96,7 @@ bool SQLQuery::step()
 		{
 			case SQLITE_MISUSE:
 			case SQLITE_ERROR:
-			{
-				tries++;
-				if (tries > 10)
-					sqlerror("SQL data access error");
-				usleep(1000000);
-				break;
-			}
+				sqlerror("SQL data access error");
 
 			case SQLITE_DONE:
 				return 0;
@@ -122,6 +123,12 @@ int SQLQuery::getint(int i)
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/09 14:17:48  dtrg
+ * No longer throws an exception when an SQLQuery is destructed (very evil!). Put
+ * in failsafe code so that if the sql_step() returns an error code, keep retrying
+ * for a short period; hopefully this will fix the strange crash that sometimes
+ * occurs on my system when speyctl is used while spey is running.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */
