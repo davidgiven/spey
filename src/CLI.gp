@@ -19,7 +19,7 @@ f / from                string {"0.0.0.0:25"}
 t / to			string {"localhost:2525"}
 	"SMTP server to connect to."
 
-v / verbose		int 999 [0...]
+v / verbose		int 7 [0...]
 	"Set the verbosity level."
 
 x / foreground		flag
@@ -30,6 +30,9 @@ i / inetd		flag
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 22:01:40  dtrg
+ * Added inetd mode, where one message is processed from stdin and then spey exits. Also added proper daemon functionality where spey detaches itself cleanly from the console to go into the background.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

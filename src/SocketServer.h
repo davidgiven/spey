@@ -17,7 +17,8 @@ struct SocketServer {
 	SocketServer(SocketAddress& sa);
 	~SocketServer();
 
-	Socket accept();
+	int accept();
+	int getfd() { return fd; }
 
 private:
 	SocketAddress address;
@@ -28,4 +29,7 @@ private:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */

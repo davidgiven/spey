@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH speyctl 8 "29 April 2004" "0.2" "SMTP preprocessor"
+.TH speyctl 8 "29 April 2004" "0.3" "SMTP preprocessor"
 .SH NAME
 speyctl \- an interface to the Spey configuration database
 
@@ -124,6 +124,12 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.2  2004/05/13 23:36:01  dtrg
+.\" Rewrote speyctl in awk, a much better scripting language than the Bourne shell.
+.\" It now works way better, is much easier to understand, and is probably much
+.\" faster. Added the interface to allow modification of the relay table with
+.\" speyctl, and wrote all the documentation.
+.\"
 .\" Revision 1.1  2004/05/01 12:20:20  dtrg
 .\" Initial version.
 .\"

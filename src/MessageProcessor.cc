@@ -12,12 +12,14 @@
 
 #include "spey.h"
 
-MessageProcessor::MessageProcessor(Socket& outside):
+MessageProcessor::MessageProcessor(int fd):
 	inside(ToAddress),
-	outside(outside)
+	outside(fd)
 {
 	inside.timeout(Settings::sockettimeout());
 	outside.timeout(Settings::sockettimeout());
+
+	Threadlet::addthreadlet(this);
 }
 
 MessageProcessor::~MessageProcessor()
@@ -267,8 +269,23 @@ abort:
 	throw NetworkException("Won't tolerate SMTP errors");
 }
 
+int MessageProcessor::debugid()
+{
+	return outside.getfd();
+}
+
+void MessageProcessor::run()
+{
+	process();
+}
+
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 23:11:44  dtrg
+ * Added decent relaying support. Also converted SocketAddress to use references a
+ * lot rather than pass-by-value, out of general tidiness and the hope that it
+ * will improve performance a bit.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  *

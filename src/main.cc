@@ -38,40 +38,16 @@ static int daemonmode(CLI& cli)
 	SystemLog() << "listening on "
 		    << FromAddress
 		    << flush;
-	SocketServer server(FromAddress);
+
+	/* Automatically added to scheduler */
+	(void) new ServerProcessor();
 
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
-	for (;;)
-	{
-		MessageLog() << "waiting for connection"
-			     << flush;
-		try {
-			Socket s = server.accept();
-			Settings::reload();
-			MessageProcessor mp(s);
-			mp.process();
-		} catch (NetworkTimeoutException e) {
-			Statistics::timeout();
-			MessageLog() << "Socket timeout; aborting"
-				     << flush;
-		} catch (NetworkException e) {
-			MessageLog() << "exception caught: "
-				     << e
-				     << flush;
-			MessageLog() << "message processing aborted"
-				     << flush;
-		} catch (SQLException e) {
-			SystemLog() << "SQL error: "
-				     << e
-				     << flush;
-			SystemLog() << "attempting to recover"
-				     << flush;
-			Sql.close();
-			Sql.open(cli.d());
-		}
-	}
-
+	Threadlet::startScheduler();
+	SystemLog() << "scheduler terminated!"
+	            << flush;
+	return 0;
 }
 
 static int inetdmode(CLI& cli)
@@ -83,10 +59,9 @@ static int inetdmode(CLI& cli)
 		    << flush;
 
 	try {
-		Socket s(0);
 		Settings::reload();
-		MessageProcessor mp(s);
-		mp.process();
+		(void) new MessageProcessor(0);
+		Threadlet::startScheduler();
 	} catch (NetworkTimeoutException e) {
 		Statistics::timeout();
 		MessageLog() << "Socket timeout; aborting"
@@ -133,6 +108,11 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/05/14 22:01:39  dtrg
+ * Added inetd mode, where one message is processed from stdin and then spey
+ * exits. Also added proper daemon functionality where spey detaches itself
+ * cleanly from the console to go into the background.
+ *
  * Revision 1.4  2004/05/13 23:33:28  dtrg
  * Discovered that I hadn't actually checked the fix in for that last bug! Also
  * noticed that the fix sorts out another problem where spey would terminate if a
@@ -154,5 +134,4 @@ int main(int argc, char* argv[])
  *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
- *
  */

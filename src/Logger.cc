@@ -49,16 +49,37 @@ void Logger::flush()
 {
 	stringstream::flush();
 	if (_level < Logger::desired)
-		if (Logger::detached)
-			syslog(_syslevel, str().c_str());
+	{
+		stringstream s;
+		Threadlet* current = Threadlet::current();
+
+		/* It would be much cleaner to use iostream for this, but I'm
+		 * not sure that setw() and setbase() work on stringstreams.
+		 * Besides, good old sprintf is easier... */
+
+		char buf[16];
+		if (current)
+			sprintf(buf, "[%d]: ", current->debugid());
 		else
-			cerr << str()
+			strcpy(buf, "[master]: ");
+
+		s << buf
+		  << str();
+
+		if (Logger::detached)
+			syslog(_syslevel, s.str().c_str());
+		else
+			cerr << s.str()
 			     << endl;
+	}
 	this->str("");
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:33:25  dtrg
+ * Added the ability to log through syslog, rather than just to stderr.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

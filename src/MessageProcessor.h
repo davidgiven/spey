@@ -13,19 +13,21 @@
 #ifndef MESSAGEPROCESSOR_H
 #define MESSAGEPROCESSOR_H
 
-struct MessageProcessor {
-	MessageProcessor(Socket& outside);
-	~MessageProcessor();
+struct MessageProcessor: Threadlet {
+	MessageProcessor(int fd);
+	virtual ~MessageProcessor();
 
 	void verifydomain(string domain);
 	void verifyaddress(string address);
 	void verifyrelay(string address);
 	void process();
 
+	virtual int debugid();
+	virtual void run();
+
 protected:
 	Socket inside;
-	/* outside socket owned by caller! */
-	Socket& outside;
+	Socket outside;
 
 	string from;
 	SMTPCommand command;
@@ -40,4 +42,6 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
