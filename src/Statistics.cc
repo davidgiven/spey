@@ -42,6 +42,16 @@ void Statistics::accepted()
 	count("accepted");
 }
 
+void Statistics::blacklisted()
+{
+	count("blacklisted");
+}
+
+void Statistics::whitelisted()
+{
+	count("whitelisted");
+}
+
 void Statistics::count(string name)
 {
 	stringstream s;
@@ -55,4 +65,6 @@ void Statistics::count(string name)
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */

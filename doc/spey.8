@@ -181,6 +181,7 @@ once in the database. An integer, in seconds. When the database is purged, any
 tuples that have not been seen for longer than the specified time will be
 discarded. The default is a week.
 
+
 .SH "MESSAGE RELAYING"
 
 Before greylisting is done, spey matches messages against a table to determine
@@ -218,27 +219,72 @@ domain will be accepted. A key of
 will match all messages and will disable the relay checking.
 
 
+.SH "BLACKLISTS AND WHITELISTS"
+
+In addition to the automatic greylisting, Spey also has blacklists and
+whitelists. These allow the user to override the greylisting mechanism. This
+can be useful for, for example, mailing lists that generate unique sender
+addresses for each message. Whitelists allow messages to be accepted without
+having to pass through the greylister; blacklists allow messages to be rejected
+before they reach the grelister.
+
+The blacklist and whitelist tables work identically, and may be manipulated with the
+.BR speyctl(8)
+command. They each contain zero or more keys.
+
+Keys are of the form
+.B <sender pattern>
+:
+.BR "<recipient pattern>" .
+Patterns are standard SQL glob patterns that are matched against the email
+address. Briefly, use
+.B %
+to match any number of characters, or
+.B _
+to match an individual character. Note that both patterns must match for the
+blacklist or whitelist to go into effect.
+
+For example: I subscribe to the
+.B comp.risks
+mailing list. Because this mailing list autogenerates sender addresses, in
+order to avoid greylisting an entry must be added to the whitelist. The pattern
+.B %@catless.ncl.ac.uk : dg@cowlark.com
+does this. This will allow any message to me from the
+.B catless
+mail server to bypass the greylist. (This is very bad news should
+.B catless
+ever host a spammer, but if you know
+.BR comp.risks ,
+you'll agree with me that this is not likely to happen.)
+
+In addition, the author gets lots of spam from the
+.BR moosq.com ,
+which I would rather not get. This particular spammer has a number of different
+domains, but the sender addresses all follow a similar pattern, so 
+.B b.esales%cowlark.com% : dg@cowlark.com
+will block them.
+
+Beware! Blacklists have the ability to consume all your email if you do not
+configure them properly. Adding the pattern
+.B % : %
+to either list will make your life a misery; in your whitelist this will cause
+you to get
+.I all
+mail, including spam; and in your blacklist it will cause you to get
+.I no
+mail, ever. It is strongly recommended that you make the patterns as specific
+as possible.
+
+If a message is caught by the blacklist, it will be rejected with a 554 SMTP
+response code rather than the 451 that greylisting produces. This should tell
+the remote server not to try resending it.
+
+
 .SH BUGS
-Spey is alpha software. It has bugs. Spey is not guaranteed to do anything
+Spey is beta software. It has bugs. Spey is not guaranteed to do anything
 useful with your email. It may throw it all away into a big, black box and you
 will never see it again. Do not use Spey in a mission-critical environment
 unless you are willing to take all responsibility for the consequences.
-
-Spey's major flaw is that it is entirely single-threaded. (I have a plan to
-work around this.) This means it can only process one message at a time;
-connections made while a message is being processed will be queued until Spey
-is ready.
-
-This means that Spey is trivial to DoS: all a malicious client has to do is to
-connect and do nothing. The
-.B socket-timeout
-variable is crucial here. If a connection remains idle for too long, Spey will
-drop the connection. This doesn't help if the client is actively sending
-keepalive packets, but that doesn't seem to happen very often, while clients
-.I do
-exist that connect and then never disconnect again. Whether these are spammers,
-portscanners, script kiddies or just badly written software is yet to be
-determined.
 
 Spey is also quite inefficient. It was written to be robust and reliable rather
 than fast; optimisation will occur at a later stage. In particular, every time
@@ -255,7 +301,8 @@ to interoperate happily with most mail software; the author is using it and
 doesn't seem to have lost any mail yet (that he's noticed). It even gets on
 well with SMTP callbacks.
 
-That said, there are almost certainly major problems with it. Please report them!
+That said, there are almost certainly major problems with it. Please report
+them!
 
 .SH FILES
 .TP
@@ -278,6 +325,10 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.4  2004/05/30 13:43:45  dtrg
+.\" Decided to make new version 0.2.9, not 0.3, as there are no actual user-visible
+.\" new features. Plus I want a delay for bugfixing.
+.\"
 .\" Revision 1.3  2004/05/30 01:55:13  dtrg
 .\" Numerous and major alterations to implement a system for processing more than
 .\" one message at a time, based around coroutines. Fairly hefty rearrangement of

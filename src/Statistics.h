@@ -20,6 +20,8 @@ struct Statistics {
 	static void timeout();
 	static void greylisted();
 	static void accepted();
+	static void blacklisted();
+	static void whitelisted();
 
 protected:
 	static void count(string which);
@@ -29,4 +31,6 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */

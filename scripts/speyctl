@@ -19,13 +19,15 @@ function usage()
 	print "                                     default: " configfile
 	print ""
 	print "Commands:"
-	print "    init                 Create a new configuration file."
-	print "    set <key> [<value>]  Set/display a single configuration value."
-	print "    list                 List all configuration values to stdout."
-	print "    relay <cmd> [<spec>] Perform a relaying operation."
-	print "    stats                List statistics."
-	print "    showdb               Show address database. (Warning --- can be large!)"
-	print "    purge                Purge stale addresses."
+	print "    init                     Create a new configuration file."
+	print "    set <key> [<value>]      Set/display a single configuration value."
+	print "    list                     List all configuration values to stdout."
+	print "    relay <cmd> [<spec>]     Manipulate the relay table."
+	print "    whitelist <cmd> [<spec>] Manipulate the whitelist table."
+	print "    blacklist <cmd> [<spec>] Manipulate the blacklist table."
+	print "    stats                    List statistics."
+	print "    showdb                   Show address database. (Warning --- can be large!)"
+	print "    purge                    Purge stale addresses."
 }
 
 function error(s)
@@ -37,6 +39,19 @@ function error(s)
 function relaysyntaxerror(s)
 {
 	error("syntax error: speyctl relay [add or sub or list] [<spec>]")
+}
+
+function Xlistsyntaxerror(list, s)
+{
+	error("syntax error: speyctl " list " [add or sub or list] [<spec>]")
+}
+
+function trim(s)
+{
+	t = s;
+	sub(/^ */, "", t);
+	sub(/ *$/, "", t);
+	return t;
 }
 
 function sqlstart()
@@ -110,7 +125,18 @@ function cmd_init()
 		INSERT INTO statistics VALUES 			\
 			('greylisted',		0); 		\
 		INSERT INTO statistics VALUES 			\
-			('accepted',		0);")
+			('accepted',		0);		\
+		INSERT INTO statistics VALUES 			\
+			('whitelisted',		0);")
+
+	sql("CREATE TABLE whitelist (                           \
+			sender VARCHAR,				\
+			recipient VARCHAR);")
+
+	sql("CREATE TABLE blacklist (                           \
+			sender VARCHAR,				\
+			recipient VARCHAR);")
+
 	sqlend()
 }
 
@@ -227,23 +253,52 @@ function cmd_relay(op, value)
 	sqlend()
 }
 
+function cmd_Xlist(op, list, value,    array, sender, recipient)
+{
+	if (op ~ /list/)
+	{
+		FS = ","
+		cmd = "sqlite -separator ',' " configfile " 'SELECT sender, recipient FROM " list "'"
+		print "              Sender   Recipient"
+		print "--------------------   --------------------"
+		while (cmd|getline == 1)
+		{
+			printf "% 20s : %s\n", $1, $2
+		}
+		return
+	}
+
+	if (split(value, array, /:/) != 2)
+		error("speyctl " list ": spec is <sender pattern> : <recipient pattern>");
+	sender = trim(array[1]);
+	recipient = trim(array[2]);
+	
+	sqlstart()
+	sql("DELETE FROM " list " WHERE "				\
+		"sender='" sender "' AND recipient='" recipient "';")
+	if (op ~ /add/)
+		sql("INSERT INTO " list " VALUES "			\
+			"('" sender "', '" recipient "');")
+	sqlend()
+}
+
 function parseargs(  i)
 {
 	for (i=1; i<ARGC; i++)
 	{
 		opt = ARGV[i]
-		if (opt ~ /(-h)|(--help)/)
+		if (opt ~ /^(-h)|(--help)$/)
 			usage()
-		else if (opt ~ /(-d)|(--db)/)
+		else if (opt ~ /^(-d)|(--db)$/)
 			configfile = ARGV[++i]
-		else if (opt ~ /init/)
+		else if (opt ~ /^init$/)
 		{
 			if (i != (ARGC - 1))
 				error("too many parameters (try --help)")
 			cmd_init()
 			exit(0)
 		}
-		else if (opt ~ /set/)
+		else if (opt ~ /^set$/)
 		{
 			key = ARGV[++i]
 			value = ARGV[++i]
@@ -254,14 +309,14 @@ function parseargs(  i)
 			cmd_set(key, value)
 			exit(0)
 		}
-		else if (opt ~ /list/)
+		else if (opt ~ /^list$/)
 		{
 			if (i != (ARGC - 1))
 				error("too many parameters (try --help)")
 			cmd_list()
 			exit(0)
 		}
-		else if (opt ~ /relay/)
+		else if (opt ~ /^relay$/)
 		{
 			op = ARGV[++i]
 			value = ARGV[++i]
@@ -272,21 +327,32 @@ function parseargs(  i)
 			cmd_relay(op, value)
 			exit(0)
 		}
-		else if (opt ~ /stats/)
+		else if (opt ~ /^(whitelist)|(blacklist)$/)
+		{
+			op = ARGV[++i]
+			value = ARGV[++i]
+			if (i < (ARGC - 1))
+				error("too many parameters (try --help)")
+			if ((op != "list") && (op != "add") && (op != "sub"))
+				Xlistsyntaxerror(opt)
+			cmd_Xlist(op, opt, value)
+			exit(0)
+		}
+		else if (opt ~ /^stats$/)
 		{
 			if (i != (ARGC - 1))
 				error("too many parameters (try --help)")
 			cmd_stats()
 			exit(0)
 		}
-		else if (opt ~ /showdb/)
+		else if (opt ~ /^showdb$/)
 		{
 			if (i != (ARGC - 1))
 				error("too many parameters (try --help)")
 			cmd_showdb()
 			exit(0)
 		}
-		else if (opt ~ /purge/)
+		else if (opt ~ /^purge$/)
 		{
 			if (i != (ARGC - 1))
 				error("too many parameters (try --help)")
@@ -308,6 +374,9 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.3  2004/05/16 17:39:53  dtrg
+# Prevented IP addresses from being stored in the database in scientific notation to six s.f., which doesn't do them a lot of good.
+#
 # Revision 1.2  2004/05/13 23:36:01  dtrg
 # Rewrote speyctl in awk, a much better scripting language than the Bourne shell.
 # It now works way better, is much easier to understand, and is probably much
