@@ -20,6 +20,19 @@ SocketAddress::SocketAddress()
 	this->sa.sin_port = 0;
 }
 
+SocketAddress::SocketAddress(int fd)
+{
+	socklen_t i = sizeof(this->sa);
+	(void)getsockname(fd, (sockaddr*) &this->sa, &i);
+	if (i != sizeof(this->sa))
+		WarningLog() << "Warning: socket size changed from "
+			     << sizeof(this->sa)
+			     << " to "
+			     << i
+			     << " during call to getsockname()!"
+			     << flush;
+}
+
 SocketAddress::SocketAddress(string name, int port)
 {
 	this->sa.sin_family = AF_INET;
@@ -140,4 +153,6 @@ SocketAddress::operator unsigned int ()
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
