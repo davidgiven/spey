@@ -14,7 +14,7 @@
 #define MESSAGEPROCESSOR_H
 
 struct MessageProcessor: Threadlet {
-	MessageProcessor(int fd);
+	MessageProcessor(int fd, SocketAddress& address);
 	virtual ~MessageProcessor();
 
 	void verifydomain(string domain);
@@ -42,6 +42,12 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

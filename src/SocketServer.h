@@ -17,18 +17,24 @@ struct SocketServer {
 	SocketServer(SocketAddress& sa);
 	~SocketServer();
 
-	int accept();
-	int getfd() { return fd; }
+	int accept(SocketAddress* address);
+	int getfd() { return _fd; }
 
 private:
-	SocketAddress address;
-	int fd;
+	SocketAddress _address;
+	int _fd;
 };
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  *

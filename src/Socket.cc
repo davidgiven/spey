@@ -18,18 +18,22 @@
 #include <sys/time.h>
 #include <time.h>
 
+/* Create a new incoming socket from the given file descriptor. */
+
 Socket::Socket(int fd):
-	address(fd)
+	_address(fd)
 {
 	this->fd = fd;
 	_timeout = 0;
 
 	DetailLog() << "new explicit slave connection from "
-		    << address
+		    << _address
 		    << " on "
 		    << fd
 		    << flush;
 }
+
+/* Create a new outgoing socket connected to the specified address. */
 
 Socket::Socket(SocketAddress& address)
 {
@@ -38,6 +42,8 @@ Socket::Socket(SocketAddress& address)
 		throw NetworkException("Error creating outbound socket", errno);
 	DetailLog() << "outbound socket created on fd "
 		    << this->fd
+		    << " to "
+		    << address
 		    << flush;
 
 	if (address.connectto(this->fd) != 0)
@@ -65,6 +71,8 @@ static uint64_t now()
 	return ((uint64_t)tv.tv_sec)*1000 + (tv.tv_usec/1000);
 }
 	
+/* Read data from the socket. */
+
 int Socket::read(void* buffer, int buflength)
 {
 	/* When does the timeout take place? */
@@ -94,6 +102,8 @@ int Socket::read(void* buffer, int buflength)
 	return ::read(fd, buffer, buflength);
 }
 
+/* Write data to the socket. */
+
 int Socket::write(void* buffer, int buflength)
 {
 	/* Wait for the socket becoming writable. */
@@ -113,6 +123,9 @@ int Socket::write(void* buffer, int buflength)
 	}
 	return ::write(fd, buffer, buflength);
 }
+
+/* Read a line of text from the socket; doesn't include the newline (or CRLF)
+ * at the end. */
 
 string Socket::readline()
 {
@@ -137,6 +150,8 @@ string Socket::readline()
 eof:
 	throw NetworkException("Socket unexpectedly closed");
 }
+
+/* Write a line of text to the socket; a CRLF is added to the end. */
 
 void Socket::writeline(string l)
 {
@@ -164,6 +179,12 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.2  2004/05/14 21:28:22  dtrg
  * Added the ability to create a Socket from a raw file descriptor (needed for
  * inetd mode, where we're going to have a socket passed to us on fd 0).
