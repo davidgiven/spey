@@ -1,9 +1,9 @@
-                                   SPEY V0.3.1
+                                   SPEY V0.3.2
                                    ===========
 
                                   Beta release
                               (C) 2004 David Given
-                                   2004-06-30
+                                   2004-11-21
 
 INTRODUCTION
 ============
@@ -178,6 +178,11 @@ the file COPYING.
 
 REVISION HISTORY
 ================
+
+Spey 0.3.2: 2004-11-21: Tracing now works correctly on gcc 3.3 and thereabouts;
+Spey should now work on, hopefully, all versions of gcc that support a modern
+iostreams implementation. Also fixed a problem where SIGPIPE would occasionally
+be received, causing spey to silently shut down.
 
 Spey 0.3.1: 2004-06-30: No longer shuts down prematurely if the downstream SMTP
 server can't be contacted; added hardening against DoS attacks by flooding spey

@@ -17,7 +17,7 @@ MAJORVERSION := unknown
 BUILDCOUNT := 1
 include version
 
-CFLAGS = -Wall -g -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
+CFLAGS = -Wall -g -O3 -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
 CC = g++
 
 LIBS = \
@@ -87,6 +87,13 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.6  2004/11/18 17:57:19  dtrg
+# Rewrote logging system so that it no longer tries to subclass stringstream,
+# that was producing bizarre results on gcc 3.3. Added version tracking to the
+# makefile; spey now knows what version and build number it is, and displays the
+# information in the startup banner. Now properly ignores SIGPIPE, which was
+# causing intermittent silent aborts.
+#
 # Revision 1.5  2004/06/22 21:19:28  dtrg
 # Turned optimisation on.
 #
