@@ -38,13 +38,42 @@ void Settings::reload()
 	_sockettimeout = atoi(get("socket-timeout").c_str());
 }
 
-bool Settings::testrelay(string address)
+bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 {
-	if (address == _identity)
-		return 1;
+	stringstream s;
+	s << "SELECT COUNT(*) FROM allowrelayingfrom WHERE "
+	  << "(" << (int)sender << " >> (32-right)) = (left >> (32-right));";
+
+	{
+		SQLQuery q(Sql, s.str());
+		q.step();
+		if (q.getint(0))
+			return 1;
+	}
+
+	int i = recipient.find('@');
+	string address = recipient.substr(0, i);
+	string domain = recipient.substr(i+1);
+
+	s.str("");
+	s << "SELECT COUNT(*) FROM allowrelayingto WHERE "
+		<< "((left = '') OR (left = '" << address << "')) AND "
+		<< "((right = '') OR (right = '" << domain << "'));";
+	cout << s.str() << endl;
+		
+	{
+		SQLQuery q(Sql, s.str());
+		q.step();
+		if (q.getint(0))
+			return 1;
+	}
+
 	return 0;
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
+

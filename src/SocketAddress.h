@@ -20,21 +20,21 @@
 struct SocketAddress {
 	SocketAddress();
 	SocketAddress(int fd);
-	SocketAddress(string name, int port);
-	SocketAddress(string name);
+	SocketAddress(const string& name, int port);
+	SocketAddress(const string& name);
 	~SocketAddress();
 
-	void setname(string name);
+	void setname(const string& name);
 	void setport(int port);
-	void set(string name);
+	void set(const string& name);
 
 	int connectto(int fd);
 	int bindto(int fd);
 	int acceptfrom(int fd);
 
-	string name();
-	operator string ();
-	operator unsigned int ();
+	string getname() const;
+	operator string () const;
+	operator unsigned int () const;
 
 private:
 	sockaddr_in sa;
@@ -50,7 +50,11 @@ inline ostream& operator << (ostream& s, SocketAddress& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 21:28:22  dtrg
+ * Added the ability to create a Socket from a raw file descriptor (needed for
+ * inetd mode, where we're going to have a socket passed to us on fd 0).
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
- *
  */
+

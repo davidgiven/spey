@@ -76,19 +76,14 @@ void MessageProcessor::verifyaddress(string address)
 
 void MessageProcessor::verifyrelay(string address)
 {
-	string::size_type i;
-
-	i = address.find('@');
-	string domain = address.substr(i+1);
-
 	DetailLog() << "checking "
-		    << domain
-		    << " against "
-		    << Settings::identity()
+		    << address
+		    << " from "
+		    << outside.getaddress().getname()
 		    << " for relaying"
 		    << flush;
 
-	if (domain != Settings::identity())
+	if (!Settings::testrelay(outside.getaddress(), address))
 		throw IllegalRelayingException();
 }
 
@@ -228,7 +223,7 @@ void MessageProcessor::process()
 				{
 					stringstream s;
 					s << "Received: from "
-					  << this->outside.getaddress().name()
+					  << outside.getaddress().getname()
 					  << " and verified by Spey"
 					  << "\n\tconnected from "
 					  << (string) outside.getaddress()
@@ -274,4 +269,7 @@ abort:
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */
