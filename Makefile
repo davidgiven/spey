@@ -13,7 +13,7 @@ PREFIX = /usr
 
 EXE = bin/spey
 
-CFLAGS = -Wall -g -I.
+CFLAGS = -Wall -g -I. -O3
 CC = g++
 
 LIBS = \
@@ -77,6 +77,12 @@ src/spey.h: \
 
 # Revision history
 # $Log$
+# Revision 1.4  2004/06/22 21:00:59  dtrg
+# Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
+# closer to the C++ standard than 2.95 is; plus, the standard library is now
+# rather different, which means that I'm not allowed to do things like have local
+# variables called errno.)
+#
 # Revision 1.3  2004/05/30 01:55:13  dtrg
 # Numerous and major alterations to implement a system for processing more than
 # one message at a time, based around coroutines. Fairly hefty rearrangement of
