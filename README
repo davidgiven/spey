@@ -150,8 +150,19 @@ the file COPYING.
 REVISION HISTORY
 ================
 
+Spey 0.2: 2004-05-15. Bug fixes, feature enhancements. Lots of stability and
+performance tweaks; inetd mode; proper daemon support; decent relay checking;
+rewrote speyctl in a real language.
+
+Spey 0.1: 2004-04-28. First release.
+
 $Source$
 $State$
 $Log$
+Revision 1.2  2004/05/14 23:11:43  dtrg
+Added decent relaying support. Also converted SocketAddress to use references a
+lot rather than pass-by-value, out of general tidiness and the hope that it
+will improve performance a bit.
+
 Revision 1.1  2004/05/01 12:20:20  dtrg
 Initial version.
