@@ -15,10 +15,19 @@
 #include <sys/time.h>
 
 int Logger::desired = 0;
+bool Logger::syslogopened = 0;
+bool Logger::detached = 0;
 
-Logger::Logger(int level)
+Logger::Logger(int level, int syslevel)
 {
-	this->level = level;
+	if (!Logger::syslogopened)
+	{
+		Logger::syslogopened = 1;
+		openlog("spey", LOG_NDELAY|LOG_PID, LOG_MAIL);
+	}
+
+	_level = level;
+	_syslevel = syslevel;
 }
 
 Logger::~Logger()
@@ -31,31 +40,25 @@ void Logger::setlevel(int desired)
 	Logger::desired = desired;
 }
 
+void Logger::detach()
+{
+	Logger::detached = 1;
+}
+
 void Logger::flush()
 {
 	stringstream::flush();
-	if (this->level < Logger::desired)
-	{
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-
-		struct tm* tm = localtime(&tv.tv_sec);
-
-		char buffer[32];
-		strftime(buffer, sizeof(buffer), "%T", tm);
-		cout << "spey: "
-		     << this->level
-		     << ": "
-		     << buffer
-		     << "+"
-		     << (tv.tv_usec / 1000)
-		     << ": "
-		     << this->str()
-		     << endl;
-	}
+	if (_level < Logger::desired)
+		if (Logger::detached)
+			syslog(_syslevel, str().c_str());
+		else
+			cerr << str()
+			     << endl;
 	this->str("");
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */

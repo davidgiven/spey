@@ -11,6 +11,7 @@
  */
 
 #include <stdlib.h>
+#include <syslog.h>
 #include <string>
 #include <sstream>
 
@@ -37,4 +38,7 @@ extern bool greylist(unsigned int sender,
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
+ *
  */
