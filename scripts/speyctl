@@ -11,7 +11,7 @@
 
 function usage()
 {
-	print "speyctl (c) 2004 David Given"
+	print "speyctl 0.3.2 (c) 2004 David Given"
 	print "Syntax: speyctl [<options>...] <command> [<parameters>...]"
 	print "Options:"
 	print "    --help    -h                   Displays this message."
@@ -374,6 +374,9 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.6  2004/06/22 21:11:05  dtrg
+# Widened the field width when displaying blacklists and whitelists.
+#
 # Revision 1.5  2004/06/21 23:16:00  dtrg
 # Now explicitly specifies mawk, as neither gawk nor traditional awk support
 # -Wexec (or equivalent).
