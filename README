@@ -1,9 +1,9 @@
-                                   SPEY V0.2.9
+                                   SPEY V0.3.0
                                    ===========
 
                                   Beta release
                               (C) 2004 David Given
-                                   2004-05-30
+                                   2004-06-22
 
 INTRODUCTION
 ============
@@ -23,9 +23,9 @@ so you'll need that before you can use it.
 IF YOU'VE USED SPEY BEFORE
 ==========================
 
-The database files used by 0.2 are NOT compatible with those used by 0.1.  You
-will have to delete the file and recreate it using speyctl (the new speyctl
-that comes with 0.2, of course). If you try to run spey with a 0.1
+The database files used by 0.3 are NOT compatible with those used by prior
+versions.  You will have to delete the file and recreate it using speyctl (the
+new speyctl that comes with 0.3, of course). If you try to run spey with an old
 configuration file... well, on your own head be it.
 
 INSTALLATION
@@ -39,6 +39,20 @@ script will also be placed in /etc/init.d/spey.
 All the code should, ideally, use standard Posix and C++ features. There might
 be some Linuxisms or gccisms that have crept in; if you find any, these are
 bugs, so please inform me.
+
+REQUIREMENTS
+============
+
+- sqlite, version 2.8.13 or compatible.  Note that libsqlite 3.0 is
+  *unsupported*. If you can get it to work, great (and please tell me). But I
+  recommend staying with 2.8. Note that 2.4 *does not work*.
+
+  Debian users! The libsqlite-dev package is 2.4. You need to upgrade to
+  libsqlite0-dev.
+
+- mawk, any version. This is needed for the speyctl program. If your mawk is
+  installed in a strange place, or if you want to use a different awk anyway,
+  you'll need to edit scripts/speyctl before installation.
 
 CONFIGURATION
 =============
@@ -126,17 +140,17 @@ Man pages are provided. They may or may not contain useful information.
 BUGS
 ====
 
-What, all of them? Big job...
+What, you want to know about them *all*? That's a big job...
 
 These are the ones I know about and think are significant:
-
-* For obscure and mysterious reasons, spey will not build on gcc 3.3. I develop
-  on 2.95, and that works fine. I have no idea why this is so; the vast
-  diagnostics it gives me make no sense.
 
 * If spey cannot write to its database, it has a tendency to crash. The fix for
   this could well just be to refuse to start up if the database is read only.
   
+* If the database schema changes, for example if you add or remove a table,
+  spey will crash cleanly (i.e. unexpectedly shut down). Playing with the
+  schema is not recommended.
+
 DISCLAIMER
 ==========
 
@@ -151,8 +165,9 @@ If it goes wrong DO NOT BLAME ME because YOU HAVE BEEN WARNED!
 (It hasn't yet for me, but that's no guarantee.)
 
 I have attempted to write it with robustness and security in mind --- for
-example, it does not use explicit dynamic memory allocation *anywhere*, which
-means it has no buffers to overflow --- but I'm new at this, okay?
+example, there is exactly one placec where it does explicit dynamic memory
+allocation, which means it has no buffers to overflow --- but I'm new at this,
+okay?
 
 LEGAL STUFF
 ===========
@@ -163,6 +178,9 @@ the file COPYING.
 
 REVISION HISTORY
 ================
+
+Spey 0.3.0: 2004-06-22: Added whitelist and blacklist support. Now compiles
+under gcc 3.3. Several minor bugfixes.
 
 Spey 0.2.9: 2004-05-30: Major internal rearrangements to support processing of
 multiple connections at once. It should now be far more usable when dealing
@@ -177,31 +195,3 @@ rewrote speyctl in a real language.
 
 Spey 0.1: 2004-04-28. First release.
 
-CVS history for this file
--------------------------
-
-$Source$
-$State$
-$Log$
-Revision 1.6  2004/05/30 01:55:13  dtrg
-Numerous and major alterations to implement a system for processing more than
-one message at a time, based around coroutines. Fairly hefty rearrangement of
-constructors and object ownership semantics. Assorted other structural
-modifications.
-
-Revision 1.5  2004/05/19 19:38:18  dtrg
-Added the banner for 0.2.1.
-
-Revision 1.4  2004/05/14 23:30:53  dtrg
-Forgot to update the banner announcing the new version!
-
-Revision 1.3  2004/05/14 23:26:57  dtrg
-Added a version history.
-
-Revision 1.2  2004/05/14 23:11:43  dtrg
-Added decent relaying support. Also converted SocketAddress to use references a
-lot rather than pass-by-value, out of general tidiness and the hope that it
-will improve performance a bit.
-
-Revision 1.1  2004/05/01 12:20:20  dtrg
-Initial version.
