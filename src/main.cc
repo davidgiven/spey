@@ -49,10 +49,10 @@ int main(int argc, char* argv[])
 		{
 			MessageLog() << "waiting for connection"
 				     << flush;
-			Socket s = server.accept();
-			Settings::reload();
-			MessageProcessor mp(s);
 			try {
+				Socket s = server.accept();
+				Settings::reload();
+				MessageProcessor mp(s);
 				mp.process();
 			} catch (NetworkTimeoutException e) {
 				Statistics::timeout();
@@ -92,6 +92,14 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/13 14:26:31  dtrg
+ * Finally tracked down the annoying SQL-related crash. It seems that VACUUM is
+ * not thread-safe and is causing the database session to expire. The correct
+ * solution is not to use VACUUM, so I'm modifying speyctl to do that. However,
+ * I'm leaving the recovery code in because of general resiliency issues, but
+ * upgrading the diagnostic to a System-level message because it is actually
+ * causing a message to be rejected when it might not be.
+ *
  * Revision 1.2  2004/05/09 18:23:16  dtrg
  * SQL server now accessed asynchronously; backed out fix for mysterious SQL crash
  * and instead put in some code that should recover sanely from it. Don't know
