@@ -105,29 +105,6 @@ void MessageProcessor::process()
 			continue;
 		}
 
-		/* Make sure we're connected to the downstream SMTP server. */
-
-		if (!connected)
-		{
-			try {
-				_inside.init(ToAddress);
-				_inside.timeout(Settings::sockettimeout());
-
-				/* Check it's okay. */
-
-				readinside();
-				_response.check(220, "Invalid banner");
-				connected = 1;
-			} catch (NetworkException e) {
-				/* Something didn't work while making the
-				 * connection to the downstream SMTP server.
-				 * Bail out cleanly. */
-				_response.set(421);
-				writeoutside();
-				throw e;
-			}
-		}
-
 		switch (_command.cmd())
 		{
 			case SMTPCommand::HELP:
@@ -241,6 +218,31 @@ void MessageProcessor::process()
 				}
 		}
 
+		/* Make sure we're connected to the downstream SMTP server. */
+
+		if (!connected)
+		{
+			try {
+				_inside.init(ToAddress);
+				_inside.timeout(Settings::sockettimeout());
+
+				/* Check it's okay. */
+
+				readinside();
+				_response.check(220, "Invalid banner");
+				connected = 1;
+			} catch (NetworkException e) {
+				/* Something didn't work while making the
+				 * connection to the downstream SMTP server.
+				 * Bail out cleanly. */
+				_response.set(421);
+				writeoutside();
+				throw e;
+			}
+		}
+
+		/* Pass on the command, and then relay back the result. */
+		
 		writeinside();
 
 		readinside();
@@ -318,6 +320,13 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.7  2004/06/30 20:18:49  dtrg
  * Changed the way sockets are initialised; instead of doing it from the Socket
  * and SocketServer constructors, they're set up as zombies and initialised later
