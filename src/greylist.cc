@@ -13,7 +13,7 @@
 #include "spey.h"
 #include <sys/time.h>
 
-bool greylist(unsigned int sender, string fromaddress, string toaddress)
+GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddress)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -34,6 +34,50 @@ bool greylist(unsigned int sender, string fromaddress, string toaddress)
 		    << " at "
 		    << tv.tv_sec
 		    << flush;
+
+	/* First check the whitelist. */
+
+	{
+		stringstream s;
+		s << "SELECT COUNT(*) FROM whitelist WHERE "
+		  << "('"
+		  << fromaddress
+		  << "' LIKE sender) AND ('"
+		  << toaddress
+		  << "' LIKE recipient);";
+
+		SQLQuery q(Sql, s.str());
+		if (!q.step())
+			goto notfound;
+		if (q.getint(0))
+		{
+			DetailLog() << "matches whitelist"
+				    << flush;
+			goto whitelisted;
+		}
+	}
+
+	/* Then check the whitelist. */
+
+	{
+		stringstream s;
+		s << "SELECT COUNT(*) FROM blacklist WHERE "
+		  << "('"
+		  << fromaddress
+		  << "' LIKE sender) AND ('"
+		  << toaddress
+		  << "' LIKE recipient);";
+
+		SQLQuery q(Sql, s.str());
+		if (!q.step())
+			goto notfound;
+		if (q.getint(0))
+		{
+			DetailLog() << "matches blacklist"
+				    << flush;
+			goto blacklisted;
+		}
+	}
 
 	{
 		stringstream s;
@@ -82,7 +126,7 @@ bool greylist(unsigned int sender, string fromaddress, string toaddress)
 		q.step();
 	}
 
-	return failed;
+	return failed ? GreyListed : Accepted;
 
 notfound:
 	/* This is the first time we've seen this triple. Add a record, but
@@ -106,9 +150,19 @@ notfound:
 		q.step();
 	}
 
-	return 1;
+	return GreyListed;
+
+whitelisted:
+	Statistics::whitelisted();
+	return Accepted;
+
+blacklisted:
+	Statistics::blacklisted();
+	return BlackListed;
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/01 12:20:20  dtrg
+ * Initial version.
  */
