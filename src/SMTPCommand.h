@@ -46,7 +46,7 @@ protected:
 	string parameter;
 };
 
-inline ostream& operator << (ostream& s, SMTPCommand& sa)
+inline Logger& operator << (Logger& s, SMTPCommand& sa)
 {
 	s << (string) sa;
 	return s;
@@ -56,6 +56,12 @@ inline ostream& operator << (ostream& s, SMTPCommand& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/06/22 21:01:02  dtrg
+ * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
+ * closer to the C++ standard than 2.95 is; plus, the standard library is now
+ * rather different, which means that I'm not allowed to do things like have local
+ * variables called errno.)
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

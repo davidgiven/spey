@@ -80,8 +80,7 @@ SQLQuery::~SQLQuery()
 	if (sqlite_finalize(this->handle, &error))
 	{
 		DetailLog() << "SQL query finalization failure: "
-		            << error
-			    << flush;
+		            << error;
 	}
 }
 
@@ -124,6 +123,12 @@ int SQLQuery::getint(int i)
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.3  2004/05/09 18:23:16  dtrg
  * SQL server now accessed asynchronously; backed out fix for mysterious SQL crash
  * and instead put in some code that should recover sanely from it. Don't know

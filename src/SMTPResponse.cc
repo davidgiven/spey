@@ -50,15 +50,13 @@ void SMTPResponse::set(Socket& in)
 {
 	string l = in.readline();
 	SMTPLog() << "rsp "
-		  << l
-		  << flush;
+		  << l;
 
 	/* Validate the first four characters. */
 
 	if (l.length() < 4)
 	{
-		MessageLog() << "SMTP response isn't long enough"
-			     << flush;
+		MessageLog() << "SMTP response isn't long enough";
 		goto malformed;
 	}
 
@@ -66,8 +64,7 @@ void SMTPResponse::set(Socket& in)
 	    !isdigit(l[1]) ||
 	    !isdigit(l[2]))
 	{
-		MessageLog() << "SMTP response has no status code"
-			     << flush;
+		MessageLog() << "SMTP response has no status code";
 		goto malformed;
 	}
 
@@ -78,13 +75,11 @@ void SMTPResponse::set(Socket& in)
 		do {
 			s = in.readline();
 			SMTPLog() << "rsp-"
-				  << s
-				  << flush;
+				  << s;
 
 			if (s.length() < 4)
 			{
-				MessageLog() << "SMTP continuation isn't long enough"
-					     << flush;
+				MessageLog() << "SMTP continuation isn't long enough";
 				goto malformed;
 			}
 
@@ -93,16 +88,14 @@ void SMTPResponse::set(Socket& in)
 			    (s[2] != l[2]))
 			{
 				MessageLog() << "SMTP continuation's "
-						"status code is inconsistent"
-					     << flush;
+						"status code is inconsistent";
 				goto malformed;
 			}
 		} while (s[3] == '-');
 	}
 	else if (l[3] != ' ')
 	{
-		MessageLog() << "SMTP response has invalid 4th char"
-			     << flush;
+		MessageLog() << "SMTP response has invalid 4th char";
 		goto malformed;
 	}
 
@@ -213,6 +206,12 @@ bool SMTPResponse::iserror()
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/06/22 21:01:02  dtrg
+ * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
+ * closer to the C++ standard than 2.95 is; plus, the standard library is now
+ * rather different, which means that I'm not allowed to do things like have local
+ * variables called errno.)
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

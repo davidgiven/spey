@@ -19,8 +19,8 @@
 
 using namespace std;
 
-#include "Exception.h"
 #include "Logger.h"
+#include "Exception.h"
 #include "SQL.h"
 #include "CLI.h"
 #include "SocketAddress.h"
@@ -50,6 +50,10 @@ extern GreylistResponse greylist(unsigned int sender,
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/06/21 23:11:15  dtrg
+ * Added a fix for gcc 3.0, hopefully. Untested *on* gcc 3.0, but it still builds
+ * on 2.95.
+ *
  * Revision 1.3  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of

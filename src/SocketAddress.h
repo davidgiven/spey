@@ -42,7 +42,7 @@ private:
 	sockaddr_in _sa;
 };
 
-inline ostream& operator << (ostream& s, SocketAddress& sa)
+inline Logger& operator << (Logger& s, SocketAddress& sa)
 {
 	s << (string) sa;
 	return s;
@@ -52,6 +52,11 @@ inline ostream& operator << (ostream& s, SocketAddress& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/06/08 19:58:04  dtrg
+ * Fixed a bug where the address of incoming connections was thought to be the
+ * address of *this* end of the connection, not the other end. In the process,
+ * changed some this->blah instance variables to _blah.
+ *
  * Revision 1.3  2004/05/14 23:11:44  dtrg
  * Added decent relaying support. Also converted SocketAddress to use references a
  * lot rather than pass-by-value, out of general tidiness and the hope that it

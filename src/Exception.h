@@ -24,7 +24,7 @@ protected:
 	string reason;
 };
 
-inline ostream& operator << (ostream& stream, Exception& e)
+inline Logger& operator << (Logger& stream, Exception& e)
 {
 	stream << (string) e;
 	return stream;
@@ -110,6 +110,12 @@ struct ParseErrorException: Exception
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/06/22 21:01:02  dtrg
+ * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
+ * closer to the C++ standard than 2.95 is; plus, the standard library is now
+ * rather different, which means that I'm not allowed to do things like have local
+ * variables called errno.)
+ *
  * Revision 1.2  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of

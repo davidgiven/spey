@@ -42,8 +42,7 @@ void Socket::init(int fd)
 	_timeout = 0;
 
 	DetailLog() << "new explicit slave connection on "
-		    << fd
-		    << flush;
+		    << fd;
 }
 
 /* Initialise the socket from the given file descriptor, but also mark it as
@@ -56,8 +55,7 @@ void Socket::init(int fd, SocketAddress& address)
 	DetailLog() << "new explicit incoming connection on "
 		    << fd
 		    << " marked as being from "
-		    << (string) address
-		    << flush;
+		    << address;
 	_fd = fd;
 	_address = address;
 }
@@ -75,8 +73,7 @@ void Socket::init(SocketAddress& address)
 	DetailLog() << "outbound socket created on fd "
 		    << _fd
 		    << " to "
-		    << address
-		    << flush;
+		    << address;
 
 	if (address.connectto(_fd) != 0)
 	{
@@ -213,6 +210,17 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2004/06/30 20:18:49  dtrg
+ * Changed the way sockets are initialised; instead of doing it from the Socket
+ * and SocketServer constructors, they're set up as zombies and initialised later
+ * with an init() method. This is cleaner, and also allows a cunning new feature:
+ * the connection to the downstream SMTP server is now only made once the first
+ * valid SMTP command is received from the upstream SMTP server. This means that
+ * connections are only made once we're reasonably sure that there's going to be a
+ * valid SMTP conversation, which should harden spey against DoS attacks like the
+ * ones I get every so often. Also took the opportunity to convert more this->blah
+ * instance variables into _blah.
+ *
  * Revision 1.5  2004/06/09 18:40:34  dtrg
  * Fixed some tracing where the address of incoming connections was being reported
  * incorrectly in the logs (but correctly in the Received lines of incoming

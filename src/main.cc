@@ -32,12 +32,11 @@ static int daemonmode(CLI& cli)
 	FromAddress.set(cli.f());
 	ToAddress.set(cli.t());
 
-	DetailLog() << "------------- STARTUP ----------------"
-		    << flush;
+	DetailLog() << "------------- STARTUP ----------------";
+	DetailLog() << "Spey version " MAJORVERSION " build " BUILDCOUNT;
 
 	SystemLog() << "listening on "
-		    << FromAddress
-		    << flush;
+		    << FromAddress;
 
 	/* Automatically added to scheduler */
 	(void) new ServerProcessor();
@@ -45,8 +44,7 @@ static int daemonmode(CLI& cli)
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
 	Threadlet::startScheduler();
-	SystemLog() << "scheduler terminated!"
-	            << flush;
+	SystemLog() << "scheduler terminated!";
 	return 0;
 }
 
@@ -55,8 +53,8 @@ static int inetdmode(CLI& cli)
 	Sql.open(cli.d());
 	ToAddress.set(cli.t());
 
-	DetailLog() << "------------- INETD STARTUP ----------------"
-		    << flush;
+	DetailLog() << "------------- INETD STARTUP ----------------";
+	DetailLog() << "Spey version " MAJORVERSION " build " BUILDCOUNT;
 
 	try {
 		Settings::reload();
@@ -65,18 +63,14 @@ static int inetdmode(CLI& cli)
 		Threadlet::startScheduler();
 	} catch (NetworkTimeoutException e) {
 		Statistics::timeout();
-		MessageLog() << "Socket timeout; aborting"
-			     << flush;
+		MessageLog() << "Socket timeout; aborting";
 	} catch (NetworkException e) {
 		MessageLog() << "exception caught: "
-			     << e
-			     << flush;
-		MessageLog() << "message processing aborted"
-			     << flush;
+			     << e;
+		MessageLog() << "message processing aborted";
 	} catch (SQLException e) {
 		SystemLog() << "SQL error: "
-			     << e
-			     << flush;
+			     << e;
 	}
 
 	return 0;
@@ -84,6 +78,12 @@ static int inetdmode(CLI& cli)
 
 int main(int argc, char* argv[])
 {
+	/* Ensure we never get any SIGPIPEs, which we don't catch and will
+	 * cause an abort. By ignoring them, we ensure that read() and write()
+	 * return error codes instead. */
+
+	signal(SIGPIPE, SIG_IGN);
+	
 	try {
 		CLI cli(argc, argv);
 		Logger::setlevel(cli.v());
@@ -94,13 +94,14 @@ int main(int argc, char* argv[])
 			return daemonmode(cli);
 	} catch (string e) {
 		SystemLog() << "exception caught: "
-			    << e
-			    << flush;
+			    << e;
 		exit(-1);
 	} catch (Exception e) {
 		SystemLog() << "exception caught: "
-			    << e
-			    << flush;
+			    << e;
+		exit(-1);
+	} catch (...) {
+		SystemLog() << "illegal exception caught! terminating!";
 		exit(-1);
 	}
 
@@ -109,6 +110,11 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2004/06/08 19:58:04  dtrg
+ * Fixed a bug where the address of incoming connections was thought to be the
+ * address of *this* end of the connection, not the other end. In the process,
+ * changed some this->blah instance variables to _blah.
+ *
  * Revision 1.6  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of
