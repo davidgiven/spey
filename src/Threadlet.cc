@@ -53,6 +53,7 @@ void Threadlet::trampoline(Threadlet* threadlet)
 		SystemLog() << "Uncaught exception in threadlet!";
 	}
 	threadlet->_running = 0;
+	currentprocess = NULL;
 }
 
 Threadlet::Threadlet()
@@ -75,7 +76,7 @@ Threadlet::Threadlet()
 	_context.uc_link = &rootcontext;
 
 	makecontext(&_context, (void(*)()) Threadlet::trampoline, 1, this);
-	_running = 1;
+	_running = true;
 }
 
 Threadlet::~Threadlet()
@@ -187,7 +188,7 @@ void Threadlet::startScheduler()
 			Threadlet* t = *i;
 			if (!t->_running)
 			{
-				ThreadLog() << "destoying threadlet "
+				ThreadLog() << "destroying threadlet "
 				            << t->debugid();
 				processes.remove(t);
 				delete t;
@@ -210,13 +211,20 @@ void Threadlet::startScheduler()
 		tv.tv_usec = (timeout % 1000) * 1000;
 		ThreadLog() << "waiting for "
 		            << timeout
-			    << "ms";
+		            << "ms";
 		select(maxfd, &reads, &writes, NULL, &tv);
 	}
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.1  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of
