@@ -78,63 +78,65 @@ function cmd_init()
 		error("configuration file already exists")
 
 	sqlstart()
-	sql("CREATE TABLE triples (				\
-			id INTEGER PRIMARY KEY,			\
-			sender INTEGER NOT NULL,		\
-			fromaddress VARCHAR NOT NULL,		\
-			toaddress VARCHAR NOT NULL,		\
-			timesseen INTEGER NOT NULL,		\
-			firstseen INTEGER NOT NULL,		\
+	sql("CREATE TABLE triples (                 \
+			id INTEGER PRIMARY KEY,                 \
+			sender INTEGER NOT NULL,                \
+			fromaddress VARCHAR NOT NULL,           \
+			toaddress VARCHAR NOT NULL,             \
+			timesseen INTEGER NOT NULL,             \
+			firstseen INTEGER NOT NULL,             \
 			lastseen INTEGER NOT NULL);")
 
-	sql("CREATE TABLE allowrelayingfrom ( 			\
-			left INTEGER NOT NULL, 			\
+	sql("CREATE TABLE allowrelayingfrom (       \
+			left INTEGER NOT NULL,                  \
 			right INTEGER NOT NULL);")
 		
-	sql("CREATE TABLE allowrelayingto ( 			\
-			left VARCHAR, 				\
+	sql("CREATE TABLE allowrelayingto (         \
+			left VARCHAR,                           \
 			right VARCHAR);")
 
-	sql("CREATE TABLE settings ( 				\
-			key VARCHAR PRIMARY KEY,  		\
-			value VARCHAR); 			\
-		INSERT INTO settings VALUES 			\
-			('identity',		'yourdomain.invalid'); \
-		INSERT INTO settings VALUES 			\
-			('intolerant',		'1'); 		\
-		INSERT INTO settings VALUES 			\
-			('quarantine-time',	'60'); 		\
-		INSERT INTO settings VALUES 			\
-			('socket-timeout',	'30'); 		\
-		INSERT INTO settings VALUES 			\
-			('invalid-expiry',	'86400'); 	\
-		INSERT INTO settings VALUES 			\
+	sql("CREATE TABLE settings (                \
+			key VARCHAR PRIMARY KEY,                \
+			value VARCHAR);                         \
+		INSERT INTO settings VALUES               \
+			('identity',		'yourdomain.invalid');  \
+		INSERT INTO settings VALUES               \
+			('process-user-id', 'nobody.nobody');   \
+		INSERT INTO settings VALUES               \
+			('intolerant',		'1');                 \
+		INSERT INTO settings VALUES               \
+			('quarantine-time',	'60');              \
+		INSERT INTO settings VALUES               \
+			('socket-timeout',	'30');              \
+		INSERT INTO settings VALUES               \
+			('invalid-expiry',	'86400');           \
+		INSERT INTO settings VALUES               \
 			('valid-expiry',	'1209600');")
 
-	sql("CREATE TABLE statistics ( 				\
-			key VARCHAR PRIMARY KEY,  		\
-			value INTEGER); 			\
-		INSERT INTO statistics VALUES 			\
-			('malformed-domain',	0); 		\
-		INSERT INTO statistics VALUES 			\
-			('malformed-address',	0); 		\
-		INSERT INTO statistics VALUES 			\
-			('illegal-relay',	0); 		\
-		INSERT INTO statistics VALUES 			\
-			('timeout',		0); 		\
-		INSERT INTO statistics VALUES 			\
-			('greylisted',		0); 		\
-		INSERT INTO statistics VALUES 			\
-			('accepted',		0);		\
-		INSERT INTO statistics VALUES 			\
+	sql("CREATE TABLE statistics (              \
+			key VARCHAR PRIMARY KEY,                \
+			value INTEGER);                         \
+		INSERT INTO statistics VALUES             \
+			('malformed-domain',	0);               \
+		INSERT INTO statistics VALUES             \
+			('malformed-address',	0);               \
+		INSERT INTO statistics VALUES             \
+			('illegal-relay',	0);                   \
+		INSERT INTO statistics VALUES             \
+			('timeout',		0);                       \
+		INSERT INTO statistics VALUES             \
+			('greylisted',		0);                   \
+		INSERT INTO statistics VALUES             \
+			('accepted',		0);                     \
+		INSERT INTO statistics VALUES             \
 			('whitelisted',		0);")
 
-	sql("CREATE TABLE whitelist (                           \
-			sender VARCHAR,				\
+	sql("CREATE TABLE whitelist (               \
+			sender VARCHAR,                         \
 			recipient VARCHAR);")
 
-	sql("CREATE TABLE blacklist (                           \
-			sender VARCHAR,				\
+	sql("CREATE TABLE blacklist (               \
+			sender VARCHAR,                         \
 			recipient VARCHAR);")
 
 	sqlend()
@@ -374,6 +376,9 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.7  2004/11/21 18:46:49  dtrg
+# Updated version numbering to 0.3.2.
+#
 # Revision 1.6  2004/06/22 21:11:05  dtrg
 # Widened the field width when displaying blacklists and whitelists.
 #
