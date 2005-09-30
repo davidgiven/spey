@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH spey 8 "21 November 2004" "0.3.2" "SMTP preprocessor"
+.TH spey 8 "30 September 2005" "0.3.3" "SMTP preprocessor"
 .SH NAME
 spey \- a smart, spam-blocking SMTP proxy
 
@@ -181,6 +181,19 @@ once in the database. An integer, in seconds. When the database is purged, any
 tuples that have not been seen for longer than the specified time will be
 discarded. The default is a week.
 
+.TP
+.B runtime-user-id
+
+If set, this variable causes Spey to drop root privileges once its
+initialisation is complete. The value should be a string of the form
+.BR username:groupname ;
+Spey must have write access to the file
+.I containing
+its database file in order to work (because SQlite needs to create a journal
+file in the same directory).
+
+If you do not want Spey to drop root privileges, then leave this variable
+unset.
 
 .SH "MESSAGE RELAYING"
 
@@ -325,6 +338,9 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.8  2004/11/21 18:46:49  dtrg
+.\" Updated version numbering to 0.3.2.
+.\"
 .\" Revision 1.7  2004/06/30 21:44:00  dtrg
 .\" Updated version number for 0.3.1.
 .\"
