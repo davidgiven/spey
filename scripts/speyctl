@@ -11,7 +11,7 @@
 
 function usage()
 {
-	print "speyctl 0.3.2 (c) 2004 David Given"
+	print "speyctl 0.3.3 (c) 2004 David Given"
 	print "Syntax: speyctl [<options>...] <command> [<parameters>...]"
 	print "Options:"
 	print "    --help    -h                   Displays this message."
@@ -100,8 +100,6 @@ function cmd_init()
 			value VARCHAR);                         \
 		INSERT INTO settings VALUES               \
 			('identity',		'yourdomain.invalid');  \
-		INSERT INTO settings VALUES               \
-			('process-user-id', 'nobody.nobody');   \
 		INSERT INTO settings VALUES               \
 			('intolerant',		'1');                 \
 		INSERT INTO settings VALUES               \
@@ -376,6 +374,9 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.8  2005/09/25 23:26:23  dtrg
+# Added support for dropping root privileges once spey has started up.
+#
 # Revision 1.7  2004/11/21 18:46:49  dtrg
 # Updated version numbering to 0.3.2.
 #
