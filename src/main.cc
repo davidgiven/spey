@@ -12,12 +12,73 @@
 
 #include "spey.h"
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 #include <iostream>
 #include <fstream>
 
 SQL Sql;
 SocketAddress FromAddress;
 SocketAddress ToAddress;
+
+static void drop_root_privileges()
+{
+	string usergroupid = Settings::runtimeuserid();
+	if (usergroupid == "")
+	{
+		DetailLog() << "Not dropping root privileges --- running as root";
+		return;
+	}
+
+	{
+		string::size_type seperator = usergroupid.find(':');
+		if (seperator == string::npos)
+			goto abort;
+			
+		/* Extract the user and group name from the string. */
+		
+		string username = usergroupid.substr(0, seperator);
+		string groupname = usergroupid.substr(seperator+1);
+		DetailLog() << "Dropping root privileges; running as "
+		            << username
+		            << ":"
+		            << groupname;
+	
+		/* Look up the passwd and group fields. */
+	
+		uid_t userid = 0;
+		gid_t groupid = 0;
+		
+		struct passwd* pwd = getpwnam(username.c_str());
+		if (pwd)
+		{
+			userid = pwd->pw_uid;
+			endpwent();
+		}
+			
+		struct group* grp = getgrnam(groupname.c_str());
+		if (grp)
+		{
+			groupid = grp->gr_gid;
+			endgrent();
+		}
+		
+		if (!pwd || !grp)
+			goto abort;
+	
+		/* Drop privileges. */
+		
+		int result = setgid(groupid);
+		result |= setuid(userid);
+		if (result)
+			goto abort;
+			
+		return;
+	}
+	
+abort:
+		throw Exception("Unable to drop root privileges --- terminating");
+}
 
 static int daemonmode(CLI& cli)
 {
@@ -43,6 +104,8 @@ static int daemonmode(CLI& cli)
 
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
+	Settings::reload();
+	drop_root_privileges();
 	Threadlet::startScheduler();
 	SystemLog() << "scheduler terminated!";
 	return 0;
@@ -60,6 +123,7 @@ static int inetdmode(CLI& cli)
 		Settings::reload();
 		SocketAddress dummyaddress;
 		(void) new MessageProcessor(0, dummyaddress);
+		drop_root_privileges();
 		Threadlet::startScheduler();
 	} catch (NetworkTimeoutException e) {
 		Statistics::timeout();
@@ -110,6 +174,13 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.7  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
  * address of *this* end of the connection, not the other end. In the process,
