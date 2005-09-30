@@ -1,4 +1,4 @@
-                                   SPEY V0.3.2
+                                   SPEY V0.3.3
                                    ===========
 
                                   Beta release
@@ -178,6 +178,10 @@ the file COPYING.
 
 REVISION HISTORY
 ================
+
+Spey 0.3.3: 2005-9-30: Fixed the untraceable scheduler bug that was causing
+Spey to very occasionally crash silently --- thanks to Markus Madlener for help
+with this one. Also added support for dropping root privileges.
 
 Spey 0.3.2: 2004-11-21: Tracing now works correctly on gcc 3.3 and thereabouts;
 Spey should now work on, hopefully, all versions of gcc that support a modern
