@@ -16,6 +16,7 @@ string Settings::_identity;
 int Settings::_intolerant;
 int Settings::_quarantinetime;
 int Settings::_sockettimeout;
+string Settings::_runtimeuserid;
 
 string Settings::get(string key)
 {
@@ -25,9 +26,16 @@ string Settings::get(string key)
 	  << key
 	  << "';";
 
-	SQLQuery q(Sql, s.str());
-	q.step();
-	return q.getstring(0);
+	try
+	{
+		SQLQuery q(Sql, s.str());
+		q.step();
+		return q.getstring(0);
+	}
+	catch (SQLException e)
+	{
+		return "";
+	}
 }
 
 void Settings::reload()
@@ -36,6 +44,7 @@ void Settings::reload()
 	_intolerant = atoi(get("intolerant").c_str());
 	_quarantinetime = atoi(get("quarantine-time").c_str());
 	_sockettimeout = atoi(get("socket-timeout").c_str());
+	_runtimeuserid = get("runtime-user-id");
 }
 
 bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
@@ -73,6 +82,11 @@ bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/14 23:11:44  dtrg
+ * Added decent relaying support. Also converted SocketAddress to use references a
+ * lot rather than pass-by-value, out of general tidiness and the hope that it
+ * will improve performance a bit.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */
