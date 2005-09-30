@@ -108,7 +108,7 @@ bool SQLQuery::step()
 
 string SQLQuery::getstring(int i)
 {
-	if ((i < 0) || (i >= this->columns))
+	if ((i < 0) || (i >= this->columns) || !this->values)
 		return "";
 	string s = this->values[i];
 	return s;
@@ -116,13 +116,20 @@ string SQLQuery::getstring(int i)
 
 int SQLQuery::getint(int i)
 {
-	if ((i < 0) || (i >= this->columns))
+	if ((i < 0) || (i >= this->columns) || !this->values)
 		return 0;
 	return atoi(this->values[i]);
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.4  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of
