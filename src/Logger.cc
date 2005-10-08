@@ -68,7 +68,7 @@ void Logger::flush()
 		  << data;
 
 		if (Logger::detached)
-			syslog(_syslevel, s.str().c_str());
+			syslog(_syslevel, "%s", s.str().c_str());
 		else
 			cerr << s.str()
 			     << endl;
@@ -78,6 +78,9 @@ void Logger::flush()
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2005/09/25 23:09:44  dtrg
+ * Changed some references to '0' and '1' to 'false' and 'true' for clarity.
+ *
  * Revision 1.4  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
