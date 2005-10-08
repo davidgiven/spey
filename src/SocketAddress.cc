@@ -77,7 +77,7 @@ void SocketAddress::setname(const string& server)
 		throw NetworkException(s);
 	}
 
-	memcpy(&_sa.sin_addr.s_addr, he->h_addr, he->h_length);
+	memcpy(&_sa.sin_addr.s_addr, he->h_addr, sizeof(_sa.sin_addr.s_addr));
 }
 
 /* Set the port part of the address to the supplied string. */
@@ -179,6 +179,13 @@ SocketAddress::operator unsigned int () const
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.4  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
  * address of *this* end of the connection, not the other end. In the process,
