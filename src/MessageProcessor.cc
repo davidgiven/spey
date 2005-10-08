@@ -63,10 +63,15 @@ void MessageProcessor::verifydomain(string domain)
 
 void MessageProcessor::verifyaddress(string address)
 {
-	string::size_type i;
-
-	i = address.find('@');
-	if (i == string::npos)
+	/* All valid email addresses must contain a @ character. */
+	
+	if (address.find('@') == string::npos)
+		throw MalformedAddressException();
+	
+	/* No valid email addresses contain any of these characters, which can be
+	 * used for SQL injection. */
+	 
+	if (address.find_first_of("'\\") != string::npos)
 		throw MalformedAddressException();
 }
 
@@ -132,7 +137,7 @@ void MessageProcessor::process()
 						verifyaddress(_from);
 				} catch (MalformedAddressException e)
 				{
-					deferrederror.set(551);
+					deferrederror.set(501);
 
 					Statistics::malformedAddress();
 					goto error;
@@ -320,6 +325,15 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2005/03/04 22:24:48  dtrg
+ * The main message processing loop now ensures that it's connected to the local
+ * server *after* it's verified the first command, not before. This means that if
+ * the first command is bogus --- such as EHLO invaliddomainname --- we won't
+ * waste resources connecting. (This was causing a problem on my system due to a
+ * misconfigured machine making lots of connections to spey with invalid EHLO
+ * statements; lots of copies of exim were being spawned, which was causing
+ * inetd's loop-detection code to go into action.)
+ *
  * Revision 1.8  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
