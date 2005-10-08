@@ -1,11 +1,11 @@
 '\" t
 .\" ** The above line should force tbl to be a preprocessor **
-.\" Man page for Spey
+.\" Man page for spey
 .\"
 .\" Copyright (C) 2004 David Given
 .\" You may distribute under the terms of the GNU General Public
 .\" License version 2 as specified in the file COPYING that comes with the
-.\" Spey distribution.
+.\" spey distribution.
 .\"
 .\" $Source$
 .\" $State$
@@ -44,7 +44,7 @@ or
 
 .SH DESCRIPTION
 .B spey
-is a smart smtp proxy that implements greylisting as a spam prevention measure.
+is a smart SMTP proxy that implements greylisting as a spam prevention measure.
 it acts as a layer between the outside world and your ordinary mail server; it
 monitors the transaction, and hijacks it if necessary to prevent messages being
 retrieved.
@@ -52,25 +52,25 @@ retrieved.
 for more information on greylisting, see
 .br http://projects.puremagic.com/greylisting/ .
 
-Spey stores all of its configuration settings (other than those specified on
+spey stores all of its configuration settings (other than those specified on
 the command line) in a
-.B sqlite
+.B Sqlite
 database. By default this is stored in
 .br /var/lib/misc/spey.db ,
 although it can be overridden if necessary. To manipulate the database, for
-example to set or change one of Spey's configuration variables, use the
+example to set or change one of spey's configuration variables, use the
 .b speyctl(8)
 command.
 
 .SH OPTIONS
-Spey understands the following options:
+spey understands the following options:
 
 .TP
 .BI --from\  address
 
 Specifies the source address to listen on, in the standard
 .IR address : port
-format. Use 0.0.0.0 for the address to tell Spey to listen on all interfaces.
+format. Use 0.0.0.0 for the address to tell spey to listen on all interfaces.
 The default is
 .BR 0.0.0.0:25 .
 
@@ -112,7 +112,7 @@ and
 settings are ignored.
 
 This mode is not recommended as there is considerable overhead in starting up
-and shutting down, due to sqlite opening and closing the database. However, it
+and shutting down, due to Sqlite opening and closing the database. However, it
 may be useful if you do not wish to have spey running all the time, or wish to
 force true multithreaded mode.
 
@@ -127,7 +127,7 @@ This is frequently useful for debugging. This flag is ignored in
 mode.
 
 .SH "CONFIGURATION VARIABLES"
-Spey uses a number of configuration variables, stored in the database, to
+spey uses a number of configuration variables, stored in the database, to
 control itself. You can list and change these with the
 .B speyctl(8)
 command.
@@ -143,14 +143,14 @@ for any useful purpose other than diagnostics.
 .TP
 .B quarantine-time
 
-Controls the delay between a message arriving and Spey marking that particular
+Controls the delay between a message arriving and spey marking that particular
 address/sender/receiver tuple as valid. This is an integer, in seconds.
 
 .TP
 .B intolerant
 
-Controls whether Spey is intolerant of SMTP errors or not. An integer, either 0
-or 1. If set, then Spey will automatically disconnect from the potential
+Controls whether spey is intolerant of SMTP errors or not. An integer, either 0
+or 1. If set, then spey will automatically disconnect from the potential
 spammer whenever an SMTP error occurs (after reporting the error, of course).
 While this does violate the RFC, SMTP errors do not usually occur during
 legitimate mail transactions. Setting this will reduce the amount of time taken
@@ -159,7 +159,7 @@ to deal with any particular spammer.
 .TP
 .B socket-timeout
 
-Controls how long Spey will wait on a socket when there is no traffic. An
+Controls how long spey will wait on a socket when there is no traffic. An
 integer, in seconds. The RFC dictates from between 60 and 300 seconds; it
 defaults to 30. See
 .B BUGS
@@ -168,7 +168,7 @@ below. Set to 0 if you want to disable the timeout completely.
 .TP
 .B invalid-expiry
 
-Controls how long Spey should keep tuples that have been seen only once in the
+Controls how long spey should keep tuples that have been seen only once in the
 database. An integer, in seconds. When the database is purged, any tuples where
 the hit count is 1 and the time last seen is older than this value will be
 discarded. The default is 24 hours.
@@ -176,7 +176,7 @@ discarded. The default is 24 hours.
 .TP
 .B valid-expiry
 
-Controls how long Spey should keep unused tuples that have been seen more than
+Controls how long spey should keep unused tuples that have been seen more than
 once in the database. An integer, in seconds. When the database is purged, any
 tuples that have not been seen for longer than the specified time will be
 discarded. The default is a week.
@@ -184,15 +184,15 @@ discarded. The default is a week.
 .TP
 .B runtime-user-id
 
-If set, this variable causes Spey to drop root privileges once its
+If set, this variable causes spey to drop root privileges once its
 initialisation is complete. The value should be a string of the form
 .BR username:groupname ;
-Spey must have write access to the file
+spey must have write access to the file
 .I containing
-its database file in order to work (because SQlite needs to create a journal
+its database file in order to work (because Sqlite needs to create a journal
 file in the same directory).
 
-If you do not want Spey to drop root privileges, then leave this variable
+If you do not want spey to drop root privileges, then leave this variable
 unset.
 
 .SH "MESSAGE RELAYING"
@@ -234,12 +234,12 @@ will match all messages and will disable the relay checking.
 
 .SH "BLACKLISTS AND WHITELISTS"
 
-In addition to the automatic greylisting, Spey also has blacklists and
+In addition to the automatic greylisting, spey also has blacklists and
 whitelists. These allow the user to override the greylisting mechanism. This
 can be useful for, for example, mailing lists that generate unique sender
 addresses for each message. Whitelists allow messages to be accepted without
 having to pass through the greylister; blacklists allow messages to be rejected
-before they reach the grelister.
+before they reach the greylister.
 
 The blacklist and whitelist tables work identically, and may be manipulated with the
 .BR speyctl(8)
@@ -293,22 +293,51 @@ response code rather than the 451 that greylisting produces. This should tell
 the remote server not to try resending it.
 
 
+.SH DROPPING ROOT PRIVILEGES
+spey has optional support for relinquishing root privileges after startup. This
+is for enhanced safety; if any security hole results in spey being compromised
+by a remote attacker, then it restricts any attack to trashing spey, preventing
+the attacker from damaging the rest of the system.
+
+By default, this is disabled, partly for backwards compatibility reasons, and
+partly because it is a little fiddly to set up (and spey should be secure
+anyway). It can be enabled by setting the
+.B runtime-user-id
+configuration variable. (See above for more information.)
+
+In order for spey to work when dropping root privileges, then you must place
+spey's database file in a directory that spey can write to. (This is due to the
+need for spey's SQL library to create temporary files.) Because the database
+is now in a non-standard location, you will need to use the
+.B --db
+command-line option to tell spey where it is.
+
+If you wish to use this feature, you will almost certainly want to create a
+specific user and group for spey. The truly paranoid can then apply a quota to
+that user to prevent any attackers from consuming all available disk space,
+but this is probably unnecessary; you should also be aware that if spey ever
+runs out of quota for legitimate reasons it will stop working.
+
+Dropping root privileges will probably become the default at some point in the
+future.
+
+
 .SH BUGS
-Spey is beta software. It has bugs. Spey is not guaranteed to do anything
+spey is beta software. It has bugs. spey is not guaranteed to do anything
 useful with your email. It may throw it all away into a big, black box and you
-will never see it again. Do not use Spey in a mission-critical environment
+will never see it again. Do not use spey in a mission-critical environment
 unless you are willing to take all responsibility for the consequences.
 
-Spey is also quite inefficient. It was written to be robust and reliable rather
+spey is also quite inefficient. It was written to be robust and reliable rather
 than fast; optimisation will occur at a later stage. In particular, every time
 a client connects a new connection is made to the local mail server. There's no
-reason why Spey couldn't keep reusing the same connection, which would reduce
+reason why spey couldn't keep reusing the same connection, which would reduce
 quite a lot of overhead.
 
-Spey assumes only one instance of it will be running on any one system. This is
+spey assumes only one instance of it will be running on any one system. This is
 incorrect, but easily fixed.
 
-Spey plays fast and loose with the RFC. There are a number of places where it
+spey plays fast and loose with the RFC. There are a number of places where it
 is actively violating it, but I've had good reason in each instance. It appears
 to interoperate happily with most mail software; the author is using it and
 doesn't seem to have lost any mail yet (that he's noticed). It even gets on
@@ -316,6 +345,7 @@ well with SMTP callbacks.
 
 That said, there are almost certainly major problems with it. Please report
 them!
+
 
 .SH FILES
 .TP
@@ -333,11 +363,14 @@ and
 are (C) 2004 David Given. Comments and criticism to
 .BR dg@cowlark.com .
 They are distributable under the terms of the GNU General Public License V2. A
-full copy can be found in the Spey source distribution, or at
+full copy can be found in the spey source distribution, or at
 .BR http://www.fsf.org/copyleft/gpl.html .
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.9  2005/09/30 23:20:17  dtrg
+.\" Updated the version number for 0.3.3. Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
+.\"
 .\" Revision 1.8  2004/11/21 18:46:49  dtrg
 .\" Updated version numbering to 0.3.2.
 .\"
