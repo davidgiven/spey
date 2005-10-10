@@ -29,7 +29,7 @@ or
 .IR destinationaddress \|]
 .RB [\| \-d 
 or 
-.B \-\-db
+.B \-\-database
 .IR database \|]
 .RB [\| \-v 
 or 
@@ -85,7 +85,7 @@ allows you to manipulate the spey's configuration, as well as examining and
 manipulating the address database.
 
 .TP
-.BI --db\  filename
+.BI --database\  filename
 
 Specifies the database file to use. The file must have already have been created with
 .BR speyctl(8) .
@@ -309,8 +309,10 @@ In order for spey to work when dropping root privileges, then you must place
 spey's database file in a directory that spey can write to. (This is due to the
 need for spey's SQL library to create temporary files.) Because the database
 is now in a non-standard location, you will need to use the
+.B --database
+command-line option to tell spey where it is. (You will also need the
 .B --db
-command-line option to tell spey where it is.
+command-line option for speyctl.)
 
 If you wish to use this feature, you will almost certainly want to create a
 specific user and group for spey. The truly paranoid can then apply a quota to
@@ -368,6 +370,9 @@ full copy can be found in the spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.10  2005/10/08 22:26:56  dtrg
+.\" Added extended documentation for the root privilege relinquish feature.
+.\"
 .\" Revision 1.9  2005/09/30 23:20:17  dtrg
 .\" Updated the version number for 0.3.3. Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
 .\"
