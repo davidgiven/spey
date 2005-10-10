@@ -2,8 +2,8 @@
                                    ===========
 
                                   Beta release
-                              (C) 2004 David Given
-                                   2004-11-21
+                              (C) 2005 David Given
+                                   2005-10-10
 
 INTRODUCTION
 ============
@@ -27,6 +27,12 @@ The database files used by 0.3 are NOT compatible with those used by prior
 versions.  You will have to delete the file and recreate it using speyctl (the
 new speyctl that comes with 0.3, of course). If you try to run spey with an old
 configuration file... well, on your own head be it.
+
+Beginning with version 0.3.3, spey now supports dropping root privileges after
+startup. This is not enabled by default, partly for backwards compatibility
+reasons, and partly because setting it up is more complex than the very stupid
+installation script can manage. How to set this up is fully documented in the
+spey man page.
 
 INSTALLATION
 ============
