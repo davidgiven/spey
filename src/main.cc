@@ -17,6 +17,12 @@
 #include <iostream>
 #include <fstream>
 
+/* If Electric Fence is turned on, enable its maximum paranoia settings. */
+
+#ifdef ELECTRICFENCE
+bool EF_FREE_WIPES = true;
+#endif
+
 SQL Sql;
 SocketAddress FromAddress;
 SocketAddress ToAddress;
@@ -174,6 +180,9 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2005/09/30 23:18:16  dtrg
+ * Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
+ *
  * Revision 1.8  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
