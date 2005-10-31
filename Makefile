@@ -9,19 +9,29 @@
 # $Source$
 # $State$
 
-PREFIX = /usr
+# Compilation options.
 
+PREFIX = /usr
 EXE = bin/spey
+OPTIMISATION = -g -O3
+CC = g++ -Wall
+
+ELECTRICFENCE = no
+
+# You shouldn't need to touch anything below here.
 
 MAJORVERSION := unknown
 BUILDCOUNT := 1
 include version
 
-CFLAGS = -Wall -g -O3 -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
-CC = g++
-
+CFLAGS = $(OPTIMISATION) -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
 LIBS = \
 	-lsqlite
+
+ifeq ($(ELECTRICFENCE),yes)
+	CFLAGS += -DELECTRICFENCE
+	LIBS += -lefence
+endif
 
 OBJS = \
 	src/Exception.o \
@@ -87,6 +97,9 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.7  2004/11/21 18:46:49  dtrg
+# Updated version numbering to 0.3.2.
+#
 # Revision 1.6  2004/11/18 17:57:19  dtrg
 # Rewrote logging system so that it no longer tries to subclass stringstream,
 # that was producing bizarre results on gcc 3.3. Added version tracking to the
