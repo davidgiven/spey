@@ -191,6 +191,17 @@ void Socket::writeline(string l)
 	for (string::size_type i=0; i<l.length(); i++)
 	{
 		c = l[i];
+		
+		/* Convert \n into \r\n. */
+		
+		if (c == 13)
+		{
+			c = 10;
+			if (write(&c, 1) == -1)
+				goto eof;
+			c = 13;
+		}
+		
 		if (write(&c, 1) == -1)
 			goto eof;
 	}
@@ -210,6 +221,13 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.6  2004/06/30 20:18:49  dtrg
  * Changed the way sockets are initialised; instead of doing it from the Socket
  * and SocketServer constructors, they're set up as zombies and initialised later
