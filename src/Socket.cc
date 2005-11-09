@@ -194,12 +194,12 @@ void Socket::writeline(string l)
 		
 		/* Convert \n into \r\n. */
 		
-		if (c == 13)
+		if (c == 10)
 		{
-			c = 10;
+			c = 13;
 			if (write(&c, 1) == -1)
 				goto eof;
-			c = 13;
+			c = 10;
 		}
 		
 		if (write(&c, 1) == -1)
@@ -221,28 +221,34 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2005/11/09 00:02:43  dtrg
+ * Fixed an issue where bare linefeeds were being sent to the internal server
+ * as part of spey's synthesised Received line. This was causing
+ * standard-checking MTAs such as qmail to die.
+ *
  * Revision 1.7  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
- * that was producing bizarre results on gcc 3.3. Added version tracking to the
- * makefile; spey now knows what version and build number it is, and displays the
- * information in the startup banner. Now properly ignores SIGPIPE, which was
- * causing intermittent silent aborts.
+ * that was producing bizarre results on gcc 3.3. Added version tracking to
+ * the makefile; spey now knows what version and build number it is, and
+ * displays the information in the startup banner. Now properly ignores
+ * SIGPIPE, which was causing intermittent silent aborts.
  *
  * Revision 1.6  2004/06/30 20:18:49  dtrg
- * Changed the way sockets are initialised; instead of doing it from the Socket
- * and SocketServer constructors, they're set up as zombies and initialised later
- * with an init() method. This is cleaner, and also allows a cunning new feature:
- * the connection to the downstream SMTP server is now only made once the first
- * valid SMTP command is received from the upstream SMTP server. This means that
- * connections are only made once we're reasonably sure that there's going to be a
- * valid SMTP conversation, which should harden spey against DoS attacks like the
- * ones I get every so often. Also took the opportunity to convert more this->blah
- * instance variables into _blah.
+ * Changed the way sockets are initialised; instead of doing it from the
+ * Socket and SocketServer constructors, they're set up as zombies and
+ * initialised later with an init() method. This is cleaner, and also allows a
+ * cunning new feature: the connection to the downstream SMTP server is now
+ * only made once the first valid SMTP command is received from the upstream
+ * SMTP server. This means that connections are only made once we're
+ * reasonably sure that there's going to be a valid SMTP conversation, which
+ * should harden spey against DoS attacks like the ones I get every so often.
+ * Also took the opportunity to convert more this->blah instance variables
+ * into _blah.
  *
  * Revision 1.5  2004/06/09 18:40:34  dtrg
- * Fixed some tracing where the address of incoming connections was being reported
- * incorrectly in the logs (but correctly in the Received lines of incoming
- * messages).
+ * Fixed some tracing where the address of incoming connections was being
+ * reported incorrectly in the logs (but correctly in the Received lines of
+ * incoming messages).
  *
  * Revision 1.4  2004/06/08 19:58:04  dtrg
  * Fixed a bug where the address of incoming connections was thought to be the
@@ -250,10 +256,10 @@ eof:
  * changed some this->blah instance variables to _blah.
  *
  * Revision 1.3  2004/05/30 01:55:13  dtrg
- * Numerous and major alterations to implement a system for processing more than
- * one message at a time, based around coroutines. Fairly hefty rearrangement of
- * constructors and object ownership semantics. Assorted other structural
- * modifications.
+ * Numerous and major alterations to implement a system for processing more
+ * than one message at a time, based around coroutines. Fairly hefty
+ * rearrangement of constructors and object ownership semantics. Assorted
+ * other structural modifications.
  *
  * Revision 1.2  2004/05/14 21:28:22  dtrg
  * Added the ability to create a Socket from a raw file descriptor (needed for
