@@ -3,7 +3,7 @@
 
                                   Beta release
                               (C) 2005 David Given
-                                   2005-10-10
+                                   2005-11-08
 
 INTRODUCTION
 ============
@@ -33,6 +33,15 @@ startup. This is not enabled by default, partly for backwards compatibility
 reasons, and partly because setting it up is more complex than the very stupid
 installation script can manage. How to set this up is fully documented in the
 spey man page.
+
+IMPORTANT NOTE TO LINUX KERNEL 2.4 USERS
+========================================
+
+Spey is, most unfortunately, *not supported* on Linux systems using a kernel
+of version 2.4 (or, probably, earlier). The reasons are complicated and
+technical and took me entirely by surprise; you may still be able to get
+spey to work, but it will be significantly harder than on a 2.6 system. See
+README-LINUX-2.4 for more information. Sorry.
 
 INSTALLATION
 ============
@@ -178,16 +187,19 @@ okay?
 LEGAL STUFF
 ===========
 
-Spey is (C) 2004 David Given. It is distributable under the conditions laid out
-by the GNU Public License, version 2. You can find a copy of this license in
-the file COPYING.
+Spey is (C) 2004-2005 David Given. It is distributable under the conditions
+laid out by the GNU Public License, version 2 only (and explictly not version
+3). You can find a copy of this license in the file COPYING.
 
 REVISION HISTORY
 ================
 
-Spey 0.3.3: 2005-9-30: Fixed the untraceable scheduler bug that was causing
-Spey to very occasionally crash silently --- thanks to Markus Madlener for help
-with this one. Also added support for dropping root privileges.
+Spey 0.3.3: 2005-11-08: Fixed the untraceable scheduler bug that was causing
+Spey to very occasionally crash silently --- thanks to Markus Madlener for
+help with this one. Fixed some other embarassing security holes; thanks to
+Joshua Drake for pointing these out. Also added support for dropping root
+privileges. Fixed an issue with using qmail as the internal mail server.
+Documented the incompatibility with Linux 2.4 glibc.
 
 Spey 0.3.2: 2004-11-21: Tracing now works correctly on gcc 3.3 and thereabouts;
 Spey should now work on, hopefully, all versions of gcc that support a modern

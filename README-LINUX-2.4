@@ -1,0 +1,45 @@
+Notes on running spey on Linux kernel 2.4 systems
+=================================================
+
+Linux with kernel 2.4 uses a version of glibc with the linuxthreads helper
+library. This thread provides the pthreads interface to the kernel's
+underlying thread functionality.
+
+Unfortunately, spey's coroutines support conflicts terminally with
+linuxthreads. It is not possible to use coroutines *and* pthreads at the
+same time. This would normally be fine, except most versions of the sqlite
+database library are compiled to use pthreads.
+
+The upshot of this is that, basically, and most unfortunately, if you use a
+Linux 2.4 kernel, spey will probably not work for you.
+
+It *might* be possible to compile a version of sqlite with pthreads support
+disabled, and then link spey against that, but you're on your own. (I don't
+have a Linux 2.4 machine to develop on.) That said, if you can get it to
+work, please contact me on dg@cowlark.com and I'll document it here!
+
+Spey works fine on Linux 2.6 machines. (The 2.6 glibc uses a different
+threading implementation that doesn't have this problem.)
+
+The technical reason is as follows: linuxthreads supplies its own version of
+malloc() that is thread-safe. In order to do this, malloc() must determine
+what thread it is running in. linuxthreads does this by examining the
+current stack frame; it tags all of its stack frames with a magic number, so
+by looking at the magic number, it knows which thread the stack belongs to.
+
+However, spey allocates its own stack frames (see src/Threadlet.cc around
+line 63). These stack frames aren't tagged. linuxthreads still looks for the
+magic number, doesn't find it, reads the value anyway, jumps off into la-la
+land and dies in a heap on the floor.
+
+The really annoying thing is that by examining the linuxthreads source code,
+I have found an internal switch that, when enabled, causes linuxthreads to
+implement a workaround to allow exactly the behaviour I need to make spey
+work --- but I can't turn the switch on from spey. Only linuxthreads itself
+can do that. (The __pthread_nonstandard_stacks internal variable.)
+
+If anyone can suggest a workaround, please get in touch.
+
+David Given
+dg@cowlark.com
+2005-11-08
