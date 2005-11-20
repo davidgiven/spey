@@ -7,16 +7,21 @@ underlying thread functionality.
 
 Unfortunately, spey's coroutines support conflicts terminally with
 linuxthreads. It is not possible to use coroutines *and* pthreads at the
-same time. This would normally be fine, except most versions of the sqlite
-database library are compiled to use pthreads.
+same time. This would normally be fine, except on some distributions,
+including Debian, the sqlite database library has been compiled to use
+pthreads.
 
 The upshot of this is that, basically, and most unfortunately, if you use a
-Linux 2.4 kernel, spey will probably not work for you.
+Linux 2.4 kernel, spey may not work for you out of the box. If you see an
+immediate crash on startup, you are running into this issue.
 
-It *might* be possible to compile a version of sqlite with pthreads support
-disabled, and then link spey against that, but you're on your own. (I don't
-have a Linux 2.4 machine to develop on.) That said, if you can get it to
-work, please contact me on dg@cowlark.com and I'll document it here!
+All is not lost, however. There is a workaround: you need to recompile the
+Sqlite library manually to avoid it linking against the pthreads library.
+Sqlite 2 can be obtained here: http://www.sqlite.org/download.html
+...and it is fairly straightforward to compile. One this is done, you can
+statically link spey against it, and it should work fine. You don't need
+to do a full installation of sqlite; your distribution's existing one will
+work everywhere else.
 
 Spey works fine on Linux 2.6 machines. (The 2.6 glibc uses a different
 threading implementation that doesn't have this problem.)
@@ -32,14 +37,6 @@ line 63). These stack frames aren't tagged. linuxthreads still looks for the
 magic number, doesn't find it, reads the value anyway, jumps off into la-la
 land and dies in a heap on the floor.
 
-The really annoying thing is that by examining the linuxthreads source code,
-I have found an internal switch that, when enabled, causes linuxthreads to
-implement a workaround to allow exactly the behaviour I need to make spey
-work --- but I can't turn the switch on from spey. Only linuxthreads itself
-can do that. (The __pthread_nonstandard_stacks internal variable.)
-
-If anyone can suggest a workaround, please get in touch.
-
 David Given
 dg@cowlark.com
-2005-11-08
+2005-11-20
