@@ -37,11 +37,18 @@ spey man page.
 IMPORTANT NOTE TO LINUX KERNEL 2.4 USERS
 ========================================
 
-Spey is, most unfortunately, *not supported* on Linux systems using a kernel
-of version 2.4 (or, probably, earlier). The reasons are complicated and
-technical and took me entirely by surprise; you may still be able to get
-spey to work, but it will be significantly harder than on a 2.6 system. See
-README-LINUX-2.4 for more information. Sorry.
+There is a problem with using Spey on Linux systems with a 2.4 kernel which
+means that Spey may, or may not, work. Sorry. Some distributions, including
+Debian, have compiled the Sqlite library in such a way that it triggers an
+obscure bug in the standard C library that causes an immediate crash on
+startup. There's no way for me to work around this.
+
+The exact reasons are complicated and technical and took me entirely by
+surprise; you may still be able to get spey to work, but it will be
+significantly harder than on a 2.6 system. See README-LINUX-2.4 for more
+information.
+
+Everything is fine on 2.6 kernels.
 
 INSTALLATION
 ============
