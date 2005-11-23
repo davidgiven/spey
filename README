@@ -44,7 +44,7 @@ obscure bug in the standard C library that causes an immediate crash on
 startup. There's no way for me to work around this.
 
 The exact reasons are complicated and technical and took me entirely by
-surprise; you may still be able to get spey to work, but it will be
+surprise; you should still be able to get spey to work, but it will be
 significantly harder than on a 2.6 system. See README-LINUX-2.4 for more
 information.
 
