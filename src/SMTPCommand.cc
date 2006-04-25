@@ -79,7 +79,10 @@ void SMTPCommand::set(Socket& in)
 			}
 			else
 				this->parameter = p.getword();
-			p.eol();
+				
+			/* Ignore the rest of the line, to cope with broken mailers who
+			 * insist on sending the RFC1870 SIZE=1234 extension despite the
+			 * fact we haven't said we support it. */
 		}
 		else if (cmd == "rcpt")
 		{
@@ -186,6 +189,13 @@ SMTPCommand::operator string ()
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.2  2004/06/22 21:01:02  dtrg
  * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
  * closer to the C++ standard than 2.95 is; plus, the standard library is now
