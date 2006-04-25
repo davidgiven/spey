@@ -13,6 +13,12 @@
 #include "spey.h"
 #include <sys/time.h>
 
+static void lowercase(string& s)
+{
+	for (size_t i=0; i<s.length(); i++)
+		s[i] = tolower(s[i]);
+}
+
 GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddress)
 {
 	struct timeval tv;
@@ -21,6 +27,11 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 	long firstseen;
 	int timesseen = 0;
 	bool failed = 1;
+
+	/* Convert the from and to addresses into lower case. */
+
+	lowercase(fromaddress);
+	lowercase(toaddress);
 
 	if (fromaddress == "")
 		fromaddress = "(probe)";
@@ -152,6 +163,13 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.3  2004/06/22 10:05:37  dtrg
  * Fixed some more logic flow bugs in the blacklist code. (Blacklisted messages
  * were being reported as greylisted.)
