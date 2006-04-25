@@ -249,10 +249,26 @@ void MessageProcessor::process()
 		/* Pass on the command, and then relay back the result. */
 		
 		writeinside();
-
 		readinside();
+		
+		/* If the command is a EHLO or HELO, then the RFC is a bit vague about
+		 * what the response should be. In one part it says that only the
+		 * response code should be valid, but in another it explicitly states
+		 * the format that the EHLO response should have... and yes, there are
+		 * broken mailers that require that format. So we need to override the
+		 * default minimalist response if the command was EHLO or HELO here.
+		 */
+		
+		if ((_command.cmd() == SMTPCommand::EHLO) ||
+		    (_command.cmd() == SMTPCommand::HELO))
+		{
+			if (_response.issuccess())
+				_response.parmoverride(_command.arg());
+		}
 		writeoutside();
 
+		/* If we don't tolerate errors, give up. */
+		
 		if (_response.iserror() && Settings::intolerant())
 			goto abort;
 		
@@ -325,6 +341,9 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.10  2005/10/08 21:19:07  dtrg
+ * Fixed a SQL injection security flaw. Email address received remotely were being pasted into SQL strings without first checking for ' and \ characters, which could result in a remote attacked executing arbitrary SQL strings on the server... nasty. MessageProcessor::verifyaddress() has now been extended to reject email addresses containing these characters, which are invalid in email addresses anyway. Thanks to Joshua Drake for spotting this one.
+ *
  * Revision 1.9  2005/03/04 22:24:48  dtrg
  * The main message processing loop now ensures that it's connected to the local
  * server *after* it's verified the first command, not before. This means that if
