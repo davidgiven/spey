@@ -1,0 +1,37 @@
+                          THE SPEY STANDARD WHITELIST
+                          ===========================
+                          
+SMTP email is hard. The RFCs are complex and subtle. There are a lot of
+people out there bending the rules in an attempt to make lives easier for
+themselves --- spey, for one.
+
+Unfortunately, there are some people who bend the rules sufficiently so that
+when they encounter spey bending the rules in the other direction, the rules
+get stressed beyond their capacity and break... leading to an inability to
+send email.
+
+This usually happens when they do something spectacularly stupid, which means
+that strictly it should be entirely their problem, but occasionally in the
+interests of expediency it's easier just to bypass the problem by whitelisting
+them.
+
+This file lists some of the major service providers that whitelisting is
+required for. If you want to communicate with users at these providers, you'll
+have to add the entries to your whitelist.
+
+If you know of any more useful whitelist entries that should go in here,
+please send them to me (dg@cowlark.com).
+
+
+
+YAHOO GROUPS
+
+When you subscribe to a Yahoo mailing list (why do they call them 'groups'?),
+Yahoo's servers will try to probe your address to make sure it's valid. When
+Spey responds with a 451 'Try Again Later' message, they assume that the
+address is invalid and won't send any mail to it. This, obviously, is
+violating the RFC. (The servers they use to actually send real email don't
+do this.) In order to subscribe to a Yahoo mailing list, you need the
+following whitelist entry:
+
+    %@returns.groups.yahoo.com : dg@cowlark.com
