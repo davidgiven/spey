@@ -246,7 +246,7 @@ void MessageProcessor::process()
 			}
 		}
 
-		/* Pass on the command, and then relay back the result. */
+		/* Pass on the command, and then fetch the result. */
 		
 		writeinside();
 		readinside();
@@ -263,7 +263,7 @@ void MessageProcessor::process()
 		    (_command.cmd() == SMTPCommand::HELO))
 		{
 			if (_response.issuccess())
-				_response.parmoverride(_command.arg());
+				_response.parmoverride(Settings::identity());
 		}
 		writeoutside();
 
@@ -341,6 +341,9 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.11  2006/04/25 21:25:59  dtrg
+ * Changed the response to EHLO and HELO to more closely comply with an ambiguous bit in RFC2821; despite the fact that the RFC states that only the numeric code should be used, it also describes the response to EHLO and HELO as including the domain that the user gave. Guess what, some MTAs rely on this.
+ *
  * Revision 1.10  2005/10/08 21:19:07  dtrg
  * Fixed a SQL injection security flaw. Email address received remotely were being pasted into SQL strings without first checking for ' and \ characters, which could result in a remote attacked executing arbitrary SQL strings on the server... nasty. MessageProcessor::verifyaddress() has now been extended to reject email addresses containing these characters, which are invalid in email addresses anyway. Thanks to Joshua Drake for spotting this one.
  *
