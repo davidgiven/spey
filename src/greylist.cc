@@ -13,12 +13,6 @@
 #include "spey.h"
 #include <sys/time.h>
 
-static void lowercase(string& s)
-{
-	for (size_t i=0; i<s.length(); i++)
-		s[i] = tolower(s[i]);
-}
-
 GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddress)
 {
 	struct timeval tv;
@@ -27,11 +21,6 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 	long firstseen;
 	int timesseen = 0;
 	bool failed = 1;
-
-	/* Convert the from and to addresses into lower case. */
-
-	lowercase(fromaddress);
-	lowercase(toaddress);
 
 	if (fromaddress == "")
 		fromaddress = "(probe)";
@@ -163,6 +152,11 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2006/04/25 20:07:59  dtrg
+ * Changed the greylister so that it converts email addresses to lower case before trying to match
+ * them. Email address are supposed to be case insensitive (in ASCII), but nobody had ever tried
+ * it until now...
+ *
  * Revision 1.4  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
