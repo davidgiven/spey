@@ -110,25 +110,25 @@ int Socket::read(void* buffer, int buflength)
 
 	uint64_t timeout = now() + (uint64_t)_timeout*1000;
 
-	/* Wait for incoming data. */
+	/* Read data in concurrent mode. */
 
+	Threadlet::releaseCPUlock();
 	for (;;) {
+		int delay = timeout - now();
+		if (delay < 0)
+		{
+			Threadlet::takeCPUlock();
+			throw NetworkTimeoutException();
+		}
+
 		struct pollfd p;
 		p.fd = _fd;
 		p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
-		if (poll(&p, 1, 0) != 0)
+
+		if (poll(&p, 1, delay) != 0)
 			break;
-
-		/* No data. Deschedule. */
-
-		int delay = timeout - now();
-		if (delay < 0)
-			throw NetworkTimeoutException();
-
-		Threadlet::addrdfd(_fd);
-		Threadlet::current()->deschedule(delay);
-		Threadlet::subrdfd(_fd);
 	}
+	Threadlet::takeCPUlock();
 
 	return ::read(_fd, buffer, buflength);
 }
@@ -137,22 +137,13 @@ int Socket::read(void* buffer, int buflength)
 
 int Socket::write(void* buffer, int buflength)
 {
-	/* Wait for the socket becoming writable. */
+	/* Wait in concurrent mode. */
 
-	for (;;) {
-		struct pollfd p;
-		p.fd = _fd;
-		p.events = POLLOUT | POLLERR | POLLHUP;
-		if (poll(&p, 1, 0) != 0)
-			break;
+	Threadlet::releaseCPUlock();
+	int e = ::write(_fd, buffer, buflength);
+	Threadlet::takeCPUlock();
 
-		/* No data. Deschedule. */
-
-		Threadlet::addwrfd(_fd);
-		Threadlet::current()->deschedule();
-		Threadlet::subwrfd(_fd);
-	}
-	return ::write(_fd, buffer, buflength);
+	return e;
 }
 
 /* Read a line of text from the socket; doesn't include the newline (or CRLF)
@@ -221,6 +212,10 @@ eof:
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2005/11/09 10:35:09  dtrg
+ * Fixed a problem with the last checkin --- it seems that \n\r is *not*
+ * the same as \r\n... thanks to Bernd Rilling for pointing this out.
+ *
  * Revision 1.8  2005/11/09 00:02:43  dtrg
  * Fixed an issue where bare linefeeds were being sent to the internal server
  * as part of spey's synthesised Received line. This was causing

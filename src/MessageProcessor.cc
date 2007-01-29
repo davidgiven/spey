@@ -16,8 +16,6 @@ MessageProcessor::MessageProcessor(int fd, SocketAddress& address)
 {
 	_outside.init(fd, address);
 	_outside.timeout(Settings::sockettimeout());
-
-	Threadlet::addthreadlet(this);
 }
 
 MessageProcessor::~MessageProcessor()
@@ -341,6 +339,11 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.12  2006/04/26 15:24:16  dtrg
+ * Fixed the EHLO/HELO response override; I was returning the incorrect domain.
+ * This was causing some MTAs (such as the one Debian uses on murphy.debian.org)
+ * to think Spey was evil and just give up, losing the email.
+ *
  * Revision 1.11  2006/04/25 21:25:59  dtrg
  * Changed the response to EHLO and HELO to more closely comply with an ambiguous bit in RFC2821; despite the fact that the RFC states that only the numeric code should be used, it also describes the response to EHLO and HELO as including the domain that the user gave. Guess what, some MTAs rely on this.
  *

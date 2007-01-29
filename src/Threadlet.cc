@@ -14,29 +14,55 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
+#include <assert.h>
 #include <list>
 
-enum {
-	StackSize = 1 * 1024 * 1024
-};
-
-static ucontext rootcontext;
-static fd_set readfds;
-static fd_set writefds;
-static int maxfd = 0;
-static list<Threadlet*> processes;
-static Threadlet* currentprocess;
-static int timeout;
+static pthread_mutex_t cpulock;
+static pthread_key_t selfkey;
 
 #define foreach(_collection, _iterator) \
         for (typeof((_collection).begin()) _iterator = (_collection).begin(); \
                 (_iterator) != (_collection).end(); (_iterator)++)
 
-void Threadlet::trampoline(Threadlet* threadlet)
+void Threadlet::initialise()
 {
+	/* Create the key used to store which Threadlet object is currently
+	 * running. */
+
+	(void) pthread_key_create(&selfkey, NULL);
+
+	/* Create the CPU lock. */
+
+	pthread_mutexattr_t attrs;
+	(void) pthread_mutexattr_init(&attrs);
+	(void) pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_RECURSIVE);
+	(void) pthread_mutexattr_setpshared(&attrs, true);
+	int e = pthread_mutex_init(&cpulock, &attrs);
+	ThreadLog() << "CPU lock created: " << e;
+	pthread_mutexattr_destroy(&attrs);
+
+	/* Take the CPU lock. */
+
+	Threadlet::takeCPUlock();
+}
+	
+void* Threadlet::trampoline(void* user)
+{
+	Threadlet* threadlet = (Threadlet*) user;
+	
+	int e = pthread_setspecific(selfkey, threadlet);
+	if (e)
+	{
+		SystemLog() << "Unable to set up new threadlet!";
+		return NULL;
+	}
+	
+	/* Threadlet code runs with the CPU lock held. */
+	
+	threadlet->takeCPUlock();
 	try {
 		threadlet->run();
 	} catch (NetworkTimeoutException e) {
@@ -52,172 +78,73 @@ void Threadlet::trampoline(Threadlet* threadlet)
 	} catch (...) {
 		SystemLog() << "Uncaught exception in threadlet!";
 	}
-	threadlet->_running = 0;
-	currentprocess = NULL;
+	threadlet->releaseCPUlock();
+	
+	/* Finished. Delete the threadlet and exit. */
+	
+	delete threadlet;
+	return NULL;
 }
 
 Threadlet::Threadlet()
 {
-	getcontext(&_context);
-
-	_context.uc_stack.ss_sp = mmap(NULL, StackSize,
-		PROT_READ | PROT_WRITE | PROT_EXEC,
-		MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, 0, 0);
-	if (_context.uc_stack.ss_sp == MAP_FAILED)
-	{
-		int e = errno;
-		close(_stackfd);
-		_stackfd = -1;
-		throw IOException("couldn't map coroutine stack block", e);
-	}
-
-	_context.uc_stack.ss_size = StackSize;
-	_context.uc_stack.ss_flags = 0;
-	_context.uc_link = &rootcontext;
-
-	makecontext(&_context, (void(*)()) Threadlet::trampoline, 1, this);
-	_running = true;
+	/* Create the underlying pthread for this threadlet. */
+	
+	int e = pthread_create(&_thread, NULL, Threadlet::trampoline, this);
+	if (e)
+		throw IOException("couldn't create new thread", e);
 }
 
 Threadlet::~Threadlet()
 {
-	if (_context.uc_stack.ss_sp)
-		munmap(_context.uc_stack.ss_sp, _context.uc_stack.ss_size);
+	pthread_detach(_thread);
 }
 
 /* ======================================================================= */
 /*                         THREADLET INTERFACE                             */
 /* ======================================================================= */
 
+int Threadlet::releaseCPUlock()
+{
+	return pthread_mutex_unlock(&cpulock);
+}
+
+int Threadlet::takeCPUlock()
+{
+	return pthread_mutex_lock(&cpulock);
+}
+
+int Threadlet::halt()
+{
+	/* Sleeps forever. */
+
+	releaseCPUlock();
+	for (;;)
+		pause();
+}
+	
 int Threadlet::debugid()
 {
 	return -1;
 }
 	
-void Threadlet::deschedule(int delay)
-{
-	if (timeout > delay)
-		timeout = delay;
-
-	currentprocess = NULL;
-	swapcontext(&_context, &rootcontext);
-}
-
 /* ======================================================================= */
-/*                        ROOT PROCESS INTERFACE                           */
-/* ======================================================================= */
-
-void Threadlet::invoke()
-{
-	if (!_running)
-		throw InternalException("Tried to invoke dead threadlet");
-
-	currentprocess = this;
-	swapcontext(&rootcontext, &_context);
-}
-
-/* ======================================================================= */
-/*                               SCHEDULER                                 */
+/*                               UTILITIES                                 */
 /* ======================================================================= */
 
 Threadlet* Threadlet::current()
 {
-	return currentprocess;
+	return (Threadlet*) pthread_getspecific(selfkey);
 }
 	
-void Threadlet::addthreadlet(Threadlet* t)
-{
-	processes.push_back(t);
-}
-
-void Threadlet::addrdfd(int fd)
-{
-	FD_SET(fd, &readfds);
-	fd++;
-	if (fd > maxfd)
-		maxfd = fd;
-}
-
-void Threadlet::subrdfd(int fd)
-{
-	FD_CLR(fd, &readfds);
-}
-	
-void Threadlet::addwrfd(int fd)
-{
-	FD_SET(fd, &writefds);
-	fd++;
-	if (fd > maxfd)
-		maxfd = fd;
-}
-
-void Threadlet::subwrfd(int fd)
-{
-	FD_CLR(fd, &writefds);
-}
-	
-/* The scheduler is dead simple: it waits for something interesting to happen on
- * a file descriptor, and then gives every threadlet a chance to execute. It could
- * be easily optimised to keep track of what threadlet is interested in what
- * file descriptors and only run those, but there's not really a lot of point:
- * in normal use, there'll be a fairly small number of threadlets running.
- *
- * The only interesting point is that when startScheduler() is called, all
- * threadlets get one chance to run. This is the point at which they should
- * register what file descriptors they're interested in. If nothing registers
- * any interest, nothing will happen --- ever! */
-
-void Threadlet::startScheduler()
-{
-	for (;;) {
-		/* Give all threadlets some CPU time. */
-
-		timeout = INT_MAX;
-		foreach (processes, i)
-		{
-			Threadlet* t = *i;
-			if (t->_running)
-				t->invoke();
-		}
-
-		/* Clean up any terminated threadlets. */
-
-	restartloop:
-		foreach (processes, i)
-		{
-			Threadlet* t = *i;
-			if (!t->_running)
-			{
-				ThreadLog() << "destroying threadlet "
-				            << t->debugid();
-				processes.remove(t);
-				delete t;
-				goto restartloop;
-			}
-		}
-
-		/* Any processes left? */
-
-		if (processes.empty())
-			break;
-
-		/* Wait for the next interesting event. */
-
-		fd_set reads = readfds;
-		fd_set writes = writefds;
-
-		struct timeval tv;
-		tv.tv_sec = timeout / 1000;
-		tv.tv_usec = (timeout % 1000) * 1000;
-		ThreadLog() << "waiting for "
-		            << timeout
-		            << "ms";
-		select(maxfd, &reads, &writes, NULL, &tv);
-	}
-}
-
 /* Revision history
  * $Log$
+ * Revision 1.3  2005/09/25 23:11:35  dtrg
+ * Changed some references to '0' and '1' to 'false' and 'true' for clarity.
+ * Fixed a problem where if a threadlet was terminated due to an exception,
+ * currentprocess wasn't being reset; this was causing the logging system to
+ * occasionally crash when it tried to determine the ID of the current threadlet.
+ *
  * Revision 1.2  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
@@ -230,6 +157,5 @@ void Threadlet::startScheduler()
  * one message at a time, based around coroutines. Fairly hefty rearrangement of
  * constructors and object ownership semantics. Assorted other structural
  * modifications.
- *
  */
 

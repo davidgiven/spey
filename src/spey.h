@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
-#include <ucontext.h>
 #include <string>
 #include <sstream>
 
@@ -50,6 +49,13 @@ extern GreylistResponse greylist(unsigned int sender,
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.4  2004/06/21 23:11:15  dtrg
  * Added a fix for gcc 3.0, hopefully. Untested *on* gcc 3.0, but it still builds
  * on 2.95.

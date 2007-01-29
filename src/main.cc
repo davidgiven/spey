@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <signal.h>
 #include <iostream>
 #include <fstream>
 
@@ -29,12 +30,24 @@ SocketAddress ToAddress;
 
 static void drop_root_privileges()
 {
+	/* Don't do anything if we're not root. */
+
+	if (getuid() != 0)
+	{
+		DetailLog() << "Not running as root, so not dropping any privileges.";
+		return;
+	}
+
+	/* Don't do anything if dropping root privileges has been disabled. */
+
 	string usergroupid = Settings::runtimeuserid();
 	if (usergroupid == "")
 	{
 		DetailLog() << "Not dropping root privileges --- running as root";
 		return;
 	}
+
+	/* Drop privileges. */
 
 	{
 		string::size_type seperator = usergroupid.find(':');
@@ -105,15 +118,15 @@ static int daemonmode(CLI& cli)
 	SystemLog() << "listening on "
 		    << FromAddress;
 
-	/* Automatically added to scheduler */
+	/* Create server thread. */
 	(void) new ServerProcessor();
 
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
 	Settings::reload();
 	drop_root_privileges();
-	Threadlet::startScheduler();
-	SystemLog() << "scheduler terminated!";
+
+	Threadlet::halt();
 	return 0;
 }
 
@@ -128,9 +141,12 @@ static int inetdmode(CLI& cli)
 	try {
 		Settings::reload();
 		SocketAddress dummyaddress;
+
+		/* Create message thread. */
 		(void) new MessageProcessor(0, dummyaddress);
 		drop_root_privileges();
-		Threadlet::startScheduler();
+
+		Threadlet::halt();
 	} catch (NetworkTimeoutException e) {
 		Statistics::timeout();
 		MessageLog() << "Socket timeout; aborting";
@@ -157,17 +173,18 @@ int main(int argc, char* argv[])
 	try {
 		CLI cli(argc, argv);
 		Logger::setlevel(cli.v());
+		Threadlet::initialise();
 		
 		if (cli.i())
 			return inetdmode(cli);
 		else
 			return daemonmode(cli);
 	} catch (string e) {
-		SystemLog() << "exception caught: "
+		SystemLog() << "string exception caught: "
 			    << e;
 		exit(-1);
 	} catch (Exception e) {
-		SystemLog() << "exception caught: "
+		SystemLog() << "generic exception caught: "
 			    << e;
 		exit(-1);
 	} catch (...) {
@@ -180,6 +197,9 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.10  2005/10/31 22:20:36  dtrg
+ * Added support for compiling with the Electric Fence memory debugger.
+ *
  * Revision 1.9  2005/09/30 23:18:16  dtrg
  * Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
  *
