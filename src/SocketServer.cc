@@ -61,23 +61,13 @@ int SocketServer::accept(SocketAddress* address)
 {
 	/* Wait for an incoming socket. */
 
-	for (;;) {
-		struct pollfd p;
-		p.fd = _fd;
-		p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
-		if (poll(&p, 1, 0) != 0)
-			break;
-
-		/* No data. Deschedule. */
-
-		Threadlet::addrdfd(_fd);
-		Threadlet::current()->deschedule();
-		Threadlet::subrdfd(_fd);
-	}
-
 	sockaddr_in sa;
 	socklen_t sas = sizeof(sa);
+
+	Threadlet::releaseCPUlock();
 	int fd = ::accept(_fd, (sockaddr*) &sa, &sas);
+	Threadlet::takeCPUlock();
+
 	if (fd == -1)
 		throw NetworkException("accept() failed", errno);
 	address->set(sa);
@@ -86,6 +76,13 @@ int SocketServer::accept(SocketAddress* address)
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.4  2004/06/30 20:18:49  dtrg
  * Changed the way sockets are initialised; instead of doing it from the Socket
  * and SocketServer constructors, they're set up as zombies and initialised later

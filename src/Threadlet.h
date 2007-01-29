@@ -13,41 +13,44 @@
 #ifndef THREADLET_H
 #define THREADLET_H
 
+#include <pthread.h>
+
 struct Threadlet {
+	static void initialise();
 	Threadlet();
 	virtual ~Threadlet();
 
 	// Called by the threadlet
 
+	static int takeCPUlock();
+	static int releaseCPUlock();
+	
 	virtual int debugid();
 	virtual void run() = 0;
-	void deschedule(int delay = INT_MAX);
 
+	static int halt();
+	
 	// Called by the root process
 	
+	static void* trampoline(void* user);
 	void invoke();
-
-	// Scheduler interface
+	
+	// Called by anyone
 	
 	static Threadlet* current();
-	static void addthreadlet(Threadlet* t);
-	static void addrdfd(int fd);
-	static void subrdfd(int fd);
-	static void addwrfd(int fd);
-	static void subwrfd(int fd);
-	static void startScheduler();
-
+	
 protected:
-	int _stackfd;
-	struct ucontext _context;
-	bool _running;
-
-	static void trampoline(Threadlet* threadlet);
+	pthread_t _thread;
 };
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.1  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
  */
 

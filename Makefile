@@ -16,6 +16,8 @@ EXE = bin/spey
 OPTIMISATION = -g -O3
 CC = g++ -Wall
 
+# If you want to debug Spey, you can enable Electric Fence support here.
+
 ELECTRICFENCE = no
 
 # You shouldn't need to touch anything below here.
@@ -26,6 +28,7 @@ include version
 
 CFLAGS = $(OPTIMISATION) -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
 LIBS = \
+	-lpthread \
 	-lsqlite
 
 ifeq ($(ELECTRICFENCE),yes)
@@ -97,6 +100,9 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.8  2005/10/31 22:20:36  dtrg
+# Added support for compiling with the Electric Fence memory debugger.
+#
 # Revision 1.7  2004/11/21 18:46:49  dtrg
 # Updated version numbering to 0.3.2.
 #
