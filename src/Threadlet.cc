@@ -121,6 +121,7 @@ int Threadlet::halt()
 	releaseCPUlock();
 	for (;;)
 		pause();
+	return 0;
 }
 	
 int Threadlet::debugid()
@@ -139,6 +140,13 @@ Threadlet* Threadlet::current()
 	
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/01/29 23:05:11  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.3  2005/09/25 23:11:35  dtrg
  * Changed some references to '0' and '1' to 'false' and 'true' for clarity.
  * Fixed a problem where if a threadlet was terminated due to an exception,
