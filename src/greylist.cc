@@ -18,7 +18,7 @@ GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddr
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	long lastseen = tv.tv_sec;
-	long firstseen;
+	long firstseen = 0;
 	int timesseen = 0;
 	bool failed = 1;
 
@@ -152,6 +152,10 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2006/04/26 21:56:23  dtrg
+ * Backed out the previous change, as it wasn't necessary (SMTPCommand's parser
+ * already converted the addresses to lower case).
+ *
  * Revision 1.5  2006/04/25 20:07:59  dtrg
  * Changed the greylister so that it converts email addresses to lower case before trying to match
  * them. Email address are supposed to be case insensitive (in ASCII), but nobody had ever tried
