@@ -68,7 +68,6 @@ bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 	s << "SELECT COUNT(*) FROM allowrelayingto WHERE "
 		<< "((left = '') OR (left = '" << address << "')) AND "
 		<< "((right = '') OR (right = '" << domain << "'));";
-	cout << s.str() << endl;
 		
 	{
 		SQLQuery q(Sql, s.str());
@@ -82,6 +81,9 @@ bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2005/09/30 23:18:16  dtrg
+ * Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
+ *
  * Revision 1.2  2004/05/14 23:11:44  dtrg
  * Added decent relaying support. Also converted SocketAddress to use references a
  * lot rather than pass-by-value, out of general tidiness and the hope that it
