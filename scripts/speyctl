@@ -109,7 +109,9 @@ function cmd_init()
 		INSERT INTO settings VALUES               \
 			('invalid-expiry',	'86400');           \
 		INSERT INTO settings VALUES               \
-			('valid-expiry',	'1209600');")
+			('valid-expiry',	'1209600');	    \
+		INSERT INTO settings VALUES               \
+			('runtime-user-id',	'spey:spey');")
 
 	sql("CREATE TABLE statistics (              \
 			key VARCHAR PRIMARY KEY,                \
@@ -365,7 +367,7 @@ function parseargs(  i)
 }
 
 BEGIN {
-	configfile = "/var/lib/misc/spey.db"
+	configfile = "/var/lib/spey/spey.db"
 	arg1 = ""
 	arg2 = ""
 	parseargs()
@@ -374,6 +376,9 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.9  2005/09/30 23:19:05  dtrg
+# Updated version number to 0.3.3. Also removed the previous default value for process-user-id; the variable is now called runtime-user-id, and we don't want a default value any more anyway.
+#
 # Revision 1.8  2005/09/25 23:26:23  dtrg
 # Added support for dropping root privileges once spey has started up.
 #

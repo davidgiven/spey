@@ -10,7 +10,7 @@
  * $State$
  */
 
-d / database		string {"/var/lib/misc/spey.db"}
+d / database		string {"/var/lib/spey/spey.db"}
 	"Spey configuration file."
 
 f / from                string {"0.0.0.0:25"}
@@ -30,6 +30,12 @@ i / inetd		flag
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/05/30 01:55:13  dtrg
+ * Numerous and major alterations to implement a system for processing more than
+ * one message at a time, based around coroutines. Fairly hefty rearrangement of
+ * constructors and object ownership semantics. Assorted other structural
+ * modifications.
+ *
  * Revision 1.2  2004/05/14 22:01:40  dtrg
  * Added inetd mode, where one message is processed from stdin and then spey exits. Also added proper daemon functionality where spey detaches itself cleanly from the console to go into the background.
  *
