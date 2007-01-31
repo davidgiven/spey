@@ -22,6 +22,13 @@ struct SMTPResponse {
 	void set();
 	void set(int code, string parameter="");
 	void set(Socket& in);
+	
+	/* Note: continuation support is currently very crude. Continuations are
+	 * not read, must be set programmatically, and may consist of only one
+	 * line. (Used by external-auth support.) */
+	 
+	void continuationoverride(string continuation);
+	
 	void parmoverride(string parameter);
 	void msgoverride(string message);
 
@@ -32,11 +39,14 @@ struct SMTPResponse {
 
 	operator string ();
 	string arg() { return _parameter; }
+	int code() { return _code; }
 
 protected:
 	int _code;
 	string _parameter;
 	string _msgoverride;
+	bool _hascontinuation;
+	string _continuation;
 };
 
 inline Logger& operator << (Logger& s, SMTPResponse& sa)
@@ -49,6 +59,13 @@ inline Logger& operator << (Logger& s, SMTPResponse& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.2  2004/06/22 21:01:02  dtrg
  * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
  * closer to the C++ standard than 2.95 is; plus, the standard library is now

@@ -127,6 +127,21 @@ void SMTPCommand::set(Socket& in)
 			this->command = NOOP;
 			p.eol();
 		}
+		else if (cmd == "auth")
+		{
+			this->command = AUTH;
+
+			p.whitespace();
+			this->parameter = p.getword();
+
+			if (p.peek() == ' ')
+			{
+				p.whitespace();
+				this->parameter += " " + p.getword();
+			}
+
+			p.eol();
+		}
 		else
 			throw ParseErrorException();
 	} catch (ParseErrorException e)
@@ -182,6 +197,11 @@ SMTPCommand::operator string ()
 		case QUIT:
 			s << "QUIT";
 			break;
+			
+		case AUTH:
+			s << "AUTH "
+			  << this->parameter;
+			break;
 	}
 
 	return s.str();
@@ -189,6 +209,9 @@ SMTPCommand::operator string ()
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2006/04/25 21:24:01  dtrg
+ * Changed the parsing of MAIL FROM: lines to ignore any additional parameters after the email address. This is to cope with broken MTAs who insist on sending RFC1870 extensions (such as SIZE=....) even though we haven't declared ourselves as using them. Thanks to Claus Herwig for pointing this out.
+ *
  * Revision 1.3  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

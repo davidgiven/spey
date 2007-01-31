@@ -90,6 +90,7 @@ void MessageProcessor::process()
 	SMTPResponse deferrederror;
 	bool errorstate = 0;
 	bool connected = 0;
+	bool authenticated = false;
 	
 	_response.set(220);
 	_response.parmoverride(Settings::identity());
@@ -108,6 +109,9 @@ void MessageProcessor::process()
 			continue;
 		}
 
+		/* These commands do not require connection to the inside
+		 * server. */
+
 		switch (_command.cmd())
 		{
 			case SMTPCommand::HELP:
@@ -117,9 +121,11 @@ void MessageProcessor::process()
 
 			case SMTPCommand::HELO:
 			case SMTPCommand::EHLO:
-				try {
+				try
+				{
 					verifydomain(_command.arg());
-				} catch (MalformedDomainException e)
+				}
+				catch (MalformedDomainException e)
 				{
 					deferrederror.set(554);
 					deferrederror.msgoverride("Illegal domain name");
@@ -129,56 +135,64 @@ void MessageProcessor::process()
 				break;
 
 			case SMTPCommand::MAIL:
-				try {
-					_from = _command.arg();
-					if (_from != "")
-						verifyaddress(_from);
-				} catch (MalformedAddressException e)
+				if (!authenticated)
 				{
-					deferrederror.set(501);
-
-					Statistics::malformedAddress();
-					goto error;
+					try
+					{
+						_from = _command.arg();
+						if (_from != "")
+							verifyaddress(_from);
+					}
+					catch (MalformedAddressException e)
+					{
+						deferrederror.set(501);
+	
+						Statistics::malformedAddress();
+						goto error;
+					}
 				}
-
 				break;
 
 			case SMTPCommand::RCPT:
-				try {
-					string address = _command.arg();
-
-					verifyaddress(address);
-					verifyrelay(address);
-
-					switch(greylist(_outside.getaddress() & 0xFFFFFF00,
-							_from, address))
-					{
-						case Accepted:
-							break;
-
-						case GreyListed:
-							goto greymessage;
-
-						case BlackListed:
-							goto blackmessage;
+				if (!authenticated)
+				{
+					try {
+						string address = _command.arg();
+	
+						verifyaddress(address);
+						verifyrelay(address);
+	
+						switch (greylist(_outside.getaddress() & 0xFFFFFF00,
+								_from, address))
+						{
+							case Accepted:
+								break;
+	
+							case GreyListed:
+								goto greymessage;
+	
+							case BlackListed:
+								goto blackmessage;
+						}
 					}
-				} catch (MalformedAddressException e)
-				{
-					deferrederror.set(551);
-					Statistics::malformedAddress();
-					goto error;
-				}
-				catch (IllegalRelayingException e)
-				{
-					deferrederror.set(550);
-					deferrederror.msgoverride("Relaying not permitted");
-
-					Statistics::illegalRelaying();
-					goto error;
-				}
-				catch (GreylistedException e)
-				{
-					goto greymessage;
+					catch (MalformedAddressException e)
+					{
+						deferrederror.set(551);
+						Statistics::malformedAddress();
+						goto error;
+					}
+					catch (IllegalRelayingException e)
+					{
+						deferrederror.set(550);
+						deferrederror.msgoverride("Relaying not permitted");
+	
+						Statistics::illegalRelaying();
+						goto error;
+					}
+					catch (GreylistedException e)
+					{
+						goto greymessage;
+					}
 				}
 					
 				Statistics::accepted();
@@ -225,7 +239,8 @@ void MessageProcessor::process()
 
 		if (!connected)
 		{
-			try {
+			try
+			{
 				_inside.init(ToAddress);
 				_inside.timeout(Settings::sockettimeout());
 
@@ -234,7 +249,9 @@ void MessageProcessor::process()
 				readinside();
 				_response.check(220, "Invalid banner");
 				connected = 1;
-			} catch (NetworkException e) {
+			}
+			catch (NetworkException e)
+			{
 				/* Something didn't work while making the
 				 * connection to the downstream SMTP server.
 				 * Bail out cleanly. */
@@ -244,25 +261,106 @@ void MessageProcessor::process()
 			}
 		}
 
+		/* These commands require connection to the inside server. */
+
+		switch (_command.cmd())
+		{
+			case SMTPCommand::AUTH:
+				if (Settings::externalauth() == "")
+				{
+					/* Someone's tried to use AUTH,
+					 * but we don't support it. */
+				
+					deferrederror.set(500);
+					goto error;
+				}
+			
+				/* Proxy the AUTH request through to
+				 * the inside, and the reply. */
+				
+				writeinside();
+				readinside();
+				writeoutside();
+
+				/* Are we allowed to authenticate? */
+
+				if (_response.code() != 334)
+				{
+					/* Continue, rather than a jump to
+					 * error, because we need to allow
+					 * the user to try multiple auth
+					 * types until one works. */
+					continue;
+				}
+
+				/* Perform the authentication. */
+
+				do
+				{
+					/* Proxy the client's string. */
+
+					{
+						string s = _outside.readline();
+						_inside.writeline(s);
+					}
+
+					/* Proxy the response. */
+
+					readinside();
+					writeoutside();
+				}
+				while (_response.code() == 334);
+				if (_response.code() != 235)
+					continue;
+
+				/* Hurray! */
+
+				authenticated = true;
+				continue;
+		}
+
 		/* Pass on the command, and then fetch the result. */
 		
 		writeinside();
 		readinside();
 		
-		/* If the command is a EHLO or HELO, then the RFC is a bit vague about
-		 * what the response should be. In one part it says that only the
-		 * response code should be valid, but in another it explicitly states
-		 * the format that the EHLO response should have... and yes, there are
-		 * broken mailers that require that format. So we need to override the
-		 * default minimalist response if the command was EHLO or HELO here.
-		 */
+		/* Special tweaks for EHLO or HELO. */
 		
-		if ((_command.cmd() == SMTPCommand::EHLO) ||
-		    (_command.cmd() == SMTPCommand::HELO))
+		if (_response.issuccess())
 		{
-			if (_response.issuccess())
-				_response.parmoverride(Settings::identity());
+			switch (_command.cmd())
+			{
+				case SMTPCommand::EHLO:
+					/* If the command is EHLO, and if we have external-auth turned
+					 * on, we need to declare that we support the AUTH extension.
+					 */
+					
+					if (Settings::externalauth() != "")
+					{
+						stringstream s;
+						s << "AUTH "
+						  << Settings::externalauth();
+						  
+						_response.continuationoverride(s.str());
+					}
+					/* fall through */
+					
+				case SMTPCommand::HELO:
+					/* If the command is a EHLO or HELO, then the RFC is a bit
+					 * vague about what the response should be. In one part it
+					 * says that only the response code should be valid, but in
+					 * another it explicitly states the format that the EHLO
+					 * response should have... and yes, there are broken mailers
+					 * that require that format. So we need to override the
+					 * default minimalist response if the command was EHLO or HELO
+					 * here.
+					 */
+			
+					_response.parmoverride(Settings::identity());
+					break;
+			}
 		}
+		
 		writeoutside();
 
 		/* If we don't tolerate errors, give up. */
@@ -280,7 +378,6 @@ void MessageProcessor::process()
 				SMTPLog() << "transferring message body";
 
 				/* Add our Received: header. */
-
 				{
 					stringstream s;
 					s << "Received: from "
@@ -339,6 +436,13 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.13  2007/01/29 23:05:10  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.12  2006/04/26 15:24:16  dtrg
  * Fixed the EHLO/HELO response override; I was returning the incorrect domain.
  * This was causing some MTAs (such as the one Debian uses on murphy.debian.org)
@@ -402,5 +506,4 @@ void MessageProcessor::run()
  *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
- *
  */

@@ -17,6 +17,7 @@ int Settings::_intolerant;
 int Settings::_quarantinetime;
 int Settings::_sockettimeout;
 string Settings::_runtimeuserid;
+string Settings::_externalauth;
 
 string Settings::get(string key)
 {
@@ -45,6 +46,7 @@ void Settings::reload()
 	_quarantinetime = atoi(get("quarantine-time").c_str());
 	_sockettimeout = atoi(get("socket-timeout").c_str());
 	_runtimeuserid = get("runtime-user-id");
+	_externalauth = get("external-auth");
 }
 
 bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
@@ -81,6 +83,9 @@ bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/01/29 00:37:48  dtrg
+ * Removed some stray stdout tracing that got checked in by accident.
+ *
  * Revision 1.3  2005/09/30 23:18:16  dtrg
  * Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
  *
