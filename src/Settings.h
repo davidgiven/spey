@@ -22,6 +22,7 @@ struct Settings {
 	static int quarantinetime() { return _quarantinetime; }
 	static int sockettimeout() { return _sockettimeout; }
 	static string runtimeuserid() { return _runtimeuserid; }
+	static string externalauth() { return _externalauth; }
 	
 	static bool testrelay(const SocketAddress& sender,
 			const string& recipient);
@@ -32,12 +33,16 @@ protected:
 	static int _quarantinetime;
 	static int _sockettimeout;
 	static string _runtimeuserid;
+	static string _externalauth;
 };
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2005/09/30 23:18:16  dtrg
+ * Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
+ *
  * Revision 1.2  2004/05/14 23:11:44  dtrg
  * Added decent relaying support. Also converted SocketAddress to use references a
  * lot rather than pass-by-value, out of general tidiness and the hope that it

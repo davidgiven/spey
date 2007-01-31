@@ -25,7 +25,8 @@ struct SMTPCommand {
 		EXPN,
 		HELP,
 		NOOP,
-		QUIT
+		QUIT,
+		AUTH
 	};
 
 	SMTPCommand();
@@ -56,6 +57,13 @@ inline Logger& operator << (Logger& s, SMTPCommand& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.2  2004/06/22 21:01:02  dtrg
  * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
  * closer to the C++ standard than 2.95 is; plus, the standard library is now

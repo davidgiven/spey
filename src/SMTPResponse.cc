@@ -17,6 +17,8 @@ SMTPResponse::SMTPResponse(SMTPResponse& r)
 	_code = r._code;
 	_parameter = r._parameter;
 	_msgoverride = r._msgoverride;
+	_hascontinuation = r._hascontinuation;
+	_continuation = r._continuation;
 }
 
 SMTPResponse::SMTPResponse()
@@ -38,16 +40,20 @@ void SMTPResponse::set()
 {
 	_code = 0;
 	_parameter = "";
+	_hascontinuation = false;
 }
 
 void SMTPResponse::set(int code, string parameter)
 {
 	_code = code;
 	_parameter = parameter;
+	_hascontinuation = false;
 }
 
 void SMTPResponse::set(Socket& in)
 {
+	_hascontinuation = false;
+
 	string l = in.readline();
 	SMTPLog() << "rsp "
 		  << l;
@@ -104,6 +110,7 @@ void SMTPResponse::set(Socket& in)
 	{
 		case 220:
 		case 221:
+		case 334:
 		case 421:
 		{
 			string::size_type i = l.find(' ', 4);
@@ -125,6 +132,12 @@ malformed:
 	throw NetworkException("Malformed SMTP response");
 }
 
+void SMTPResponse::continuationoverride(string continuation)
+{
+	_hascontinuation = true;
+	_continuation = continuation;
+}
+
 void SMTPResponse::parmoverride(string parameter)
 {
 	_parameter = parameter;
@@ -143,10 +156,12 @@ static char* statusMessage(int code)
 		case 214: return "No help here";
 		case 220: return "Service ready";
 		case 221: return "Service closing transmission channel";
+		case 235: return "Authentication successful";
 		case 250: return "Requested mail action okay, completed";
 		case 251: return "User not local";
 		case 252: return "Cannot VRFY user, but will accept message "
 			  		"and attempt delivery";
+		case 334: return "";
 		case 354: return "Start mail input; end with <CRLF>.<CRLF>";
 		case 421: return "Service not available, closing transmission channel";
 		case 450: return "Requested mail action not taken: mailbox unavailable";
@@ -171,7 +186,7 @@ SMTPResponse::operator string ()
 	stringstream s;
 
 	s << _code
-	  << ' ';
+	  << (_hascontinuation ? '-' : ' ');
 	if (_parameter != "")
 		s << _parameter << ' ';
 	if (_msgoverride == "")
@@ -179,6 +194,12 @@ SMTPResponse::operator string ()
 	else
 		s << _msgoverride;
 
+	if (_hascontinuation)
+		s << '\n'
+		  << _code
+		  << ' '
+		  << _continuation;
+		  
 	return s.str();
 }
 
@@ -206,6 +227,13 @@ bool SMTPResponse::iserror()
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.2  2004/06/22 21:01:02  dtrg
  * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
  * closer to the C++ standard than 2.95 is; plus, the standard library is now
