@@ -266,7 +266,7 @@ void MessageProcessor::process()
 		switch (_command.cmd())
 		{
 			case SMTPCommand::AUTH:
-				if (Settings::externalauth() == "")
+				if (!Settings::externalauth())
 				{
 					/* Someone's tried to use AUTH,
 					 * but we don't support it. */
@@ -324,41 +324,59 @@ void MessageProcessor::process()
 		writeinside();
 		readinside();
 		
-		/* Special tweaks for EHLO or HELO. */
+		/* Special tweaks if this is a 250 response; a reply to EHLO or HELO. */
 		
-		if (_response.issuccess())
+		if (_response.code() == 250)
 		{
-			switch (_command.cmd())
+			/* The downstream server will probably have responded with a huge
+			 * great wodge of text telling us what it can do. We want to throw
+			 * most of this away. The exception is that if external-auth is
+			 * turned on, we want to check to see what authentication
+			 * mechanisms the downstream server supports, and advertise those.
+			 */
+			 
+			if (Settings::externalauth() && (_command.cmd() == SMTPCommand::EHLO))
 			{
-				case SMTPCommand::EHLO:
-					/* If the command is EHLO, and if we have external-auth turned
-					 * on, we need to declare that we support the AUTH extension.
-					 */
-					
-					if (Settings::externalauth() != "")
+				/* Find the AUTH line. */
+				
+				string auth;
+				vector<string>& continuation = _response.continuation();
+				for (vector<string>::size_type i=0; i<continuation.size(); i++)
+				{
+					string s = continuation[i];
+					if (s.compare(0, 5, "AUTH ") == 0)
 					{
-						stringstream s;
-						s << "AUTH "
-						  << Settings::externalauth();
-						  
-						_response.continuationoverride(s.str());
+						auth = s;
+						break;
 					}
-					/* fall through */
-					
-				case SMTPCommand::HELO:
-					/* If the command is a EHLO or HELO, then the RFC is a bit
-					 * vague about what the response should be. In one part it
-					 * says that only the response code should be valid, but in
-					 * another it explicitly states the format that the EHLO
-					 * response should have... and yes, there are broken mailers
-					 * that require that format. So we need to override the
-					 * default minimalist response if the command was EHLO or HELO
-					 * here.
-					 */
-			
-					_response.parmoverride(Settings::identity());
-					break;
+				}
+				
+				/* Replace the continuation with just the AUTH line, if there
+				 * is one. */
+				 
+				_response.continuationoverride();
+				if (auth != "")
+					_response.continuation().push_back(auth);
 			}
+			else
+			{
+				/* external-auth is switched off, so just blow away and extra
+				 * data. */
+				 
+				_response.continuationoverride();
+			}
+			
+			/* If the command is a EHLO or HELO, then the RFC is a bit
+			 * vague about what the response should be. In one part it
+			 * says that only the response code should be valid, but in
+			 * another it explicitly states the format that the EHLO
+			 * response should have... and yes, there are broken mailers
+			 * that require that format. So we need to override the
+			 * default minimalist response if the command was EHLO or HELO
+			 * here.
+			 */
+	
+			_response.parmoverride(Settings::identity());
 		}
 		
 		writeoutside();
@@ -436,6 +454,12 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.14  2007/01/31 12:58:25  dtrg
+ * Added basic support for upstream AUTH requests based on Juan José
+ * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
+ * proxied through to the downstream server. Parts of the code still need a
+ * rethink but it should all work.
+ *
  * Revision 1.13  2007/01/29 23:05:10  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use
