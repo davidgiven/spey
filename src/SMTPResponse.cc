@@ -17,7 +17,6 @@ SMTPResponse::SMTPResponse(SMTPResponse& r)
 	_code = r._code;
 	_parameter = r._parameter;
 	_msgoverride = r._msgoverride;
-	_hascontinuation = r._hascontinuation;
 	_continuation = r._continuation;
 }
 
@@ -40,25 +39,26 @@ void SMTPResponse::set()
 {
 	_code = 0;
 	_parameter = "";
-	_hascontinuation = false;
+	_msgoverride = "";
+	_continuation.clear();
 }
 
 void SMTPResponse::set(int code, string parameter)
 {
+	set();
 	_code = code;
 	_parameter = parameter;
-	_hascontinuation = false;
 }
 
 void SMTPResponse::set(Socket& in)
 {
-	_hascontinuation = false;
+	set();
 
 	string l = in.readline();
 	SMTPLog() << "rsp "
 		  << l;
 
-	/* Validate the first four characters. */
+	/* Validate the first four characters and parse the code. */
 
 	if (l.length() < 4)
 	{
@@ -74,38 +74,66 @@ void SMTPResponse::set(Socket& in)
 		goto malformed;
 	}
 
-	if (l[3] == '-')
-	{
-		string s;
-
-		do {
-			s = in.readline();
-			SMTPLog() << "rsp-"
-				  << s;
-
-			if (s.length() < 4)
-			{
-				MessageLog() << "SMTP continuation isn't long enough";
-				goto malformed;
-			}
-
-			if ((s[0] != l[0]) ||
-			    (s[1] != l[1]) ||
-			    (s[2] != l[2]))
-			{
-				MessageLog() << "SMTP continuation's "
-						"status code is inconsistent";
-				goto malformed;
-			}
-		} while (s[3] == '-');
-	}
-	else if (l[3] != ' ')
-	{
-		MessageLog() << "SMTP response has invalid 4th char";
-		goto malformed;
-	}
-
 	_code = atoi(l.substr(0, 3).c_str());
+
+	/* Read in any additional data, if there is any. */
+	
+	switch (l[3])
+	{
+		case '-':
+		{
+			/* For 250 responses *only*, we read in and remember any
+			 * multiline replies. Strictly this is illegal, but
+			 * multiline replies are never seen in the wild for anything
+			 * other than EHLO (this case), or EXPN and HELP (which we
+			 * don't support).
+			 */
+			 
+			if (_code != 250)
+			{
+				MessageLog() << "Multiline reply in dubious circumstances";
+				goto malformed;
+			}
+
+			string s;
+			do {
+				s = in.readline();
+				SMTPLog() << "rsp-"
+					  << s;
+	
+				if (s.length() < 4)
+				{
+					MessageLog() << "SMTP continuation isn't long enough";
+					goto malformed;
+				}
+	
+				if ((s[0] != l[0]) ||
+				    (s[1] != l[1]) ||
+				    (s[2] != l[2]))
+				{
+					MessageLog() << "SMTP continuation's "
+							"status code is inconsistent";
+					goto malformed;
+				}
+				
+				_continuation.push_back(s.substr(4));
+			} while (s[3] == '-');
+			break;
+		}
+			
+		case ' ':
+			/* Conventional single-line reply. */
+			break;
+			
+		default:
+			/* Something unknown, something horrible... */
+
+			MessageLog() << "SMTP response has invalid 4th char";
+			goto malformed;
+	}
+
+	/* For only those responses where we care about the text, remember it. */
+	
 	switch (_code)
 	{
 		case 220:
@@ -132,9 +160,13 @@ malformed:
 	throw NetworkException("Malformed SMTP response");
 }
 
-void SMTPResponse::continuationoverride(string continuation)
+void SMTPResponse::continuationoverride()
 {
-	_hascontinuation = true;
+	_continuation.clear();
+}
+
+void SMTPResponse::continuationoverride(vector<string>& continuation)
+{
 	_continuation = continuation;
 }
 
@@ -186,7 +218,7 @@ SMTPResponse::operator string ()
 	stringstream s;
 
 	s << _code
-	  << (_hascontinuation ? '-' : ' ');
+	  << (_continuation.empty() ? ' ' : '-');
 	if (_parameter != "")
 		s << _parameter << ' ';
 	if (_msgoverride == "")
@@ -194,11 +226,13 @@ SMTPResponse::operator string ()
 	else
 		s << _msgoverride;
 
-	if (_hascontinuation)
+	for (string::size_type i=0; i<_continuation.size(); i++)
+	{
 		s << '\n'
 		  << _code
-		  << ' '
-		  << _continuation;
+		  << ((i == (_continuation.size() - 1)) ? ' ' : '-')
+		  << _continuation[i];
+	}
 		  
 	return s.str();
 }
@@ -227,6 +261,12 @@ bool SMTPResponse::iserror()
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/01/31 12:58:25  dtrg
+ * Added basic support for upstream AUTH requests based on Juan José
+ * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
+ * proxied through to the downstream server. Parts of the code still need a
+ * rethink but it should all work.
+ *
  * Revision 1.3  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

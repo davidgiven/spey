@@ -17,7 +17,7 @@ int Settings::_intolerant;
 int Settings::_quarantinetime;
 int Settings::_sockettimeout;
 string Settings::_runtimeuserid;
-string Settings::_externalauth;
+bool Settings::_externalauth;
 
 string Settings::get(string key)
 {
@@ -46,7 +46,7 @@ void Settings::reload()
 	_quarantinetime = atoi(get("quarantine-time").c_str());
 	_sockettimeout = atoi(get("socket-timeout").c_str());
 	_runtimeuserid = get("runtime-user-id");
-	_externalauth = get("external-auth");
+	_externalauth = atoi(get("external-auth").c_str());
 }
 
 bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
@@ -83,6 +83,12 @@ bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/01/31 12:58:25  dtrg
+ * Added basic support for upstream AUTH requests based on Juan José
+ * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
+ * proxied through to the downstream server. Parts of the code still need a
+ * rethink but it should all work.
+ *
  * Revision 1.4  2007/01/29 00:37:48  dtrg
  * Removed some stray stdout tracing that got checked in by accident.
  *

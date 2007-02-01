@@ -22,7 +22,7 @@ struct Settings {
 	static int quarantinetime() { return _quarantinetime; }
 	static int sockettimeout() { return _sockettimeout; }
 	static string runtimeuserid() { return _runtimeuserid; }
-	static string externalauth() { return _externalauth; }
+	static bool externalauth() { return _externalauth; }
 	
 	static bool testrelay(const SocketAddress& sender,
 			const string& recipient);
@@ -33,13 +33,19 @@ protected:
 	static int _quarantinetime;
 	static int _sockettimeout;
 	static string _runtimeuserid;
-	static string _externalauth;
+	static bool _externalauth;
 };
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/01/31 12:58:25  dtrg
+ * Added basic support for upstream AUTH requests based on Juan José
+ * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
+ * proxied through to the downstream server. Parts of the code still need a
+ * rethink but it should all work.
+ *
  * Revision 1.3  2005/09/30 23:18:16  dtrg
  * Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
  *

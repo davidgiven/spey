@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH spey 8 "23 November 2005" "0.3.3" "SMTP preprocessor"
+.TH spey 8 "23 November 2005" "0.3.4" "SMTP preprocessor"
 .SH NAME
 spey \- a smart, spam-blocking SMTP proxy
 
@@ -45,21 +45,21 @@ or
 .SH DESCRIPTION
 .B spey
 is a smart SMTP proxy that implements greylisting as a spam prevention measure.
-it acts as a layer between the outside world and your ordinary mail server; it
+It acts as a layer between the outside world and your ordinary mail server; it
 monitors the transaction, and hijacks it if necessary to prevent messages being
 retrieved.
 
-for more information on greylisting, see
-.br http://projects.puremagic.com/greylisting/ .
+For more information on greylisting, see
+.BR http://projects.puremagic.com/greylisting/ .
 
 spey stores all of its configuration settings (other than those specified on
-the command line) in a
+the command line) in an
 .B Sqlite
 database. By default this is stored in
-.br /var/lib/misc/spey.db ,
+.BR /var/lib/spey/spey.db ,
 although it can be overridden if necessary. To manipulate the database, for
 example to set or change one of spey's configuration variables, use the
-.b speyctl(8)
+.B speyctl(8)
 command.
 
 .SH OPTIONS
@@ -81,23 +81,25 @@ Specifies the address to connect to; this is where your real mail server is
 listening. The address is specified as for the source address. The default is
 .BR localhost:2525 .
 
-allows you to manipulate the spey's configuration, as well as examining and
-manipulating the address database.
-
 .TP
 .BI --database\  filename
 
-Specifies the database file to use. The file must have already have been created with
+Specifies the database file to use. The file must have already have been
+created with
 .BR speyctl(8) .
 The default is
-.BR /var/lib/misc/spey.db .
+.BR /var/lib/spey/spey.db .
+Be aware that by default,
+.B runtime-user-id
+is switched on. This affects how the file permissions should be set. See
+.B DROPPING ROOT PRIVILEGES
+below.
 
 .TP
 .BI --verbose\  level
 
 Specifies the verbosity level. Use 0 to suppress all output; increasing the
-number will produce more and more detailed tracing. Tracing is always sent to
-.BR stdout .
+number will produce more and more detailed tracing.
 
 .TP
 .BI --inetd
@@ -121,7 +123,7 @@ force true multithreaded mode.
 Prevents spey from detaching itself from the console. Instead, it will run in
 the foreground and all tracing will be sent to
 .BR stderr .
-This is frequently useful for debugging. This flag is ignored in
+This is frequently useful for debugging. This flag is implicit in
 .B inetd
 mode.
 
@@ -185,14 +187,28 @@ discarded. The default is a week.
 
 If set, this variable causes spey to drop root privileges once its
 initialisation is complete. The value should be a string of the form
-.BR username:groupname ;
-spey must have write access to the file
-.I containing
-its database file in order to work (because Sqlite needs to create a journal
-file in the same directory).
+.BR username:groupname .
+See
+.B DROPPING ROOT PRIVILEGES
+below for more information.
 
 If you do not want spey to drop root privileges, then leave this variable
-unset.
+unset. Newly created databases have this set to
+.BR spey:spey .
+
+.TP
+.B external-auth
+
+Enables use of AUTH by external users. An integer, either 0 or 1, defaulting
+to 0.
+
+spey's AUTH support is very simple, and merely proxies the AUTH request to
+the internal server. If the authentication succeeds then any greylisting or
+blacklisting will be bypassed.
+
+Only authentication is supported. If a client tries to negotiate a security
+layer, spey will get very confused. It is recommended that you turn this
+feature off in your MTA.
 
 .SH "MESSAGE RELAYING"
 
@@ -269,7 +285,7 @@ ever host a spammer, but if you know
 .BR comp.risks ,
 you'll agree with me that this is not likely to happen.)
 
-In addition, the author gets lots of spam from the
+In addition, the author gets lots of spam from
 .BR moosq.com ,
 which I would rather not get. This particular spammer has a number of different
 domains, but the sender addresses all follow a similar pattern, so 
@@ -298,29 +314,27 @@ is for enhanced safety; if any security hole results in spey being compromised
 by a remote attacker, then it restricts any attack to trashing spey, preventing
 the attacker from damaging the rest of the system.
 
-By default, this is disabled, partly for backwards compatibility reasons, and
-partly because it is a little fiddly to set up (and spey should be secure
-anyway). It can be enabled by setting the
+By default, this is enabled (new in version 0.3.4). It can be disabled by
+unsetting the
 .B runtime-user-id
 configuration variable. (See above for more information.)
 
 In order for spey to work when dropping root privileges, then you must place
 spey's database file in a directory that spey can write to. (This is due to the
-need for spey's SQL library to create temporary files.) Because the database
-is now in a non-standard location, you will need to use the
+need for spey's SQL library to create temporary files.) If you wish to use a
+non-standard location, you will need to use the
 .B --database
 command-line option to tell spey where it is. (You will also need the
 .B --db
 command-line option for speyctl.)
 
-If you wish to use this feature, you will almost certainly want to create a
-specific user and group for spey. The truly paranoid can then apply a quota to
+In order to use this feature, you will almost certainly want to create a
+specific user and group for spey; by default,
+.BR spey:spey .
+The truly paranoid can then apply a disk quota to
 that user to prevent any attackers from consuming all available disk space,
 but this is probably unnecessary; you should also be aware that if spey ever
 runs out of quota for legitimate reasons it will stop working.
-
-Dropping root privileges will probably become the default at some point in the
-future.
 
 
 .SH BUGS
@@ -341,8 +355,8 @@ incorrect, but easily fixed.
 spey plays fast and loose with the RFC. There are a number of places where it
 is actively violating it, but I've had good reason in each instance. It appears
 to interoperate happily with most mail software; the author is using it and
-doesn't seem to have lost any mail yet (that he's noticed). It even gets on
-well with SMTP callbacks.
+the only mail server that that has a problem is Yahoo's subscription probing,
+which violates the RFC anyway. It even gets on well with SMTP callbacks.
 
 That said, there are almost certainly major problems with it. Please report
 them!
@@ -350,7 +364,7 @@ them!
 
 .SH FILES
 .TP
-.I /var/lib/misc/spey.db
+.I /var/lib/spey/spey.db
 The default database.
 
 .TP
@@ -369,6 +383,9 @@ full copy can be found in the spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.13  2007/01/29 00:39:00  dtrg
+.\" Corrected a minor typo.
+.\"
 .\" Revision 1.12  2005/11/23 22:43:29  dtrg
 .\" Updated for the real 0.3.3 release.
 .\"

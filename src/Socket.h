@@ -34,6 +34,7 @@ struct Socket {
 	void timeout(int t) { _timeout = t; }
 
 	int getfd() { return _fd; }
+	bool connected() { return _fd != -1; }
 
 protected:
 	SocketAddress _address;
@@ -45,6 +46,17 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2004/06/30 20:18:49  dtrg
+ * Changed the way sockets are initialised; instead of doing it from the Socket
+ * and SocketServer constructors, they're set up as zombies and initialised later
+ * with an init() method. This is cleaner, and also allows a cunning new feature:
+ * the connection to the downstream SMTP server is now only made once the first
+ * valid SMTP command is received from the upstream SMTP server. This means that
+ * connections are only made once we're reasonably sure that there's going to be a
+ * valid SMTP conversation, which should harden spey against DoS attacks like the
+ * ones I get every so often. Also took the opportunity to convert more this->blah
+ * instance variables into _blah.
+ *
  * Revision 1.6  2004/06/09 18:40:36  dtrg
  * Fixed some tracing where the address of incoming connections was being reported
  * incorrectly in the logs (but correctly in the Received lines of incoming

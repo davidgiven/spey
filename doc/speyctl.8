@@ -32,7 +32,7 @@ allows you to manipulate the spey's configuration, as well as examining and
 manipulating the address database.
 
 By default, the database is stored in
-.BR /var/lib/misc/spey.db ,
+.BR /var/lib/spey/spey.db ,
 although this can be overridden with the
 .B \-d
 option. The database is a standard
@@ -142,7 +142,7 @@ should be run on a regular basis, or Spey's database will grow without limit!
 
 .SH FILES
 .TP
-.I /var/lib/misc/spey.db
+.I /var/lib/spey/spey.db
 Default database.
 
 
@@ -155,6 +155,9 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.10  2005/11/23 22:43:29  dtrg
+.\" Updated for the real 0.3.3 release.
+.\"
 .\" Revision 1.9  2005/09/30 23:20:17  dtrg
 .\" Updated the version number for 0.3.3. Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
 .\"
