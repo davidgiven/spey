@@ -27,6 +27,7 @@ function usage()
 	print "    whitelist <cmd> [<spec>] Manipulate the whitelist table."
 	print "    blacklist <cmd> [<spec>] Manipulate the blacklist table."
 	print "    stats                    List statistics."
+	print "    statsreset               Reset statistic counters to 0."
 	print "    showdb                   Show address database. (Warning --- can be large!)"
 	print "    purge                    Purge stale addresses."
 }
@@ -94,40 +95,44 @@ function cmd_init()
 		    right VARCHAR);                         ")
 
 	sql("CREATE TABLE settings (                \
-			key VARCHAR PRIMARY KEY,                \
-			value VARCHAR);                         \
-		INSERT INTO settings VALUES               \
-			('identity',		'yourdomain.invalid');  \
-		INSERT INTO settings VALUES               \
-			('intolerant',		'1');                 \
-		INSERT INTO settings VALUES               \
-			('quarantine-time',	'60');              \
-		INSERT INTO settings VALUES               \
-			('socket-timeout',	'30');              \
-		INSERT INTO settings VALUES               \
-			('invalid-expiry',	'86400');           \
-		INSERT INTO settings VALUES               \
-			('valid-expiry',	'1209600');	    \
-		INSERT INTO settings VALUES               \
-			('runtime-user-id',	'spey:spey');")
+		    key VARCHAR PRIMARY KEY,            \
+		    value VARCHAR);                     \
+		INSERT INTO settings VALUES             \
+		    ('identity',        'yourdomain.invalid'); \
+		INSERT INTO settings VALUES             \
+		    ('intolerant',      '1');           \
+		INSERT INTO settings VALUES             \
+		    ('quarantine-time', '60');          \
+		INSERT INTO settings VALUES             \
+		    ('socket-timeout',  '30');          \
+		INSERT INTO settings VALUES             \
+		    ('invalid-expiry',  '86400');       \
+		INSERT INTO settings VALUES             \
+		    ('valid-expiry',    '1209600');	    \
+		INSERT INTO settings VALUES             \
+		    ('runtime-user-id', 'spey:spey');   \
+		INSERT INTO settings VALUES             \
+		    ('greet-pause',     '2');           ")
 
 	sql("CREATE TABLE statistics (              \
-			key VARCHAR PRIMARY KEY,                \
-			value INTEGER);                         \
-		INSERT INTO statistics VALUES             \
-			('malformed-domain',	0);               \
-		INSERT INTO statistics VALUES             \
-			('malformed-address',	0);               \
-		INSERT INTO statistics VALUES             \
-			('illegal-relay',	0);                   \
-		INSERT INTO statistics VALUES             \
-			('timeout',		0);                       \
-		INSERT INTO statistics VALUES             \
-			('greylisted',		0);                   \
-		INSERT INTO statistics VALUES             \
-			('accepted',		0);                     \
-		INSERT INTO statistics VALUES             \
-			('whitelisted',		0);")
+		    key VARCHAR PRIMARY KEY,            \
+		    value INTEGER);                     \
+		INSERT INTO statistics VALUES           \
+		    ('malformed-domain',    0);         \
+		INSERT INTO statistics VALUES           \
+		    ('malformed-address',   0);         \
+		INSERT INTO statistics VALUES           \
+		    ('illegal-relay',       0);         \
+		INSERT INTO statistics VALUES           \
+		    ('timeout',             0);         \
+		INSERT INTO statistics VALUES           \
+		    ('greylisted',          0);         \
+		INSERT INTO statistics VALUES           \
+		    ('accepted',            0);         \
+		INSERT INTO statistics VALUES           \
+		    ('whitelisted',         0);         \
+		INSERT INTO statistics VALUES           \
+		    ('spoke-too-soon',      0);			")
 
 	sql("CREATE TABLE whitelist (               \
 			sender VARCHAR,                         \
@@ -306,6 +311,13 @@ function cmd_Xlist(op, list, value,    array, sender, recipient)
 	sqlend()
 }
 
+function cmd_statsreset()
+{
+	sqlstart()
+	sql("UPDATE statistics SET value=0;")
+	sqlend()
+}
+
 function parseargs(  i)
 {
 	for (i=1; i<ARGC; i++)
@@ -372,6 +384,13 @@ function parseargs(  i)
 			cmd_purge()
 			exit(0)
 		}
+		else if (opt ~ /^statsreset$/)
+		{
+			if (i != (ARGC - 1))
+				error("too many parameters (try --help)")
+			cmd_statsreset()
+			exit(0)
+		}
 		else
 			error("unrecognised option (try --help)")
 	}
@@ -387,6 +406,17 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.11  2007/02/10 00:24:35  dtrg
+# Added support for TLS connections using the GNUTLS library. A X509
+# certificate and private key must be supplied for most purposes, but if they
+# are not provided anonymous authentication will be used instead (which
+# apparently only GNUTLS supports). Split the relay check up into two
+# separate parts; the trustedhosts table now specifies machines that can be
+# trusted to play nice, and can do relaying and be allowed to bypass the
+# greylisting; and allowedrecipients, which specifies what email address we're
+# expecting to receive. Also fixed some remaining niggles in the AUTH
+# proxy support, but this remains largely untested.
+#
 # Revision 1.10  2007/01/31 12:48:51  dtrg
 # Dropping root privileges is now the default. The default database file
 # has been moved into /var/lib/spey/spey.db to assist this.

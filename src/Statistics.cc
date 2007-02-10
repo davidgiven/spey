@@ -22,6 +22,11 @@ void Statistics::malformedAddress()
 	count("malformed-address");
 }
 
+void Statistics::spokeTooSoon()
+{
+	count("spoke-too-soon");
+}
+
 void Statistics::timeout()
 {
 	count("timeout");
@@ -65,6 +70,9 @@ void Statistics::count(string name)
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/06/21 23:12:46  dtrg
+ * Added blacklisting and whitelisting support.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

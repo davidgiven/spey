@@ -21,6 +21,7 @@ struct Settings {
 	static int intolerant() { return _intolerant; }
 	static int quarantinetime() { return _quarantinetime; }
 	static int sockettimeout() { return _sockettimeout; }
+	static int greetpause() { return _greetpause; }
 	static string runtimeuserid() { return _runtimeuserid; }
 	static string tlscertificatefile() { return _tlscertificatefile; }
 	static string tlsprivatekeyfile() { return _tlsprivatekeyfile; }
@@ -35,6 +36,7 @@ protected:
 	static int _intolerant;
 	static int _quarantinetime;
 	static int _sockettimeout;
+	static int _greetpause;
 	static string _runtimeuserid;
 	static string _tlscertificatefile;
 	static string _tlsprivatekeyfile;
@@ -46,6 +48,17 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/02/10 00:24:35  dtrg
+ * Added support for TLS connections using the GNUTLS library. A X509
+ * certificate and private key must be supplied for most purposes, but if they
+ * are not provided anonymous authentication will be used instead (which
+ * apparently only GNUTLS supports). Split the relay check up into two
+ * separate parts; the trustedhosts table now specifies machines that can be
+ * trusted to play nice, and can do relaying and be allowed to bypass the
+ * greylisting; and allowedrecipients, which specifies what email address we're
+ * expecting to receive. Also fixed some remaining niggles in the AUTH
+ * proxy support, but this remains largely untested.
+ *
  * Revision 1.5  2007/02/01 18:41:49  dtrg
  * Reworked the SMTP AUTH code so that spey automatically figures out what
  * authentication mechanisms there are by asking the downstream server. The
