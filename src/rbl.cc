@@ -20,7 +20,7 @@ bool rblcheck(uint32_t sender, string rbldomain)
 	  << ((sender >> 16) & 0xFF) << '.'
 	  << ((sender >> 24) & 0xFF) << '.'
 	  << rbldomain;
-	MessageLog() << "checking " << s.str();
+	MessageLog() << "doing RBL check for " << s.str();
 
 	bool found = false;
 	
@@ -41,4 +41,6 @@ bool rblcheck(uint32_t sender, string rbldomain)
 
 /* Revision history
  * $Log$
-  */
+ * Revision 1.1  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ */
