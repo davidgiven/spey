@@ -283,14 +283,36 @@ layer, spey will get very confused. It is recommended that you turn this
 feature off in your MTA.
 
 
+.TP
+.B rbl-list
+
+Enables use of DNS-based RBLs (Realtime Blackhole Lists).
+
+To use, set this variable to a whitespace-delimited list of RBL zone names.
+Any new connections will be verified against each RBL in turn. If the
+connecting host is listed, the connection will be closed.
+
+.B Warning:
+Use of an RBL means that you are
+.IR "handing over control of your email server to someone else" .
+Think carefully before you do this. There are many RBLs, run by different
+people with different standards of what makes a particular IP address
+worthy of blackholing. If you are a commercial organisation and require
+communication with someone at, say, Google Mail, and your RBL provider
+decides on a whim to blacklist Google Mail's email servers, you will be out
+of luck. Choose your RBLs carefully.
+
+RBL lookups are not done for machines in the trusted list.
+
+
 
 
 .SH "TRUSTED MACHINES"
 
-Before greylisting is done, spey matches the IP addresses of the machines that
+Before anything else is done, spey matches the IP addresses of the machines that
 connect to it to determine whether they are special trusted machines or not.
-If they are trusted, then greylisting and relay checking is bypassed. In other
-words, any machine on this list may spam at will.
+If they are trusted, then all other checks will be bypassed. In other words, any
+machine on this list may spam at will.
 
 This table can be manipulated by
 .BR speyctl(8) ,
@@ -483,6 +505,12 @@ full copy can be found in the spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.16  2007/02/10 19:46:44  dtrg
+.\" Added greet-pause support. Moved the trusted hosts check to right after
+.\" connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+.\" in the AUTH supported that meant that authenticated connections had no
+.\" extra privileges (oops). Added the ability to reset all statistics on demand.
+.\"
 .\" Revision 1.15  2007/02/10 00:24:35  dtrg
 .\" Added support for TLS connections using the GNUTLS library. A X509
 .\" certificate and private key must be supplied for most purposes, but if they

@@ -13,7 +13,8 @@
 #include "spey.h"
 #include <sys/time.h>
 
-GreylistResponse greylist(unsigned int sender, string fromaddress, string toaddress)
+GreylistResponse greylist(uint32_t sender, string fromaddress,
+		string toaddress)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -152,6 +153,9 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/01/29 23:01:19  dtrg
+ * Fixed a compiler warning.
+ *
  * Revision 1.6  2006/04/26 21:56:23  dtrg
  * Backed out the previous change, as it wasn't necessary (SMTPCommand's parser
  * already converted the addresses to lower case).

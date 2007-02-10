@@ -12,50 +12,16 @@
 
 #include "spey.h"
 
-void Statistics::malformedDomain()
-{
-	count("malformed-domain");
-}
-
-void Statistics::malformedAddress()
-{
-	count("malformed-address");
-}
-
-void Statistics::spokeTooSoon()
-{
-	count("spoke-too-soon");
-}
-
-void Statistics::timeout()
-{
-	count("timeout");
-}
-
-void Statistics::illegalRelaying()
-{
-	count("illegal-relay");
-}
-
-void Statistics::greylisted()
-{
-	count("greylisted");
-}
-
-void Statistics::accepted()
-{
-	count("accepted");
-}
-
-void Statistics::blacklisted()
-{
-	count("blacklisted");
-}
-
-void Statistics::whitelisted()
-{
-	count("whitelisted");
-}
+void Statistics::malformedDomain()     { count("malformed-domain"); }
+void Statistics::malformedAddress()    { count("malformed-address"); }
+void Statistics::spokeTooSoon()        { count("spoke-too-soon"); }
+void Statistics::timeout()             { count("timeout"); }
+void Statistics::illegalRelaying()     { count("illegal-relay"); }
+void Statistics::greylisted()          { count("greylisted"); }
+void Statistics::accepted()            { count("accepted"); }
+void Statistics::blacklisted()         { count("blacklisted"); }
+void Statistics::whitelisted()         { count("whitelisted"); }
+void Statistics::blackholed()          { count("blackholed"); }
 
 void Statistics::count(string name)
 {
@@ -70,6 +36,12 @@ void Statistics::count(string name)
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2007/02/10 19:46:44  dtrg
+ * Added greet-pause support. Moved the trusted hosts check to right after
+ * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+ * in the AUTH supported that meant that authenticated connections had no
+ * extra privileges (oops). Added the ability to reset all statistics on demand.
+ *
  * Revision 1.2  2004/06/21 23:12:46  dtrg
  * Added blacklisting and whitelisting support.
  *

@@ -132,7 +132,9 @@ function cmd_init()
 		INSERT INTO statistics VALUES           \
 		    ('whitelisted',         0);         \
 		INSERT INTO statistics VALUES           \
-		    ('spoke-too-soon',      0);			")
+		    ('spoke-too-soon',      0);			\
+		INSERT INTO statistics VALUES           \
+		    ('blackholed',          0);         ")
 
 	sql("CREATE TABLE whitelist (               \
 			sender VARCHAR,                         \
@@ -164,7 +166,11 @@ function cmd_list()
 	print "Variable                 Value"
 	print "----------------------------------------------------------"
 	while (cmd|getline == 1)
-		printf "%-25s%s\n", $1, $2
+	{
+		printf "%-25s", $1
+		$1 = ""
+		print $0
+	}
 }
 
 function cmd_stats()
@@ -406,6 +412,12 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.12  2007/02/10 19:46:44  dtrg
+# Added greet-pause support. Moved the trusted hosts check to right after
+# connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+# in the AUTH supported that meant that authenticated connections had no
+# extra privileges (oops). Added the ability to reset all statistics on demand.
+#
 # Revision 1.11  2007/02/10 00:24:35  dtrg
 # Added support for TLS connections using the GNUTLS library. A X509
 # certificate and private key must be supplied for most purposes, but if they

@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <syslog.h>
 #include <string>
 #include <sstream>
@@ -38,17 +39,30 @@ extern SQL Sql;
 extern SocketAddress FromAddress;
 extern SocketAddress ToAddress;
 
+/* Greylist validation. */
+
 enum GreylistResponse {
 	Accepted,
 	BlackListed,
 	GreyListed
 };
 
-extern GreylistResponse greylist(unsigned int sender,
+extern GreylistResponse greylist(uint32_t sender,
 		string fromaddress, string toaddress);
+
+/* RBL validation. */
+
+extern bool rblcheck(uint32_t sender, string rbldomainlist);
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/01/29 23:05:11  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.5  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

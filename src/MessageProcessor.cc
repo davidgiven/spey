@@ -84,6 +84,38 @@ void MessageProcessor::process()
 	if (trusted)
 		MessageLog() << "This connection is trusted";
 		
+	/* Do any RBL checking. */
+	
+	if (!trusted)
+	{
+		stringstream rbllist(Settings::rbllist());
+		rbllist >> skipws;
+
+		for (;;) 
+		{
+			/* Read a word. */
+			
+			string rbl;
+			rbllist >> rbl;
+			if (rbllist.fail())
+				break;
+				
+			/* Run it through the RBL checker. */
+			
+			if (rblcheck(_outside.getaddress(), rbl))
+			{
+				deferrederror.set(554);
+				stringstream s;
+				s << "5.7.1 Rejected: your IP address is listed in the "
+				  << rbl
+				  << " RBL";
+				deferrederror.msgoverride(s.str());
+				Statistics::blackholed();
+				goto error;
+			}
+		}
+	}
+	
 	/* Do the greet-pause. */
 	
 	if (!trusted)
@@ -522,6 +554,12 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.17  2007/02/10 19:46:44  dtrg
+ * Added greet-pause support. Moved the trusted hosts check to right after
+ * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+ * in the AUTH supported that meant that authenticated connections had no
+ * extra privileges (oops). Added the ability to reset all statistics on demand.
+ *
  * Revision 1.16  2007/02/10 00:24:35  dtrg
  * Added support for TLS connections using the GNUTLS library. A X509
  * certificate and private key must be supplied for most purposes, but if they
