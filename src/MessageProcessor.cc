@@ -73,23 +73,11 @@ void MessageProcessor::verifyaddress(string address)
 		throw MalformedAddressException();
 }
 
-void MessageProcessor::verifyrelay(string address)
-{
-	DetailLog() << "checking "
-		    << address
-		    << " from "
-		    << _outside.getaddress().getname()
-		    << " for relaying";
-
-	if (!Settings::testrelay(_outside.getaddress(), address))
-		throw IllegalRelayingException();
-}
-
 void MessageProcessor::process()
 {
 	SMTPResponse deferrederror;
-	bool errorstate = 0;
-	bool connected = 0;
+	bool errorstate = false;
+	bool connected = false;
 	bool authenticated = false;
 	
 	_response.set(220);
@@ -119,6 +107,40 @@ void MessageProcessor::process()
 				writeoutside();
 				continue;
 
+			case SMTPCommand::STARTTLS:
+#ifdef GNUTLS
+				if (Settings::externaltls())
+				{
+					if (_outside.issecure())
+					{
+						/* We're already using TLS --- fail. */
+						deferrederror.set(503);
+						goto error;
+					}
+					
+					/* Perform the handshake. */
+					 
+					_response.set(220);
+					writeoutside();
+					
+					_outside.makesecure();
+					
+					/* RFC2487 decrees that the SMTP session must be reset at this
+					 * point; the way we do it is to ensure that we disconnect
+					 * from the downstream server. */
+					
+					if (connected)
+						_inside.deinit();
+					connected = false;
+					errorstate = false;
+					authenticated = false;
+					continue;
+				}
+#else
+				deferrederror.set(500);
+				goto error;
+#endif
+					
 			case SMTPCommand::HELO:
 			case SMTPCommand::EHLO:
 				try
@@ -160,19 +182,30 @@ void MessageProcessor::process()
 						string address = _command.arg();
 	
 						verifyaddress(address);
-						verifyrelay(address);
-	
-						switch (greylist(_outside.getaddress() & 0xFFFFFF00,
-								_from, address))
+						
+						/* If this is not a trusted machine, do further checks. */
+						
+						if (!Settings::testtrusted(_outside.getaddress()))
 						{
-							case Accepted:
-								break;
-	
-							case GreyListed:
-								goto greymessage;
-	
-							case BlackListed:
-								goto blackmessage;
+							/* Do we want to accept mail to this email address? */
+							
+							if (!Settings::testacceptance(address))
+								throw IllegalRelayingException();
+
+							/* Do the greylisting. */
+														
+							switch (greylist(_outside.getaddress() & 0xFFFFFF00,
+									_from, address))
+							{
+								case Accepted:
+									break;
+		
+								case GreyListed:
+									goto greymessage;
+		
+								case BlackListed:
+									goto blackmessage;
+							}
 						}
 					}
 					catch (MalformedAddressException e)
@@ -194,7 +227,7 @@ void MessageProcessor::process()
 						goto greymessage;
 					}
 				}
-					
+				
 				Statistics::accepted();
 				break;
 
@@ -248,7 +281,7 @@ void MessageProcessor::process()
 
 				readinside();
 				_response.check(220, "Invalid banner");
-				connected = 1;
+				connected = true;
 			}
 			catch (NetworkException e)
 			{
@@ -328,44 +361,49 @@ void MessageProcessor::process()
 		
 		if (_response.code() == 250)
 		{
-			/* The downstream server will probably have responded with a huge
-			 * great wodge of text telling us what it can do. We want to throw
-			 * most of this away. The exception is that if external-auth is
-			 * turned on, we want to check to see what authentication
-			 * mechanisms the downstream server supports, and advertise those.
-			 */
+			/* If this is an EHLO, the downstream server will probably have
+			 * responded with a huge great wodge of text telling us what it
+			 * can do. We want to throw most of this away and replace it with
+			 * our own. */
 			 
-			if (Settings::externalauth() && (_command.cmd() == SMTPCommand::EHLO))
+			if (_command.cmd() == SMTPCommand::EHLO)
 			{
-				/* Find the AUTH line. */
+				vector<string> newcontinuation;
 				
-				string auth;
-				vector<string>& continuation = _response.continuation();
-				for (vector<string>::size_type i=0; i<continuation.size(); i++)
+				/* Do we want to advertise TLS? */
+				
+#ifdef GNUTLS
+				if (Settings::externaltls())
+					newcontinuation.push_back("STARTTLS");
+#endif
+
+				/* Do we want to advertise AUTH? */
+				
+				if (Settings::externalauth())
 				{
-					string s = continuation[i];
-					if (s.compare(0, 5, "AUTH ") == 0)
+					/* Find the AUTH line and copy it into the new continuation. */
+					
+					string auth;
+					vector<string>& continuation = _response.continuation();
+					for (vector<string>::size_type i=0; i<continuation.size(); i++)
 					{
-						auth = s;
-						break;
+						string s = continuation[i];
+						if (s.compare(0, 5, "AUTH ") == 0)
+						{
+							auth = s;
+							break;
+						}
 					}
+					
+					if (auth != "")
+						newcontinuation.push_back(auth);
 				}
 				
-				/* Replace the continuation with just the AUTH line, if there
-				 * is one. */
-				 
-				_response.continuationoverride();
-				if (auth != "")
-					_response.continuation().push_back(auth);
+				/* Replace the existing continuation with our new one. */
+				
+				_response.continuationoverride(newcontinuation);
 			}
-			else
-			{
-				/* external-auth is switched off, so just blow away and extra
-				 * data. */
-				 
-				_response.continuationoverride();
-			}
-			
+				
 			/* If the command is a EHLO or HELO, then the RFC is a bit
 			 * vague about what the response should be. In one part it
 			 * says that only the response code should be valid, but in
@@ -454,6 +492,12 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.15  2007/02/01 18:41:48  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.14  2007/01/31 12:58:25  dtrg
  * Added basic support for upstream AUTH requests based on Juan José
  * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are

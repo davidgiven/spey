@@ -1,9 +1,10 @@
-                                   SPEY V0.3.3
+                                   SPEY V0.4.0
                                    ===========
 
                                   Beta release
-                              (C) 2005 David Given
-                                   2005-11-08
+                              (C) 2007 David Given
+                                   2007-0-10
+                                *** FIXME UPDATE DATE ***
 
 INTRODUCTION
 ============
@@ -20,47 +21,29 @@ that spammers can't usually afford to run real mail servers; see:
 Spey uses the Sqlite library to keep track of which addresses its seen before,
 so you'll need that before you can use it.
 
+
 IF YOU'VE USED SPEY BEFORE
 ==========================
 
-The database files used by 0.3 are NOT compatible with those used by prior
+The database files used by 0.4 are NOT compatible with those used by prior
 versions.  You will have to delete the file and recreate it using speyctl (the
-new speyctl that comes with 0.3, of course). If you try to run spey with an old
+new speyctl that comes with 0.4, of course). If you try to run spey with an old
 configuration file... well, on your own head be it.
 
-Beginning with version 0.3.3, spey now supports dropping root privileges after
-startup. This is not enabled by default, partly for backwards compatibility
-reasons, and partly because setting it up is more complex than the very stupid
-installation script can manage. How to set this up is fully documented in the
-spey man page.
-
-IMPORTANT NOTE TO LINUX KERNEL 2.4 USERS
-========================================
-
-There is a problem with using Spey on Linux systems with a 2.4 kernel which
-means that Spey may, or may not, work. Sorry. Some distributions, including
-Debian, have compiled the Sqlite library in such a way that it triggers an
-obscure bug in the standard C library that causes an immediate crash on
-startup. There's no way for me to work around this.
-
-The exact reasons are complicated and technical and took me entirely by
-surprise; you should still be able to get spey to work, but it will be
-significantly harder than on a 2.6 system. See README-LINUX-2.4 for more
-information.
-
-Everything is fine on 2.6 kernels.
 
 INSTALLATION
 ============
 
 The installation process is, unfortunately, very primitive. There's a simple
-makefile. Run it. Spey should build. If you're the superuser, 'make install'
-will install everything into, probably, the wrong place. A startup/shutdown
-script will also be placed in /etc/init.d/spey.
+makefile. Take a look at it in a text editor; any configuration options should
+be clearly marked and documented. If you run it, Spey should build. If you're
+the superuser, 'make install' will install everything into, probably, the
+wrong place. A startup/shutdown script will also be placed in /etc/init.d/spey.
 
 All the code should, ideally, use standard Posix and C++ features. There might
 be some Linuxisms or gccisms that have crept in; if you find any, these are
 bugs, so please inform me.
+
 
 REQUIREMENTS
 ============
@@ -76,6 +59,14 @@ REQUIREMENTS
   installed in a strange place, or if you want to use a different awk anyway,
   you'll need to edit scripts/speyctl before installation.
 
+Links:
+
+    sqlite: http://sqlite.org/
+    mawk:   http://freshmeat.net/projects/mawk/
+    
+Debian has both of these.
+
+
 CONFIGURATION
 =============
 
@@ -87,17 +78,28 @@ run Spey; Spey itself doesn't care.
 I'm assuming that you've reconfigured your mail server to listen on the address
 localhost:2525 and that it's happy to receive mail from localhost.
 
+Step 0
+------
+
+By default, spey drops root privileges after startup. To do this, you need
+to create a user and group called "spey" and "spey". You don't have to do
+this, but these instructions assume that you are (because it's a good idea).
+If you're happy with running as root, then see "runtime-user-id" in the
+spey(8) man page to switch this feature off.
+
 Step 1
 ------
 
 You need to configure Spey. Spey stores all its configuration information in
-its database, which by default lives in /var/lib/misc/spey.db. You need to
-create this before you can do anything. You can do this with the command:
+its database, which by default lives in /var/lib/spey/spey.db. You need to
+create this before you can do anything. You can do this with these commands:
 
+	mkdir -p /var/lib/spey
+	chown spey.spey /var/lib/spey
 	speyctl init
 
 There are two things you need to do at minimum to configure spey. Firstly, you
-need to tell spey who to announce itself as in the SMTP banner. (Technically
+need to tell spey who to announce itself as in the SMTP banner. (In practice
 this isn't necessary, but the RFC requires it, and it's considered polite.) You
 do it like this:
 
@@ -154,10 +156,13 @@ while this won't do any harm, and indeed you might want to keep it as a record
 (and it won't even slow Spey down much thanks to the magic of Sqlite), it is a
 bit of a waste of space.
 
+
 DOCUMENTATION
 =============
 
-Man pages are provided. They may or may not contain useful information.
+Man pages are provided; see spey(8) and speyctl(8). They may or may not contain
+useful information.
+
 
 BUGS
 ====
@@ -172,6 +177,11 @@ These are the ones I know about and think are significant:
 * If the database schema changes, for example if you add or remove a table,
   spey will crash cleanly (i.e. unexpectedly shut down). Playing with the
   schema is not recommended.
+  
+* If you change a configuration setting, it will take effect when the next
+  client connects to spey; but when this happens, the changes will affect all
+  existing connections. This is sub-optimal and potentially confusing.
+
 
 DISCLAIMER
 ==========
@@ -191,15 +201,19 @@ example, there is exactly one placec where it does explicit dynamic memory
 allocation, which means it has no buffers to overflow --- but I'm new at this,
 okay?
 
+
 LEGAL STUFF
 ===========
 
-Spey is (C) 2004-2005 David Given. It is distributable under the conditions
-laid out by the GNU Public License, version 2 only (and explictly not version
+Spey is (C) 2004-2007 David Given. It is distributable under the conditions
+laid out by the GNU Public License, version 2 only (and explicitly not version
 3). You can find a copy of this license in the file COPYING.
+
 
 REVISION HISTORY
 ================
+
+Spey 0.4.0: 2007-10-10: FIXME in progress.
 
 Spey 0.3.3: 2005-11-08: Fixed the untraceable scheduler bug that was causing
 Spey to very occasionally crash silently --- thanks to Markus Madlener for
@@ -234,4 +248,3 @@ performance tweaks; inetd mode; proper daemon support; decent relay checking;
 rewrote speyctl in a real language.
 
 Spey 0.1: 2004-04-28. First release.
-

@@ -18,12 +18,22 @@
 #include <sys/time.h>
 #include <time.h>
 
+#ifdef GNUTLS
+/* The number of bits to use for Diffie-Helmann key exchange.
+ * (From the example.) */
+ 
+#define DH_BITS 1024
+#endif
+
 /* Create a new, uninitialised socket. */
 
 Socket::Socket()
 {
 	_fd = -1;
 	_timeout = 0;
+#ifdef GNUTLS
+	_issecure = false;
+#endif
 }
 
 /* Destroy an existing socket. */
@@ -85,6 +95,27 @@ void Socket::init(SocketAddress& address)
 
 void Socket::deinit()
 {
+#ifdef GNUTLS
+	if (_issecure)
+	{
+		gnutls_deinit(_gnutls_session);
+		
+		if (_gnutls_certificate_credentials)
+		{
+			gnutls_certificate_free_credentials(_gnutls_certificate_credentials);
+			_gnutls_certificate_credentials = NULL;
+		}
+		
+		if (_gnutls_anonymous_credentials)
+		{
+			gnutls_anon_free_server_credentials(_gnutls_anonymous_credentials);
+			_gnutls_anonymous_credentials = NULL;
+		}
+		
+		_issecure = false;
+	}
+#endif
+
 	if (_fd != -1)
 	{
 		close(_fd);
@@ -130,6 +161,10 @@ int Socket::read(void* buffer, int buflength)
 	}
 	Threadlet::takeCPUlock();
 
+#ifdef GNUTLS
+	if (_issecure)
+		return gnutls_record_recv(_gnutls_session, buffer, buflength);
+#endif
 	return ::read(_fd, buffer, buflength);
 }
 
@@ -140,7 +175,13 @@ int Socket::write(void* buffer, int buflength)
 	/* Wait in concurrent mode. */
 
 	Threadlet::releaseCPUlock();
-	int e = ::write(_fd, buffer, buflength);
+	int e;
+#ifdef GNUTLS
+	if (_issecure)
+		e = gnutls_record_send(_gnutls_session, buffer, buflength);
+	else
+#endif
+		e = ::write(_fd, buffer, buflength);
 	Threadlet::takeCPUlock();
 
 	return e;
@@ -177,6 +218,7 @@ eof:
 
 void Socket::writeline(string l)
 {
+	stringstream s;
 	char c;
 
 	for (string::size_type i=0; i<l.length(); i++)
@@ -186,32 +228,123 @@ void Socket::writeline(string l)
 		/* Convert \n into \r\n. */
 		
 		if (c == 10)
-		{
-			c = 13;
-			if (write(&c, 1) == -1)
-				goto eof;
-			c = 10;
-		}
-		
-		if (write(&c, 1) == -1)
-			goto eof;
+			s << (char) 13;
+
+		s << c;		
 	}
 
-	c = 13;
-	if (write(&c, 1) == -1)
-		goto eof;
-
-	c = 10;
-	if (write(&c, 1) == -1)
-		goto eof;
-	return;
-
-eof:
-	throw NetworkException("Socket unexpectedly closed");
+	s << (char) 13
+	  << (char) 10;
+	
+	string ss = s.str();
+	if (write((void*) ss.c_str(), ss.size()) == -1)
+		throw NetworkException("Socket unexpectedly closed");
 }
+
+/* --------------------------- GNU TLS support --------------------------- */
+
+#ifdef GNUTLS
+
+static gnutls_dh_params_t get_dh_params()
+{
+	static gnutls_dh_params_t dh_params;
+
+	/* Ensure that the Diffie-Helmann parameters have been made and that
+	 * they're not too old. */
+	
+	static time_t freshness = 0;
+	if ((time(NULL) - freshness) < (3600L * 24L))
+		return dh_params;
+	freshness = time(NULL);
+	
+	/* Regenerate the DH parameters. */
+	
+	MessageLog() << "Regenerating Diffie-Helmann parameters";
+	
+	gnutls_dh_params_init(&dh_params);
+	gnutls_dh_params_generate2(dh_params, DH_BITS);
+	return dh_params;
+}
+	
+void Socket::makesecure()
+{
+	/* GNUTLS setup. */
+		 
+	gnutls_init(&_gnutls_session, GNUTLS_SERVER);
+	gnutls_set_default_priority(_gnutls_session);
+
+	/* Make the anonymous credentials. */
+	
+	gnutls_anon_allocate_server_credentials(&_gnutls_anonymous_credentials);
+	if (_gnutls_anonymous_credentials)
+	{
+		gnutls_anon_set_server_dh_params(_gnutls_anonymous_credentials,	
+			get_dh_params());
+		gnutls_credentials_set(_gnutls_session, GNUTLS_CRD_ANON,
+			_gnutls_anonymous_credentials);
+	}
+	
+	/* Make the certificate credentials. */
+	
+	gnutls_certificate_allocate_credentials(&_gnutls_certificate_credentials);
+	bool certificate_valid = false;
+	if (_gnutls_certificate_credentials)
+	{
+		gnutls_certificate_set_dh_params(_gnutls_certificate_credentials,
+			get_dh_params());
+	
+		string privatekeyfile = Settings::tlsprivatekeyfile();
+		string certificatefile = Settings::tlscertificatefile();
+		int i = gnutls_certificate_set_x509_key_file(_gnutls_certificate_credentials,
+			certificatefile.c_str(), privatekeyfile.c_str(), GNUTLS_X509_FMT_PEM);
+		certificate_valid = (i == 0);
+
+		i = gnutls_credentials_set(_gnutls_session, GNUTLS_CRD_CERTIFICATE,
+			_gnutls_certificate_credentials);
+	}
+	
+	/* Other setup. */
+
+	if (!certificate_valid)
+	{
+		WarningLog() << "TLS enabled, but no valid certificate --- using anonymous authentication";
+		const int kx_prio[] = { GNUTLS_KX_ANON_DH, 0 };
+		gnutls_kx_set_priority(_gnutls_session, kx_prio);
+	}
+
+  	gnutls_dh_set_prime_bits(_gnutls_session, DH_BITS);
+	gnutls_certificate_server_set_request(_gnutls_session, GNUTLS_CERT_REQUEST);
+	
+	/* This socket is now marked as secure to ensure that TLS teardown happens
+	 * correctly, even if the handshake fails. */
+	
+	_issecure = true;
+	
+	/* TLS handshake. */
+	
+	gnutls_transport_set_ptr(_gnutls_session, (gnutls_transport_ptr_t) _fd);
+	
+	MessageLog() << "Starting TLS handshake";
+	Threadlet::releaseCPUlock();
+	int e = gnutls_handshake(_gnutls_session);
+	Threadlet::takeCPUlock();
+	MessageLog() << "Finished TLS handshake: "
+	             << gnutls_strerror(e); 
+
+	if (e < 0)
+		throw NetworkException("Unable to perform TLS handshake");
+}
+#endif
 
 /* Revision history
  * $Log$
+ * Revision 1.10  2007/01/29 23:05:10  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.9  2005/11/09 10:35:09  dtrg
  * Fixed a problem with the last checkin --- it seems that \n\r is *not*
  * the same as \r\n... thanks to Bernd Rilling for pointing this out.

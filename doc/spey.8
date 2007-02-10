@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH spey 8 "23 November 2005" "0.3.4" "SMTP preprocessor"
+.TH spey 8 "10 February 2007" "0.4.0" "SMTP preprocessor"
 .SH NAME
 spey \- a smart, spam-blocking SMTP proxy
 
@@ -42,6 +42,9 @@ or
 or
 .BR \-\-inetd \|]
 
+
+
+
 .SH DESCRIPTION
 .B spey
 is a smart SMTP proxy that implements greylisting as a spam prevention measure.
@@ -56,14 +59,18 @@ spey stores all of its configuration settings (other than those specified on
 the command line) in an
 .B Sqlite
 database. By default this is stored in
-.BR /var/lib/spey/spey.db ,
+.I /var/lib/spey/spey.db ,
 although it can be overridden if necessary. To manipulate the database, for
 example to set or change one of spey's configuration variables, use the
 .B speyctl(8)
 command.
 
+
+
+
 .SH OPTIONS
 spey understands the following options:
+
 
 .TP
 .BI --from\  address
@@ -74,12 +81,14 @@ format. Use 0.0.0.0 for the address to tell spey to listen on all interfaces.
 The default is
 .BR 0.0.0.0:25 .
 
+
 .TP
 .BI --to\  address
 
 Specifies the address to connect to; this is where your real mail server is
 listening. The address is specified as for the source address. The default is
 .BR localhost:2525 .
+
 
 .TP
 .BI --database\  filename
@@ -88,18 +97,20 @@ Specifies the database file to use. The file must have already have been
 created with
 .BR speyctl(8) .
 The default is
-.BR /var/lib/spey/spey.db .
+.I /var/lib/spey/spey.db .
 Be aware that by default,
 .B runtime-user-id
 is switched on. This affects how the file permissions should be set. See
 .B DROPPING ROOT PRIVILEGES
 below.
 
+
 .TP
 .BI --verbose\  level
 
 Specifies the verbosity level. Use 0 to suppress all output; increasing the
 number will produce more and more detailed tracing.
+
 
 .TP
 .BI --inetd
@@ -117,6 +128,7 @@ and shutting down, due to Sqlite opening and closing the database. However, it
 may be useful if you do not wish to have spey running all the time, or wish to
 force true multithreaded mode.
 
+
 .TP
 .BI --foreground
 
@@ -127,11 +139,15 @@ This is frequently useful for debugging. This flag is implicit in
 .B inetd
 mode.
 
+
+
+
 .SH "CONFIGURATION VARIABLES"
 spey uses a number of configuration variables, stored in the database, to
 control itself. You can list and change these with the
 .B speyctl(8)
 command.
+
 
 .TP
 .B identity
@@ -141,11 +157,13 @@ Technically this should be the name of your mail domain; in the real world,
 frequently this is set to a dummy value. SMTP connections do not use this value
 for any useful purpose other than diagnostics.
 
+
 .TP
 .B quarantine-time
 
 Controls the delay between a message arriving and spey marking that particular
 address/sender/receiver tuple as valid. This is an integer, in seconds.
+
 
 .TP
 .B intolerant
@@ -157,6 +175,7 @@ While this does violate the RFC, SMTP errors do not usually occur during
 legitimate mail transactions. Setting this will reduce the amount of time taken
 to deal with any particular spammer.
 
+
 .TP
 .B socket-timeout
 
@@ -166,6 +185,7 @@ defaults to 30. See
 .B BUGS
 below. Set to 0 if you want to disable the timeout completely.
 
+
 .TP
 .B invalid-expiry
 
@@ -174,6 +194,7 @@ database. An integer, in seconds. When the database is purged, any tuples where
 the hit count is 1 and the time last seen is older than this value will be
 discarded. The default is 24 hours.
 
+
 .TP
 .B valid-expiry
 
@@ -181,6 +202,7 @@ Controls how long spey should keep unused tuples that have been seen more than
 once in the database. An integer, in seconds. When the database is purged, any
 tuples that have not been seen for longer than the specified time will be
 discarded. The default is a week.
+
 
 .TP
 .B runtime-user-id
@@ -196,6 +218,40 @@ If you do not want spey to drop root privileges, then leave this variable
 unset. Newly created databases have this set to
 .BR spey:spey .
 
+
+.TP
+.B tls-certificate-file
+
+Specifies the path of the SSL certificate (the
+.I .pem
+file). to be used when TLS is enabled. See
+.BR external-tls .
+
+
+.TP
+.B tls-private-key-file
+
+Specifies the path of the SSL key to be used when TLS is enabled (the
+.I .key
+file). See
+.BR external-tls .
+
+
+.TP
+.B external-tls
+
+Enables the use of TLS by external users. An integer, either 0 or 1,
+defaulting to 0.
+
+If you use TLS, it's strongly recommended that you specify the
+.B tls-certificate-file
+and
+.B tls-private-key-file
+parameters as well; this will allow far more types of client to use TLS and
+connect to spey. Otherwise spey will attempt to use GNUTLS' anonymous
+authentication, which is not supported by most other SSL implementations.
+
+
 .TP
 .B external-auth
 
@@ -210,21 +266,22 @@ Only authentication is supported. If a client tries to negotiate a security
 layer, spey will get very confused. It is recommended that you turn this
 feature off in your MTA.
 
-.SH "MESSAGE RELAYING"
 
-Before greylisting is done, spey matches messages against a table to determine
-whether to accept them or not. This provides an overall access control
-mechanism necessary to prevent abuse of your mail server. This table can be
-manipulated by
+
+
+.SH "TRUSTED MACHINES"
+
+Before greylisting is done, spey matches the IP addresses of the machines that
+connect to it to determine whether they are special trusted machines or not.
+If they are trusted, then greylisting and relay checking is bypassed. In other
+words, any machine on this list may spam at will.
+
+This table can be manipulated by
 .BR speyctl(8) ,
-and contains zero or more keys.
+and contains zero or more keys of the form
+.BR ipaddress/width .
 
-Keys are of the form
-.B ipaddress/width
-or
-.BR address@domain .
-The first form specifies allowed senders. Any connections from an address that
-matches the key will be allowed to relay to any address. It is recommended that
+It is recommended that
 .B 127.0.0.1/32
 is added, so that mail may be sent from the local machine. The author has
 .B 10.0.0.0/8
@@ -236,15 +293,33 @@ will allow connections to be made from any host, disabling the relay checking
 completely. Don't do this unless you are absolutely sure about what you are
 doing!
 
-The second form specifies allowed recipients. Either the address or domain part
-may be blank, which acts as a wildcard. Unless you have configured spey as an
-open relay above, you will want at least one entry; the author has
+
+
+
+.SH "ALLOWED RECIPIENTS"
+
+If a machine is not trusted, but before greylisting is done, spey checks the
+email address in order to determine whether it makes sense at all to handle
+the message. The message is checked against a table which, again, can be
+manipulated with
+.BR speyctl(8) .
+It contains keys of the form
+.BR address@domain .
+
+Either the address or domain part may be blank, which acts as a wildcard.
+You will want at least one entry, otherwise you won't be able to receive email
+at all; the author has
 .BR @cowlark.com ,
 meaning that all messages to an address at the
 .B cowlark.com
 domain will be accepted. A key of
 .B @
-will match all messages and will disable the relay checking.
+will match all messages.
+
+Messages that are not addressed to a recipient on this table will be rejected
+out of hand.
+
+
 
 
 .SH "BLACKLISTS AND WHITELISTS"
@@ -308,6 +383,8 @@ response code rather than the 451 that greylisting produces. This should tell
 the remote server not to try resending it.
 
 
+
+
 .SH DROPPING ROOT PRIVILEGES
 spey has optional support for relinquishing root privileges after startup. This
 is for enhanced safety; if any security hole results in spey being compromised
@@ -337,6 +414,8 @@ but this is probably unnecessary; you should also be aware that if spey ever
 runs out of quota for legitimate reasons it will stop working.
 
 
+
+
 .SH BUGS
 spey is beta software. It has bugs. spey is not guaranteed to do anything
 useful with your email. It may throw it all away into a big, black box and you
@@ -362,6 +441,8 @@ That said, there are almost certainly major problems with it. Please report
 them!
 
 
+
+
 .SH FILES
 .TP
 .I /var/lib/spey/spey.db
@@ -381,8 +462,17 @@ They are distributable under the terms of the GNU General Public License V2. A
 full copy can be found in the spey source distribution, or at
 .BR http://www.fsf.org/copyleft/gpl.html .
 
+
+
+
 .\" Revision history
 .\" $Log$
+.\" Revision 1.14  2007/02/01 18:41:47  dtrg
+.\" Reworked the SMTP AUTH code so that spey automatically figures out what
+.\" authentication mechanisms there are by asking the downstream server. The
+.\" external-auth setting variable is now a boolean. Rearranged various
+.\" other bits of code and fixed a lot of problems with the man pages.
+.\"
 .\" Revision 1.13  2007/01/29 00:39:00  dtrg
 .\" Corrected a minor typo.
 .\"

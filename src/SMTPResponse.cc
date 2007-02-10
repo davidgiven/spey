@@ -136,9 +136,12 @@ void SMTPResponse::set(Socket& in)
 	
 	switch (_code)
 	{
+		case 334:
+			_parameter = l.substr(4);
+			break;
+
 		case 220:
 		case 221:
-		case 334:
 		case 421:
 		{
 			string::size_type i = l.find(' ', 4);
@@ -199,11 +202,13 @@ static char* statusMessage(int code)
 		case 450: return "Requested mail action not taken: mailbox unavailable";
 		case 451: return "Requested action aborted: local error in processing";
 		case 452: return "Requested action not taken: insufficient system storage";
+		case 454: return "TLS not available due to temporary reason";
 		case 500: return "Syntax error, command unrecognized";
 		case 501: return "Syntax error in parameters or arguments";
 		case 502: return "Command not implemented";
 		case 503: return "Bad sequence of commands";
 		case 504: return "Command parameter not implemented";
+		case 535: return "SMTP Authentication unsuccessful/Bad username or password";
 		case 550: return "Requested action not taken: mailbox unavailable";
 		case 551: return "User not local";
 		case 552: return "Requested mail action aborted: exceeded storage allocation";
@@ -261,6 +266,12 @@ bool SMTPResponse::iserror()
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/02/01 18:41:48  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.4  2007/01/31 12:58:25  dtrg
  * Added basic support for upstream AUTH requests based on Juan José
  * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
