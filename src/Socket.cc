@@ -135,11 +135,14 @@ static uint64_t now()
 	
 /* Read data from the socket. */
 
-int Socket::read(void* buffer, int buflength)
+int Socket::read(void* buffer, int buflength, int timeoutdelta)
 {
 	/* When does the timeout take place? */
 
-	uint64_t timeout = now() + (uint64_t)_timeout*1000;
+	if (timeoutdelta == -1)
+		timeoutdelta = _timeout;
+		
+	uint64_t timeout = now() + (uint64_t)(timeoutdelta*1000);
 
 	/* Read data in concurrent mode. */
 
@@ -338,6 +341,17 @@ void Socket::makesecure()
 
 /* Revision history
  * $Log$
+ * Revision 1.11  2007/02/10 00:24:35  dtrg
+ * Added support for TLS connections using the GNUTLS library. A X509
+ * certificate and private key must be supplied for most purposes, but if they
+ * are not provided anonymous authentication will be used instead (which
+ * apparently only GNUTLS supports). Split the relay check up into two
+ * separate parts; the trustedhosts table now specifies machines that can be
+ * trusted to play nice, and can do relaying and be allowed to bypass the
+ * greylisting; and allowedrecipients, which specifies what email address we're
+ * expecting to receive. Also fixed some remaining niggles in the AUTH
+ * proxy support, but this remains largely untested.
+ *
  * Revision 1.10  2007/01/29 23:05:10  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use

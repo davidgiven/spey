@@ -79,6 +79,41 @@ void MessageProcessor::process()
 	bool errorstate = false;
 	bool connected = false;
 	bool authenticated = false;
+	bool trusted = Settings::testtrusted(_outside.getaddress());
+	 
+	if (trusted)
+		MessageLog() << "This connection is trusted";
+		
+	/* Do the greet-pause. */
+	
+	if (!trusted)
+	{
+		int delay = Settings::greetpause();
+		if (delay > 0)
+		{
+			MessageLog() << "doing greet-pause of " << delay << " seconds";
+			
+			try
+			{
+				char buf[1];
+				_outside.read(buf, 1, delay);
+				
+				/* On timeout, read() will throw an exception. So if we get
+				 * here, data has been read. */
+				
+				deferrederror.set(554);
+				deferrederror.msgoverride("5.7.1 Rejected: protocol violation");
+				Statistics::spokeTooSoon();
+				goto error;
+			}
+			catch (NetworkTimeoutException e)
+			{
+				/* do nothing --- this is what we expected */
+			}
+		}
+	}
+	
+	/* Write out the banner. */
 	
 	_response.set(220);
 	_response.parmoverride(Settings::identity());
@@ -133,7 +168,7 @@ void MessageProcessor::process()
 						_inside.deinit();
 					connected = false;
 					errorstate = false;
-					authenticated = false;
+					authenticated = true;
 					continue;
 				}
 #else
@@ -157,7 +192,7 @@ void MessageProcessor::process()
 				break;
 
 			case SMTPCommand::MAIL:
-				if (!authenticated)
+				if (!authenticated && !trusted)
 				{
 					try
 					{
@@ -176,36 +211,31 @@ void MessageProcessor::process()
 				break;
 
 			case SMTPCommand::RCPT:
-				if (!authenticated)
+				if (!authenticated && !trusted)
 				{
 					try {
 						string address = _command.arg();
 	
 						verifyaddress(address);
 						
-						/* If this is not a trusted machine, do further checks. */
+						/* Do we want to accept mail to this email address? */
 						
-						if (!Settings::testtrusted(_outside.getaddress()))
-						{
-							/* Do we want to accept mail to this email address? */
-							
-							if (!Settings::testacceptance(address))
-								throw IllegalRelayingException();
+						if (!Settings::testacceptance(address))
+							throw IllegalRelayingException();
 
-							/* Do the greylisting. */
-														
-							switch (greylist(_outside.getaddress() & 0xFFFFFF00,
-									_from, address))
-							{
-								case Accepted:
-									break;
-		
-								case GreyListed:
-									goto greymessage;
-		
-								case BlackListed:
-									goto blackmessage;
-							}
+						/* Do the greylisting. */
+													
+						switch (greylist(_outside.getaddress() & 0xFFFFFF00,
+								_from, address))
+						{
+							case Accepted:
+								break;
+	
+							case GreyListed:
+								goto greymessage;
+	
+							case BlackListed:
+								goto blackmessage;
 						}
 					}
 					catch (MalformedAddressException e)
@@ -247,7 +277,7 @@ void MessageProcessor::process()
 					s << "You have been blacklisted. "
 					  << "Your message will not be accepted.";
 					deferrederror.msgoverride(s.str());
-					errorstate = 1;
+					errorstate = true;
 
 					Statistics::blacklisted();
 					break;
@@ -261,7 +291,7 @@ void MessageProcessor::process()
 					  << (Settings::quarantinetime()/60)
 					  << " minutes and your message will be accepted";
 					deferrederror.msgoverride(s.str());
-					errorstate = 1;
+					errorstate = true;
 
 					Statistics::greylisted();
 					break;
@@ -472,7 +502,7 @@ void MessageProcessor::process()
 		writeoutside();
 		if (Settings::intolerant())
 			goto abort;
-		errorstate = 0;
+		errorstate = false;
 		continue;
 	}
 
@@ -492,6 +522,17 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.16  2007/02/10 00:24:35  dtrg
+ * Added support for TLS connections using the GNUTLS library. A X509
+ * certificate and private key must be supplied for most purposes, but if they
+ * are not provided anonymous authentication will be used instead (which
+ * apparently only GNUTLS supports). Split the relay check up into two
+ * separate parts; the trustedhosts table now specifies machines that can be
+ * trusted to play nice, and can do relaying and be allowed to bypass the
+ * greylisting; and allowedrecipients, which specifies what email address we're
+ * expecting to receive. Also fixed some remaining niggles in the AUTH
+ * proxy support, but this remains largely untested.
+ *
  * Revision 1.15  2007/02/01 18:41:48  dtrg
  * Reworked the SMTP AUTH code so that spey automatically figures out what
  * authentication mechanisms there are by asking the downstream server. The

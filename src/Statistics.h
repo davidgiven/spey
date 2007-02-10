@@ -17,6 +17,7 @@ struct Statistics {
 	static void malformedDomain();
 	static void malformedAddress();
 	static void illegalRelaying();
+	static void spokeTooSoon();
 	static void timeout();
 	static void greylisted();
 	static void accepted();
@@ -31,6 +32,9 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/06/21 23:12:46  dtrg
+ * Added blacklisting and whitelisting support.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */
