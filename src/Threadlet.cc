@@ -40,8 +40,7 @@ void Threadlet::initialise()
 	(void) pthread_mutexattr_init(&attrs);
 	(void) pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_RECURSIVE);
 	(void) pthread_mutexattr_setpshared(&attrs, true);
-	int e = pthread_mutex_init(&cpulock, &attrs);
-	ThreadLog() << "CPU lock created: " << e;
+	(void) pthread_mutex_init(&cpulock, &attrs);
 	pthread_mutexattr_destroy(&attrs);
 
 	/* Take the CPU lock. */
@@ -140,6 +139,9 @@ Threadlet* Threadlet::current()
 	
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/01/29 23:32:19  dtrg
+ * Fixed a compiler warning.
+ *
  * Revision 1.4  2007/01/29 23:05:11  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use
