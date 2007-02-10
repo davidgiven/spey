@@ -27,6 +27,7 @@ struct Settings {
 	static string tlsprivatekeyfile() { return _tlsprivatekeyfile; }
 	static bool externaltls() { return _externaltls; }
 	static bool externalauth() { return _externalauth; }
+	static string rbllist() { return _rbllist; };
 	
 	static bool testtrusted(const SocketAddress& sender);
 	static bool testacceptance(const string& recipient);
@@ -42,12 +43,19 @@ protected:
 	static string _tlsprivatekeyfile;
 	static bool _externaltls;
 	static bool _externalauth;
+	static string _rbllist;
 };
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/02/10 19:46:44  dtrg
+ * Added greet-pause support. Moved the trusted hosts check to right after
+ * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+ * in the AUTH supported that meant that authenticated connections had no
+ * extra privileges (oops). Added the ability to reset all statistics on demand.
+ *
  * Revision 1.6  2007/02/10 00:24:35  dtrg
  * Added support for TLS connections using the GNUTLS library. A X509
  * certificate and private key must be supplied for most purposes, but if they

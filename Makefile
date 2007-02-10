@@ -13,7 +13,7 @@
 
 PREFIX = /usr
 EXE = bin/spey
-OPTIMISATION = -g -O3
+OPTIMISATION = -g -Os
 CC = g++ -Wall
 
 # If you want GNUTLS support, set this to 'yes'.
@@ -62,6 +62,7 @@ OBJS = \
 	src/MessageProcessor.o \
 	src/ServerProcessor.o \
 	src/greylist.o \
+	src/rbl.o \
 	src/main.o
 
 all: $(EXE)
@@ -109,6 +110,17 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.10  2007/02/10 00:24:35  dtrg
+# Added support for TLS connections using the GNUTLS library. A X509
+# certificate and private key must be supplied for most purposes, but if they
+# are not provided anonymous authentication will be used instead (which
+# apparently only GNUTLS supports). Split the relay check up into two
+# separate parts; the trustedhosts table now specifies machines that can be
+# trusted to play nice, and can do relaying and be allowed to bypass the
+# greylisting; and allowedrecipients, which specifies what email address we're
+# expecting to receive. Also fixed some remaining niggles in the AUTH
+# proxy support, but this remains largely untested.
+#
 # Revision 1.9  2007/01/29 23:06:06  dtrg
 # Due to various unpleasant incompatibilities with ucontext, the
 # entire coroutine implementation has been rewritten to use

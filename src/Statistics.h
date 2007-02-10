@@ -23,6 +23,7 @@ struct Statistics {
 	static void accepted();
 	static void blacklisted();
 	static void whitelisted();
+	static void blackholed();
 
 protected:
 	static void count(string which);
@@ -32,6 +33,12 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2007/02/10 19:46:44  dtrg
+ * Added greet-pause support. Moved the trusted hosts check to right after
+ * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+ * in the AUTH supported that meant that authenticated connections had no
+ * extra privileges (oops). Added the ability to reset all statistics on demand.
+ *
  * Revision 1.2  2004/06/21 23:12:46  dtrg
  * Added blacklisting and whitelisting support.
  *
