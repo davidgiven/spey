@@ -17,6 +17,9 @@ int Settings::_intolerant;
 int Settings::_quarantinetime;
 int Settings::_sockettimeout;
 string Settings::_runtimeuserid;
+string Settings::_tlscertificatefile;
+string Settings::_tlsprivatekeyfile;
+bool Settings::_externaltls;
 bool Settings::_externalauth;
 
 string Settings::get(string key)
@@ -46,28 +49,41 @@ void Settings::reload()
 	_quarantinetime = atoi(get("quarantine-time").c_str());
 	_sockettimeout = atoi(get("socket-timeout").c_str());
 	_runtimeuserid = get("runtime-user-id");
+	_tlscertificatefile = get("tls-certificate-file");
+	_tlsprivatekeyfile = get("tls-private-key-file");
+	_externaltls = atoi(get("external-tls").c_str());
 	_externalauth = atoi(get("external-auth").c_str());
 }
 
-bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
+/* Check to see whether the machine that's connected to us is a trusted site.
+ */
+ 
+bool Settings::testtrusted(const SocketAddress& sender)
 {
 	stringstream s;
-	s << "SELECT COUNT(*) FROM allowrelayingfrom WHERE "
+	s << "SELECT COUNT(*) FROM trustedhosts WHERE "
 	  << "(" << (int)sender << " >> (32-right)) = (left >> (32-right));";
 
 	{
 		SQLQuery q(Sql, s.str());
 		q.step();
 		if (q.getint(0))
-			return 1;
+			return true;
 	}
 
+	return false;
+}
+
+/* Test to see if we want to accept mail to a particular address. */
+
+bool Settings::testacceptance(const string& recipient)
+{
 	int i = recipient.find('@');
 	string address = recipient.substr(0, i);
 	string domain = recipient.substr(i+1);
 
-	s.str("");
-	s << "SELECT COUNT(*) FROM allowrelayingto WHERE "
+	stringstream s;
+	s << "SELECT COUNT(*) FROM validrecipients WHERE "
 		<< "((left = '') OR (left = '" << address << "')) AND "
 		<< "((right = '') OR (right = '" << domain << "'));";
 		
@@ -75,14 +91,20 @@ bool Settings::testrelay(const SocketAddress& sender, const string& recipient)
 		SQLQuery q(Sql, s.str());
 		q.step();
 		if (q.getint(0))
-			return 1;
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/02/01 18:41:49  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.5  2007/01/31 12:58:25  dtrg
  * Added basic support for upstream AUTH requests based on Juan José
  * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are

@@ -22,7 +22,8 @@ function usage()
 	print "    init                     Create a new configuration file."
 	print "    set <key> [<value>]      Set/display a single configuration value."
 	print "    list                     List all configuration values to stdout."
-	print "    relay <cmd> [<spec>]     Manipulate the relay table."
+	print "    trust <cmd> [<spec>]     Manipulate the trusted host table."
+	print "    recipient <cmd> [<spec>] Manipulate the allowed recipients table."
 	print "    whitelist <cmd> [<spec>] Manipulate the whitelist table."
 	print "    blacklist <cmd> [<spec>] Manipulate the blacklist table."
 	print "    stats                    List statistics."
@@ -34,11 +35,6 @@ function error(s)
 {
 	print "speyctl: " s > "/dev/stderr"
 	exit(1)
-}
-
-function relaysyntaxerror(s)
-{
-	error("syntax error: speyctl relay [add or sub or list] [<spec>]")
 }
 
 function Xlistsyntaxerror(list, s)
@@ -87,13 +83,15 @@ function cmd_init()
 			firstseen INTEGER NOT NULL,             \
 			lastseen INTEGER NOT NULL);")
 
-	sql("CREATE TABLE allowrelayingfrom (       \
-			left INTEGER NOT NULL,                  \
-			right INTEGER NOT NULL);")
+	sql("CREATE TABLE trustedhosts (                \
+		    left INTEGER NOT NULL,                  \
+		    right INTEGER NOT NULL);                \
+		INSERT INTO trustedhosts VALUES             \
+		    (2130706433, 32);                       ")
 		
-	sql("CREATE TABLE allowrelayingto (         \
-			left VARCHAR,                           \
-			right VARCHAR);")
+	sql("CREATE TABLE validrecipients (             \
+		    left VARCHAR,                           \
+		    right VARCHAR);                         ")
 
 	sql("CREATE TABLE settings (                \
 			key VARCHAR PRIMARY KEY,                \
@@ -199,12 +197,12 @@ function cmd_purge()
 	sqlend();
 }
 
-function cmd_relay(op, value)
+function cmd_trust(op, value)
 {
 	if (op ~ /list/)
 	{
 		FS = ","
-		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM allowrelayingfrom'"
+		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM trustedhosts'"
 		while (cmd|getline == 1)
 		{
 			b1 = int($1 / (256*256*256)) % 256
@@ -213,38 +211,57 @@ function cmd_relay(op, value)
 			b4 = int($1) % 256
 			printf "%d.%d.%d.%d/%d\n", b1, b2, b3, b4, $2
 		}
-		
-		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM allowrelayingto'"
-		while (cmd|getline == 1)
-			printf "%s@%s\n", $1, $2
 		return
 	}
 
 	if (value ~ /.*\/.*/)
 	{
 		if (split(value, array, /\//) > 2)
-			relaysyntaxerror()
+			Xlistsyntaxerror("trust")
 		left = array[1]
 		right = array[2]
 		if (right == "")
 			right = 32
 
 		if (split(left, array, /\./) != 4)
-			relaysyntaxerror()
+			Xlistsyntaxerror("trust")
 		left = ((array[1]*256 + array[2])*256 + array[3])*256 + array[4]
 		left = sprintf("%.0f", left)
-		table = "allowrelayingfrom"
-	}
-	else if (value ~ /.*@.*/)
-	{
-		if (split(value, array, /@/) > 2)
-			relaysyntaxerror()
-		left = array[1]
-		right = array[2]
-		table = "allowrelayingto"
+		table = "trustedhosts"
 	}
 	else
-		relaysyntaxerror()
+		Xlistsyntaxerror("trust")
+
+	sqlstart()
+	sql("DELETE FROM " table " WHERE "			\
+		"left='" left "' AND right='" right "';")
+	if (op ~ /add/)
+		sql("INSERT INTO " table " VALUES "		\
+			"('" left "', '" right "');")
+	sqlend()
+}
+
+function cmd_recipient(op, value)
+{
+	if (op ~ /list/)
+	{
+		FS = ","		
+		cmd = "sqlite -separator ',' " configfile " 'SELECT left, right FROM validrecipients'"
+		while (cmd|getline == 1)
+			printf "%s@%s\n", $1, $2
+		return
+	}
+
+	if (value ~ /.*@.*/)
+	{
+		if (split(value, array, /@/) > 2)
+			Xlistsyntaxerror("recipient")
+		left = array[1]
+		right = array[2]
+		table = "validrecipients"
+	}
+	else
+		Xlistsyntaxerror("recipient")
 
 	sqlstart()
 	sql("DELETE FROM " table " WHERE "			\
@@ -257,6 +274,11 @@ function cmd_relay(op, value)
 
 function cmd_Xlist(op, list, value,    array, sender, recipient)
 {
+	if (list ~ /trust/)
+		return cmd_trust(op, value)
+	if (list ~ /recipient/)
+		return cmd_recipient(op, value)
+		
 	if (op ~ /list/)
 	{
 		FS = ","
@@ -318,18 +340,7 @@ function parseargs(  i)
 			cmd_list()
 			exit(0)
 		}
-		else if (opt ~ /^relay$/)
-		{
-			op = ARGV[++i]
-			value = ARGV[++i]
-			if (i < (ARGC - 1))
-				error("too many parameters (try --help)")
-			if ((op != "list") && (op != "add") && (op != "sub"))
-				relaysyntaxerror()
-			cmd_relay(op, value)
-			exit(0)
-		}
-		else if (opt ~ /^(whitelist)|(blacklist)$/)
+		else if (opt ~ /^(trust)|(recipient)|(whitelist)|(blacklist)$/)
 		{
 			op = ARGV[++i]
 			value = ARGV[++i]
@@ -376,6 +387,10 @@ BEGIN {
 
 # Revision history
 # $Log$
+# Revision 1.10  2007/01/31 12:48:51  dtrg
+# Dropping root privileges is now the default. The default database file
+# has been moved into /var/lib/spey/spey.db to assist this.
+#
 # Revision 1.9  2005/09/30 23:19:05  dtrg
 # Updated version number to 0.3.3. Also removed the previous default value for process-user-id; the variable is now called runtime-user-id, and we don't want a default value any more anyway.
 #

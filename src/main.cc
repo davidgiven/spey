@@ -175,6 +175,10 @@ int main(int argc, char* argv[])
 		Logger::setlevel(cli.v());
 		Threadlet::initialise();
 		
+#ifdef GNUTLS
+		gnutls_global_init();
+#endif
+
 		if (cli.i())
 			return inetdmode(cli);
 		else
@@ -197,6 +201,13 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.11  2007/01/29 23:05:12  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.10  2005/10/31 22:20:36  dtrg
  * Added support for compiling with the Electric Fence memory debugger.
  *

@@ -16,13 +16,17 @@ EXE = bin/spey
 OPTIMISATION = -g -O3
 CC = g++ -Wall
 
+# If you want GNUTLS support, set this to 'yes'.
+
+GNUTLS = yes
+
 # If you want to debug Spey, you can enable Electric Fence support here.
 
 ELECTRICFENCE = no
 
 # You shouldn't need to touch anything below here.
 
-MAJORVERSION := unknown
+MAJORVERSION := 0.4.0
 BUILDCOUNT := 1
 include version
 
@@ -34,6 +38,11 @@ LIBS = \
 ifeq ($(ELECTRICFENCE),yes)
 	CFLAGS += -DELECTRICFENCE
 	LIBS += -lefence
+endif
+
+ifeq ($(GNUTLS),yes)
+	CFLAGS += -DGNUTLS
+	LIBS += -lgnutls
 endif
 
 OBJS = \
@@ -100,6 +109,13 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.9  2007/01/29 23:06:06  dtrg
+# Due to various unpleasant incompatibilities with ucontext, the
+# entire coroutine implementation has been rewritten to use
+# pthreads instead of user-level scheduling. This should make
+# things far more robust and portable, if a bit more heavyweight.
+# It also has the side effect of drastically simplified threadlet code.
+#
 # Revision 1.8  2005/10/31 22:20:36  dtrg
 # Added support for compiling with the Electric Fence memory debugger.
 #

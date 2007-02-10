@@ -19,7 +19,6 @@ struct MessageProcessor: Threadlet {
 
 	void verifydomain(string domain);
 	void verifyaddress(string address);
-	void verifyrelay(string address);
 	void process();
 
 	virtual int debugid();
@@ -44,6 +43,12 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/02/01 18:41:48  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.4  2004/06/30 20:18:49  dtrg
  * Changed the way sockets are initialised; instead of doing it from the Socket
  * and SocketServer constructors, they're set up as zombies and initialised later

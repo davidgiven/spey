@@ -142,6 +142,11 @@ void SMTPCommand::set(Socket& in)
 
 			p.eol();
 		}
+		else if (cmd == "starttls")
+		{
+			this->command = STARTTLS;
+			p.eol();
+		}
 		else
 			throw ParseErrorException();
 	} catch (ParseErrorException e)
@@ -202,6 +207,10 @@ SMTPCommand::operator string ()
 			s << "AUTH "
 			  << this->parameter;
 			break;
+			
+		case STARTTLS:
+			s << "STARTTLS";
+			break;
 	}
 
 	return s.str();
@@ -209,6 +218,12 @@ SMTPCommand::operator string ()
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/01/31 12:58:25  dtrg
+ * Added basic support for upstream AUTH requests based on Juan José
+ * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
+ * proxied through to the downstream server. Parts of the code still need a
+ * rethink but it should all work.
+ *
  * Revision 1.4  2006/04/25 21:24:01  dtrg
  * Changed the parsing of MAIL FROM: lines to ignore any additional parameters after the email address. This is to cope with broken MTAs who insist on sending RFC1870 extensions (such as SIZE=....) even though we haven't declared ourselves as using them. Thanks to Claus Herwig for pointing this out.
  *

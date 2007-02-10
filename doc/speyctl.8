@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH speyctl 8 "23 November 2005" "0.3.3" "SMTP preprocessor"
+.TH speyctl 8 "10 February 2007" "0.4.0" "SMTP preprocessor"
 .SH NAME
 speyctl \- an interface to the Spey configuration database
 
@@ -64,58 +64,43 @@ is omitted, the key will be deleted.
 .B list
 List out all configuration variables.
 
-.TP
-.BI relay\  command\ argument
-Modifies spey's relay control table. spey will allow relaying only if the
-message is being sent from a known IP address, OR if the message is to a known
-recipient. (Or both.) All other messages will be rejected.
 
-.I command
-should be one of
-.BR add ,\  sub \ or\  list .
-If
-.BR add ,
-then the specified key will be added to the table, allowing relaying of
-messages matching that key. If
-.BR sub ,
-then the key will be removed.
-.B list
-will show the current table. See the section MESSAGE RELAYING in the
-.B spey(8)
-man page for a description of the keys used by the relay table.
+.TP
+.BI trust\  command\ argument
+See below.
+
+.TP
+.BI recipient\  command\ argument
+See below.
 
 .TP
 .BI whitelist\  command\ argument
-Modifies spey's whitelisting table. spey will bypass the greylister and allow
-the message through if it matches the pattern supplied.
+See below.
+
+.TP
+.BI blacklist\  command\ argument
+These four commands all modify one of spey's control tables. See the sections
+TRUSTED HOSTS, ALLOWED RECIPIENTS, and BLACKLISTS AND WHITELISTS in the
+.B spey(8)
+man page for for more information about these tables.
 
 .I command
 should be one of
 .BR add ,\  sub \ or\  list .
 If
 .BR add ,
-then the specified pattern will be added to the table, indicating that messages
-matching the pattern should be accepted immediately.  If
+then the specified key will be added to the table. If
 .BR sub ,
-then the pattern will be removed.
+then the key will be removed.
 .B list
-will show the current table. See the section BLACKLISTING AND WHITELISTING in
-the
-.B spey(8)
-man page for a description of the keys used by the relay table.
+will show the current table.
 
-.TP
-.BI blacklist\  command\ argument
-Modifies spey's blacklisting table. spey will bypass the greylister and
-immediately reject the message if the it matches the pattern supplied. The
-arguments are the same as for the
-.B whitelist
-command (see above).
 
 .TP
 .B stats
 Display a summary of the number of messages processed so far, and what
 categories they fall in to.
+
 
 .TP
 .B showdb
@@ -123,6 +108,7 @@ Lists out the current address database. The three columns are: network address
 of sender, the number of times this particular address/sender/recipient tuple
 has been seen, and the sender/recipient. The list is sorted by the number of
 times seen, most recent tuples first.
+
 
 .TP
 .B purge
@@ -155,6 +141,12 @@ full copy can be found in the Spey source distribution, or at
 
 .\" Revision history
 .\" $Log$
+.\" Revision 1.11  2007/02/01 18:41:47  dtrg
+.\" Reworked the SMTP AUTH code so that spey automatically figures out what
+.\" authentication mechanisms there are by asking the downstream server. The
+.\" external-auth setting variable is now a boolean. Rearranged various
+.\" other bits of code and fixed a lot of problems with the man pages.
+.\"
 .\" Revision 1.10  2005/11/23 22:43:29  dtrg
 .\" Updated for the real 0.3.3 release.
 .\"

@@ -26,7 +26,8 @@ struct SMTPCommand {
 		HELP,
 		NOOP,
 		QUIT,
-		AUTH
+		AUTH,
+		STARTTLS
 	};
 
 	SMTPCommand();
@@ -57,6 +58,12 @@ inline Logger& operator << (Logger& s, SMTPCommand& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/01/31 12:58:25  dtrg
+ * Added basic support for upstream AUTH requests based on Juan José
+ * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
+ * proxied through to the downstream server. Parts of the code still need a
+ * rethink but it should all work.
+ *
  * Revision 1.3  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

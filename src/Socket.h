@@ -13,6 +13,10 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+#ifdef GNUTLS
+#include <gnutls/gnutls.h>
+#endif
+
 struct SocketServer;
 
 struct Socket {
@@ -40,12 +44,34 @@ protected:
 	SocketAddress _address;
 	int _fd;
 	int _timeout;
+
+#ifndef GNUTLS
+	public:
+		bool issecure() { return false; }
+#else
+	public:
+		bool issecure() { return _issecure; }
+		void makesecure();
+		
+	protected:
+		bool _issecure;
+		gnutls_session_t _gnutls_session;
+
+		gnutls_certificate_credentials_t _gnutls_certificate_credentials;
+		gnutls_anon_server_credentials_t _gnutls_anonymous_credentials;
+#endif	
 };
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2007/02/01 18:41:49  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.7  2004/06/30 20:18:49  dtrg
  * Changed the way sockets are initialised; instead of doing it from the Socket
  * and SocketServer constructors, they're set up as zombies and initialised later

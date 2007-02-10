@@ -22,10 +22,13 @@ struct Settings {
 	static int quarantinetime() { return _quarantinetime; }
 	static int sockettimeout() { return _sockettimeout; }
 	static string runtimeuserid() { return _runtimeuserid; }
+	static string tlscertificatefile() { return _tlscertificatefile; }
+	static string tlsprivatekeyfile() { return _tlsprivatekeyfile; }
+	static bool externaltls() { return _externaltls; }
 	static bool externalauth() { return _externalauth; }
 	
-	static bool testrelay(const SocketAddress& sender,
-			const string& recipient);
+	static bool testtrusted(const SocketAddress& sender);
+	static bool testacceptance(const string& recipient);
 	
 protected:
 	static string _identity;
@@ -33,6 +36,9 @@ protected:
 	static int _quarantinetime;
 	static int _sockettimeout;
 	static string _runtimeuserid;
+	static string _tlscertificatefile;
+	static string _tlsprivatekeyfile;
+	static bool _externaltls;
 	static bool _externalauth;
 };
 
@@ -40,6 +46,12 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/02/01 18:41:49  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.4  2007/01/31 12:58:25  dtrg
  * Added basic support for upstream AUTH requests based on Juan José
  * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
