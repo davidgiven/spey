@@ -39,7 +39,6 @@ void Threadlet::initialise()
 	pthread_mutexattr_t attrs;
 	(void) pthread_mutexattr_init(&attrs);
 	(void) pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_RECURSIVE);
-	(void) pthread_mutexattr_setpshared(&attrs, true);
 	(void) pthread_mutex_init(&cpulock, &attrs);
 	pthread_mutexattr_destroy(&attrs);
 
@@ -77,11 +76,12 @@ void* Threadlet::trampoline(void* user)
 	} catch (...) {
 		SystemLog() << "Uncaught exception in threadlet!";
 	}
-	threadlet->releaseCPUlock();
 	
-	/* Finished. Delete the threadlet and exit. */
+	/* Finished. Delete the threadlet and exit. Remember that
+	 * the destructor must run with the CPU lock held. */
 	
 	delete threadlet;
+	threadlet->releaseCPUlock();
 	return NULL;
 }
 
@@ -139,6 +139,9 @@ Threadlet* Threadlet::current()
 	
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/02/10 16:04:29  dtrg
+ * Removed some extraneous debugging tracing.
+ *
  * Revision 1.5  2007/01/29 23:32:19  dtrg
  * Fixed a compiler warning.
  *
