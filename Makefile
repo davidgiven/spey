@@ -24,14 +24,21 @@ GNUTLS = yes
 
 ELECTRICFENCE = no
 
+# If you're on a platform that needs extra library and include paths, put
+# them here.
+
+EXTRAINCLUDES = -I/usr/local/include
+EXTRALIBS = -L/usr/local/lib
+
 # You shouldn't need to touch anything below here.
 
-MAJORVERSION := 0.4.0
+MAJORVERSION := 0.4.1
 BUILDCOUNT := 1
 include version
 
-CFLAGS = $(OPTIMISATION) -I. -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
+CFLAGS = $(OPTIMISATION) -I. $(EXTRAINCLUDES) -DMAJORVERSION=\"$(MAJORVERSION)\" -DBUILDCOUNT=\"$(BUILDCOUNT)\"
 LIBS = \
+	$(EXTRALIBS) \
 	-lpthread \
 	-lsqlite
 
@@ -110,6 +117,9 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.11  2007/02/10 20:59:17  dtrg
+# Added support for DNS-based RBLs.
+#
 # Revision 1.10  2007/02/10 00:24:35  dtrg
 # Added support for TLS connections using the GNUTLS library. A X509
 # certificate and private key must be supplied for most purposes, but if they
