@@ -32,7 +32,7 @@ private:
 
 struct SQLQuery
 {
-	SQLQuery(SQL& sql, string statement);
+	SQLQuery(SQL& sql, const string& statement, ...);
 	~SQLQuery();
 
 	bool step();
@@ -50,6 +50,11 @@ private:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/05/09 18:23:16  dtrg
+ * SQL server now accessed asynchronously; backed out fix for mysterious SQL crash
+ * and instead put in some code that should recover sanely from it. Don't know
+ * what's going on here.
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  *

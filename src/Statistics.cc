@@ -25,17 +25,17 @@ void Statistics::blackholed()          { count("blackholed"); }
 
 void Statistics::count(string name)
 {
-	stringstream s;
-	s << "UPDATE statistics SET value=value+1 WHERE key='"
-	  << name
-	  << "';";
-
-	SQLQuery q(Sql, s.str());
+	SQLQuery q(Sql, "UPDATE statistics SET value=value+1 WHERE "
+	                  "key=%Q;",
+	                  name.c_str());
 	q.step();
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.3  2007/02/10 19:46:44  dtrg
  * Added greet-pause support. Moved the trusted hosts check to right after
  * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
