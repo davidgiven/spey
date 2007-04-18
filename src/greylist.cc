@@ -66,7 +66,7 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 	}
 
 	{
-		SQLQuery q(Sql, "SELECT firstseen, timeseen FROM triples WHERE "
+		SQLQuery q(Sql, "SELECT firstseen, timesseen FROM triples WHERE "
 		                  "(sender=%u) AND (fromaddress=%Q) AND (toaddress=%Q);",
 		                  sender, fromaddress.c_str(), toaddress.c_str());
 		if (!q.step())
@@ -86,7 +86,7 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 
 	{
 		SQLQuery q(Sql, "UPDATE triples SET "
-		                  "lastseen=%ld, timesseen=%d, WHERE "
+		                  "lastseen=%ld, timesseen=%d WHERE "
 		                  "(sender=%u) AND (fromaddress=%Q) AND (toaddress=%Q);",
 		                  lastseen, timesseen, sender, fromaddress.c_str(), toaddress.c_str());
 		q.step();
@@ -110,6 +110,13 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2007/04/18 22:39:32  dtrg
+ * Changed SQLQuery() to use SQLite's mprintf() function for constructing
+ * SQL queries rather than simple string concatenation. This makes the
+ * code considerably more concise and easier to read, and also removes
+ * the risk of SQL injection. Also modified the (broken) email address rules
+ * accordingly.
+ *
  * Revision 1.8  2007/02/10 20:59:16  dtrg
  * Added support for DNS-based RBLs.
  *
