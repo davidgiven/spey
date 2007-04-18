@@ -53,19 +53,13 @@ void Logger::flush()
 		stringstream s;
 		Threadlet* current = Threadlet::current();
 
-		/* It would be much cleaner to use iostream for this, but I'm
-		 * not sure that setw() and setbase() work on stringstreams.
-		 * Besides, good old sprintf is easier... */
-
-		char buf[16];
+		s << _level
+		  << '[';
 		if (current)
-			sprintf(buf, "[%d]: ", current->debugid());
+			s << current->debugid();
 		else
-			strcpy(buf, "[master]: ");
-
-		const string data = _data.str();
-		s << buf
-		  << data;
+			s << 'M';
+		s << "]: " << _data.str();
 
 		if (Logger::detached)
 			syslog(_syslevel, "%s", s.str().c_str());
@@ -78,6 +72,9 @@ void Logger::flush()
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2005/10/08 21:05:26  dtrg
+ * Fixed a security flaw in the call to syslog() that prevents the processing of bogus printf characters. I don't believe this could be used as a root exploit, but it could certainly crash Spey. Thanks to Joshua Drake for pointing this out.
+ *
  * Revision 1.5  2005/09/25 23:09:44  dtrg
  * Changed some references to '0' and '1' to 'false' and 'true' for clarity.
  *
