@@ -1,0 +1,72 @@
+#!/bin/sh
+# $Source$
+# $State$
+#
+# Script to build a distribution package.
+
+set -e
+PACKAGE=spey
+	
+if [ "$1" = "" ]; then
+	echo "Please specify a version number!"
+	exit 1
+fi
+
+if [ -d ../$PACKAGE-$1 ]; then
+	echo "I think you've already generated version $1."
+	exit 1
+fi
+
+mkdir ../$PACKAGE-$1
+cp -a --parents \
+	./doc/speyctl.8 \
+	./doc/spey.8 \
+	./src/SocketAddress.cc \
+	./src/Parser.h \
+	./src/CLI.h \
+	./src/ServerProcessor.h \
+	./src/SQL.h \
+	./src/ServerProcessor.cc \
+	./src/Statistics.h \
+	./src/Threadlet.cc \
+	./src/SocketServer.h \
+	./src/SQL.cc \
+	./src/Exception.cc \
+	./src/greylist.cc \
+	./src/MessageProcessor.h \
+	./src/main.cc \
+	./src/MessageProcessor.cc \
+	./src/Settings.h \
+	./src/SMTPResponse.h \
+	./src/Logger.h \
+	./src/Exception.h \
+	./src/Socket.cc \
+	./src/Settings.cc \
+	./src/Threadlet.h \
+	./src/Statistics.cc \
+	./src/rbl.cc \
+	./src/spey.h \
+	./src/Socket.h \
+	./src/Parser.cc \
+	./src/SMTPResponse.cc \
+	./src/SocketAddress.h \
+	./src/SocketServer.cc \
+	./src/Logger.cc \
+	./src/CLI.cc \
+	./src/CLI.gp \
+	./src/SMTPCommand.cc \
+	./src/SMTPCommand.h \
+	./Makefile \
+	./WHITELIST \
+	./README \
+	./scripts/speyctl \
+	./scripts/init.d.script \
+	./COPYING \
+	\
+	../$PACKAGE-$1
+
+(cd .. && tar cvf $PACKAGE-$1.tar.bz2 --bzip2 $PACKAGE-$1)
+
+echo ""
+echo "Done --- but did you remember to update the version number in the README?"
+
