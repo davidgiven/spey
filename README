@@ -1,10 +1,9 @@
-                                   SPEY V0.4.0
+                                   SPEY V0.4.1
                                    ===========
 
                                   Beta release
                               (C) 2007 David Given
-                                   2007-0-10
-                                *** FIXME UPDATE DATE ***
+                                   2007-04-18
 
 INTRODUCTION
 ============
@@ -48,6 +47,11 @@ bugs, so please inform me.
 REQUIREMENTS
 ============
 
+- IPv4. Due to the way spey handles IP address internally, it will *only*
+  work on 32-bit IPv4 addresses. I currently have no intention of changing
+  this (as it would require totally changing all the code and starting again
+  from scratch). Sorry.
+  
 - sqlite, version 2.8.13 or compatible.  Note that libsqlite 3.0 is
   *unsupported*. If you can get it to work, great (and please tell me). But I
   recommend staying with 2.8. Note that 2.4 *does not work*.
@@ -108,8 +112,8 @@ do it like this:
 Secondly, you need to tell spey who it is going to be receiving mail from. Most
 users will want to do this:
 
-	speyctl relay add '@mydomain.com'
-	speyctl relay add '127.0.0.1/32'
+	speyctl recipient add '@mydomain.com'
+	speyctl trust add '127.0.0.1/32'
 
 This tells spey to accept all mail to any address at mydomain.com; and to relay
 any mail being sent from the local machine. See the spey(8) man page for more
@@ -197,7 +201,7 @@ If it goes wrong DO NOT BLAME ME because YOU HAVE BEEN WARNED!
 (It hasn't yet for me, but that's no guarantee.)
 
 I have attempted to write it with robustness and security in mind --- for
-example, there is exactly one placec where it does explicit dynamic memory
+example, there is exactly one place where it does explicit dynamic memory
 allocation, which means it has no buffers to overflow --- but I'm new at this,
 okay?
 
@@ -213,7 +217,16 @@ laid out by the GNU Public License, version 2 only (and explicitly not version
 REVISION HISTORY
 ================
 
-Spey 0.4.0: 2007-10-10: FIXME in progress.
+Spey 0.4.1: 2007-04-18: Fixed yet *another* random-crash-at-infrequent-
+intervals (this one related to the new TLS support). Fixed an SQL injection
+issue; thanks to Frederic Vander Elst for pointing this out. Fixed a number
+of minor documentation issues. Fixed a race condition on threadlet destruction
+that could have led to yet more random crashes. A few other minor tweaks.
+
+Spey 0.4.0: 2006-10-10: Lots of new features! SMTP AUTH proxying, TLS support,
+greet-pause support, RBL lookups. Lots of bugfixes and tweaks, including a
+complete rewrite of the threadlet code to now use pthreads instead of ucontext,
+which should make it a whole lot more portable.
 
 Spey 0.3.3: 2005-11-08: Fixed the untraceable scheduler bug that was causing
 Spey to very occasionally crash silently --- thanks to Markus Madlener for
