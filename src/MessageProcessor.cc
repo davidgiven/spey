@@ -66,11 +66,8 @@ void MessageProcessor::verifyaddress(string address)
 	if (address.find('@') == string::npos)
 		throw MalformedAddressException();
 	
-	/* No valid email addresses contain any of these characters, which can be
-	 * used for SQL injection. */
-	 
-	if (address.find_first_of("'\\") != string::npos)
-		throw MalformedAddressException();
+	/* Full RFC2822 email address verification is actually extremely
+	 * complicated, and we're not going to bother for now. */
 }
 
 void MessageProcessor::process()
@@ -549,11 +546,16 @@ int MessageProcessor::debugid()
 
 void MessageProcessor::run()
 {
+	MessageLog() << "connection from " << (SocketAddress&) _outside.getaddress();
 	process();
+	MessageLog() << "connection terminating";
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.18  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.17  2007/02/10 19:46:44  dtrg
  * Added greet-pause support. Moved the trusted hosts check to right after
  * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug

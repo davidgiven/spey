@@ -38,15 +38,9 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 	/* First check the whitelist. */
 
 	{
-		stringstream s;
-		s << "SELECT COUNT(*) FROM whitelist WHERE "
-		  << "('"
-		  << fromaddress
-		  << "' LIKE sender) AND ('"
-		  << toaddress
-		  << "' LIKE recipient);";
-
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "SELECT COUNT(*) FROM whitelist WHERE "
+		                  "(%Q LIKE sender) AND (%Q LIKE recipient);",
+		                  fromaddress.c_str(), toaddress.c_str());
 		if (!q.step())
 			goto notfound;
 		if (q.getint(0))
@@ -59,15 +53,9 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 	/* Then check the blacklist. */
 
 	{
-		stringstream s;
-		s << "SELECT COUNT(*) FROM blacklist WHERE "
-		  << "('"
-		  << fromaddress
-		  << "' LIKE sender) AND ('"
-		  << toaddress
-		  << "' LIKE recipient);";
-
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "SELECT COUNT(*) FROM blacklist WHERE "
+		                   "(%Q LIKE sender) AND (%Q LIKE recipient);",
+		                   fromaddress.c_str(), toaddress.c_str());
 		if (!q.step())
 			goto notfound;
 		if (q.getint(0))
@@ -78,17 +66,9 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 	}
 
 	{
-		stringstream s;
-		s << "SELECT firstseen, timesseen FROM triples WHERE "
-		  << "(sender="
-		  << sender
-		  << ") AND (fromaddress='"
-		  << fromaddress
-		  << "') AND (toaddress='"
-		  << toaddress
-		  << "');";
-
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "SELECT firstseen, timeseen FROM triples WHERE "
+		                  "(sender=%u) AND (fromaddress=%Q) AND (toaddress=%Q);",
+		                  sender, fromaddress.c_str(), toaddress.c_str());
 		if (!q.step())
 			goto notfound;
 		firstseen = q.getint(0);
@@ -105,22 +85,10 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 	}
 
 	{
-		stringstream s;
-		s << "UPDATE triples SET "
-		  << "lastseen="
-		  << lastseen
-		  << ", timesseen="
-		  << timesseen
-		  << " WHERE "
-		  << "(sender="
-		  << sender
-		  << ") AND (fromaddress='"
-		  << fromaddress
-		  << "') AND (toaddress='"
-		  << toaddress
-		  << "');";
-
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "UPDATE triples SET "
+		                  "lastseen=%ld, timesseen=%d, WHERE "
+		                  "(sender=%u) AND (fromaddress=%Q) AND (toaddress=%Q);",
+		                  lastseen, timesseen, sender, fromaddress.c_str(), toaddress.c_str());
 		q.step();
 	}
 
@@ -131,20 +99,9 @@ notfound:
 	 * fail it. */
 
 	{
-		stringstream s;
-		s << "INSERT INTO triples VALUES (NULL, "
-		  << sender
-		  << ", '"
-		  << fromaddress
-		  << "', '"
-		  << toaddress
-		  << "', 1, "
-		  << lastseen
-		  << ", "
-		  << lastseen
-		  << ");";
-
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "INSERT INTO triples VALUES "
+		                  "(NULL, %u, %Q, %Q, 1, %ld, %ld);",
+		                  sender, fromaddress.c_str(), toaddress.c_str(), lastseen, lastseen);
 		q.step();
 	}
 
@@ -153,6 +110,9 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.7  2007/01/29 23:01:19  dtrg
  * Fixed a compiler warning.
  *

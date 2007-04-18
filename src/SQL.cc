@@ -55,24 +55,35 @@ void SQL::close()
 
 bool SQL::checktable(string name)
 {
-	string query =
-		"SELECT COUNT(*) FROM sqlite_master "
-		"WHERE type='table' AND name='";
-	query += name;
-	query += "';";
-
-	SQLQuery q(*this, query);
+	SQLQuery q(*this, "SELECT COUNT(*) FROM sqlite_master "
+		                "WHERE type='table' AND name=%Q;",
+		                name.c_str());
 	q.step();
 	return q.getint(0);
 }
 
 /* --- SQL query class --------------------------------------------------- */
 
-SQLQuery::SQLQuery(SQL& sql, string statement)
+SQLQuery::SQLQuery(SQL& sql, const string& statement, ...)
 {
-	if (sqlite_compile(sql, statement.c_str(),
-			NULL, &this->handle, &error))
-		sqlerror("SQL query compilation failure");
+	va_list ap;
+	va_start(ap, statement);
+	char* s = sqlite_vmprintf(statement.c_str(), ap);
+	if (!s)
+		throw std::bad_alloc();
+	
+	try
+	{
+		if (sqlite_compile(sql, s, NULL, &this->handle, &error))
+			sqlerror("SQL query compilation failure");
+		sqlite_freemem(s);
+	}
+	catch (...)
+	{
+		/* Ensure that s is freed, even if an exception is thrown. */
+		sqlite_freemem(s);
+		throw;
+	}
 }
 
 SQLQuery::~SQLQuery()
@@ -123,6 +134,9 @@ int SQLQuery::getint(int i)
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2005/09/30 23:17:12  dtrg
+ * Prevented a crash if one of the get...() methods was called on a Query if it was stepped off the end of the result; it now returns 0 or an empty string.
+ *
  * Revision 1.5  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

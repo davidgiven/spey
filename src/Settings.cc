@@ -26,15 +26,11 @@ string Settings::_rbllist;
 
 string Settings::get(string key)
 {
-	stringstream s;
-	s << "SELECT value FROM settings WHERE "
-		"key = '"
-	  << key
-	  << "';";
-
 	try
 	{
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "SELECT value FROM settings WHERE "
+		                  "key=%Q;",
+		                  key.c_str());
 		q.step();
 		return q.getstring(0);
 	}
@@ -64,12 +60,10 @@ void Settings::reload()
  
 bool Settings::testtrusted(const SocketAddress& sender)
 {
-	stringstream s;
-	s << "SELECT COUNT(*) FROM trustedhosts WHERE "
-	  << "(" << (int)sender << " >> (32-right)) = (left >> (32-right));";
-
 	{
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "SELECT COUNT(*) FROM trustedhosts WHERE "
+		                  "(%u >> (32-right)) = (left >> (32-right));",
+		                  (int)sender);
 		q.step();
 		if (q.getint(0))
 			return true;
@@ -86,13 +80,11 @@ bool Settings::testacceptance(const string& recipient)
 	string address = recipient.substr(0, i);
 	string domain = recipient.substr(i+1);
 
-	stringstream s;
-	s << "SELECT COUNT(*) FROM validrecipients WHERE "
-		<< "((left = '') OR (left = '" << address << "')) AND "
-		<< "((right = '') OR (right = '" << domain << "'));";
-		
 	{
-		SQLQuery q(Sql, s.str());
+		SQLQuery q(Sql, "SELECT COUNT(*) FROM validrecipients WHERE "
+		                  "((left = '') OR (left = %Q)) AND "
+		                  "((right = '') OR (right = %Q));",
+		                  address.c_str(), domain.c_str()); 
 		q.step();
 		if (q.getint(0))
 			return true;
@@ -103,6 +95,9 @@ bool Settings::testacceptance(const string& recipient)
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.8  2007/02/10 19:46:44  dtrg
  * Added greet-pause support. Moved the trusted hosts check to right after
  * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
