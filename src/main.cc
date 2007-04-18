@@ -12,6 +12,7 @@
 
 #include "spey.h"
 #include <unistd.h>
+#include <errno.h>
 #include <pwd.h>
 #include <grp.h>
 #include <signal.h>
@@ -22,6 +23,13 @@
 
 #ifdef ELECTRICFENCE
 bool EF_FREE_WIPES = true;
+#endif
+
+/* GNUTLS needs special code if it is to be used in multithreaded mode.
+ * This macro emits it. */
+
+#ifdef GNUTLS
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #endif
 
 SQL Sql;
@@ -176,6 +184,7 @@ int main(int argc, char* argv[])
 		Threadlet::initialise();
 		
 #ifdef GNUTLS
+		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 		gnutls_global_init();
 #endif
 
@@ -201,6 +210,17 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.12  2007/02/10 00:24:35  dtrg
+ * Added support for TLS connections using the GNUTLS library. A X509
+ * certificate and private key must be supplied for most purposes, but if they
+ * are not provided anonymous authentication will be used instead (which
+ * apparently only GNUTLS supports). Split the relay check up into two
+ * separate parts; the trustedhosts table now specifies machines that can be
+ * trusted to play nice, and can do relaying and be allowed to bypass the
+ * greylisting; and allowedrecipients, which specifies what email address we're
+ * expecting to receive. Also fixed some remaining niggles in the AUTH
+ * proxy support, but this remains largely untested.
+ *
  * Revision 1.11  2007/01/29 23:05:12  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use
