@@ -15,6 +15,7 @@
 
 #ifdef GNUTLS
 #include <gnutls/gnutls.h>
+#include <gcrypt.h>
 #endif
 
 struct SocketServer;
@@ -66,6 +67,12 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.10  2007/02/10 19:46:44  dtrg
+ * Added greet-pause support. Moved the trusted hosts check to right after
+ * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+ * in the AUTH supported that meant that authenticated connections had no
+ * extra privileges (oops). Added the ability to reset all statistics on demand.
+ *
  * Revision 1.9  2007/02/10 00:24:35  dtrg
  * Added support for TLS connections using the GNUTLS library. A X509
  * certificate and private key must be supplied for most purposes, but if they
