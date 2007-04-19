@@ -44,19 +44,7 @@ public:
 		return *this;
 	};
 
-	Logger& operator<< (int value)
-	{
-		_data << value;
-		return *this;
-	};
-
-	Logger& operator<< (unsigned int value)
-	{
-		_data << value;
-		return *this;
-	};
-
-	Logger& operator<< (long value)
+	Logger& operator<< (unsigned long value)
 	{
 		_data << value;
 		return *this;
@@ -71,7 +59,8 @@ enum {
 	LOGLEVEL_PARSING,
 	LOGLEVEL_DETAIL,
 	LOGLEVEL_SMTP,
-	LOGLEVEL_THREADS
+	LOGLEVEL_THREADS,
+	LOGLEVEL_SQL,
 };
 
 #define _LOG(_n, _l, _t) \
@@ -87,11 +76,19 @@ _LOG(ParseLog,		LOGLEVEL_PARSING,	LOG_DEBUG);
 _LOG(DetailLog,		LOGLEVEL_DETAIL,	LOG_DEBUG);
 _LOG(SMTPLog,		LOGLEVEL_SMTP,		LOG_DEBUG);
 _LOG(ThreadLog,		LOGLEVEL_THREADS,	LOG_DEBUG);
+_LOG(SQLLog,        LOGLEVEL_SQL,       LOG_DEBUG);
 
 #endif
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2004/11/18 17:57:20  dtrg
+ * Rewrote logging system so that it no longer tries to subclass stringstream,
+ * that was producing bizarre results on gcc 3.3. Added version tracking to the
+ * makefile; spey now knows what version and build number it is, and displays the
+ * information in the startup banner. Now properly ignores SIGPIPE, which was
+ * causing intermittent silent aborts.
+ *
  * Revision 1.3  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of

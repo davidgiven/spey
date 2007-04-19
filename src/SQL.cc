@@ -71,6 +71,7 @@ SQLQuery::SQLQuery(SQL& sql, const string& statement, ...)
 	char* s = sqlite_vmprintf(statement.c_str(), ap);
 	if (!s)
 		throw std::bad_alloc();
+	SQLLog() << s;
 	
 	try
 	{
@@ -122,6 +123,7 @@ string SQLQuery::getstring(int i)
 	if ((i < 0) || (i >= this->columns) || !this->values)
 		return "";
 	string s = this->values[i];
+	SQLLog() << "-> (string) " << s;
 	return s;
 }
 
@@ -129,11 +131,19 @@ int SQLQuery::getint(int i)
 {
 	if ((i < 0) || (i >= this->columns) || !this->values)
 		return 0;
+	SQLLog() << "-> (int) " << this->values[i];
 	return atoi(this->values[i]);
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/04/18 22:39:28  dtrg
+ * Changed SQLQuery() to use SQLite's mprintf() function for constructing
+ * SQL queries rather than simple string concatenation. This makes the
+ * code considerably more concise and easier to read, and also removes
+ * the risk of SQL injection. Also modified the (broken) email address rules
+ * accordingly.
+ *
  * Revision 1.6  2005/09/30 23:17:12  dtrg
  * Prevented a crash if one of the get...() methods was called on a Query if it was stepped off the end of the result; it now returns 0 or an empty string.
  *
