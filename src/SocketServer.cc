@@ -38,7 +38,7 @@ void SocketServer::init(SocketAddress& address)
 		    << _fd;
 
 	int i = 1;
-	setsockopt(_fd, IPPROTO_TCP, SO_REUSEADDR, &i, sizeof(i));
+	setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i));
 
 	if (_address.bindto(_fd) == -1)
 		throw NetworkException("Error binding server socket", errno);
@@ -76,6 +76,13 @@ int SocketServer::accept(SocketAddress* address)
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/01/29 23:05:10  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.5  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
