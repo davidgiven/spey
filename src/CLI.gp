@@ -19,7 +19,7 @@ f / from                string {"0.0.0.0:25"}
 t / to			string {"localhost:2525"}
 	"SMTP server to connect to."
 
-v / verbose		int 7 [0...]
+v / verbose		int 3 [0...]
 	"Set the verbosity level."
 
 x / foreground		flag
@@ -30,6 +30,10 @@ i / inetd		flag
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/01/31 12:51:51  dtrg
+ * Dropping root privileges is now the default. The default database file
+ * has been moved into /var/lib/spey/spey.db to assist this.
+ *
  * Revision 1.3  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of
