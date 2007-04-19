@@ -109,8 +109,22 @@ below.
 .BI --verbose\  level
 
 Specifies the verbosity level. Use 0 to suppress all output; increasing the
-number will produce more and more detailed tracing.
+number will produce more and more detailed tracing. The levels of verbosity
+are:
 
+.TS
+tab(|);
+ll.
+0|No tracing
+1|System messages
+2|Warning messages
+3|Informational messages
+4|SMTP command/response parse information
+5|Detailed processing information
+6|SMTP tracing
+7|Thread tracing
+8|SQL tracing
+.TE
 
 .TP
 .BI --inetd
@@ -499,78 +513,3 @@ are (C) 2004 David Given. Comments and criticism to
 They are distributable under the terms of the GNU General Public License V2. A
 full copy can be found in the spey source distribution, or at
 .BR http://www.fsf.org/copyleft/gpl.html .
-
-
-
-
-.\" Revision history
-.\" $Log$
-.\" Revision 1.16  2007/02/10 19:46:44  dtrg
-.\" Added greet-pause support. Moved the trusted hosts check to right after
-.\" connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
-.\" in the AUTH supported that meant that authenticated connections had no
-.\" extra privileges (oops). Added the ability to reset all statistics on demand.
-.\"
-.\" Revision 1.15  2007/02/10 00:24:35  dtrg
-.\" Added support for TLS connections using the GNUTLS library. A X509
-.\" certificate and private key must be supplied for most purposes, but if they
-.\" are not provided anonymous authentication will be used instead (which
-.\" apparently only GNUTLS supports). Split the relay check up into two
-.\" separate parts; the trustedhosts table now specifies machines that can be
-.\" trusted to play nice, and can do relaying and be allowed to bypass the
-.\" greylisting; and allowedrecipients, which specifies what email address we're
-.\" expecting to receive. Also fixed some remaining niggles in the AUTH
-.\" proxy support, but this remains largely untested.
-.\"
-.\" Revision 1.14  2007/02/01 18:41:47  dtrg
-.\" Reworked the SMTP AUTH code so that spey automatically figures out what
-.\" authentication mechanisms there are by asking the downstream server. The
-.\" external-auth setting variable is now a boolean. Rearranged various
-.\" other bits of code and fixed a lot of problems with the man pages.
-.\"
-.\" Revision 1.13  2007/01/29 00:39:00  dtrg
-.\" Corrected a minor typo.
-.\"
-.\" Revision 1.12  2005/11/23 22:43:29  dtrg
-.\" Updated for the real 0.3.3 release.
-.\"
-.\" Revision 1.11  2005/10/10 21:52:57  dtrg
-.\" Fixed a mistake in the name of the --database option. (spey and speyctl use different names for the options --- this should probably be fixed properly some time.)
-.\"
-.\" Revision 1.10  2005/10/08 22:26:56  dtrg
-.\" Added extended documentation for the root privilege relinquish feature.
-.\"
-.\" Revision 1.9  2005/09/30 23:20:17  dtrg
-.\" Updated the version number for 0.3.3. Added support for dropping root privileges, by setting the runtime-user-id configuration variable to the desired user and group.
-.\"
-.\" Revision 1.8  2004/11/21 18:46:49  dtrg
-.\" Updated version numbering to 0.3.2.
-.\"
-.\" Revision 1.7  2004/06/30 21:44:00  dtrg
-.\" Updated version number for 0.3.1.
-.\"
-.\" Revision 1.6  2004/06/22 21:11:29  dtrg
-.\" Updated version numbers to 0.3.0.
-.\"
-.\" Revision 1.5  2004/06/21 23:12:46  dtrg
-.\" Added blacklisting and whitelisting support.
-.\"
-.\" Revision 1.4  2004/05/30 13:43:45  dtrg
-.\" Decided to make new version 0.2.9, not 0.3, as there are no actual user-visible
-.\" new features. Plus I want a delay for bugfixing.
-.\"
-.\" Revision 1.3  2004/05/30 01:55:13  dtrg
-.\" Numerous and major alterations to implement a system for processing more than
-.\" one message at a time, based around coroutines. Fairly hefty rearrangement of
-.\" constructors and object ownership semantics. Assorted other structural
-.\" modifications.
-.\"
-.\" Revision 1.2  2004/05/13 23:36:01  dtrg
-.\" Rewrote speyctl in awk, a much better scripting language than the Bourne shell.
-.\" It now works way better, is much easier to understand, and is probably much
-.\" faster. Added the interface to allow modification of the relay table with
-.\" speyctl, and wrote all the documentation.
-.\"
-.\" Revision 1.1  2004/05/01 12:20:20  dtrg
-.\" Initial version.
-.\"
