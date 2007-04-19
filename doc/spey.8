@@ -126,6 +126,13 @@ ll.
 8|SQL tracing
 .TE
 
+Each output line starts with a code of the form
+.BR X[Y] ,
+where X is the verbosity level of the message and Y is the file descriptor
+that corresponds to the connection. If the file descriptor is
+.B M
+then the message is referring to spey as a whole.
+
 .TP
 .BI --inetd
 

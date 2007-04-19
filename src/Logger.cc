@@ -48,7 +48,7 @@ void Logger::detach()
 void Logger::flush()
 {
 	_data.flush();
-	if (_level < Logger::desired)
+	if (_level <= Logger::desired)
 	{
 		stringstream s;
 		Threadlet* current = Threadlet::current();
@@ -72,6 +72,10 @@ void Logger::flush()
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/04/18 22:27:53  dtrg
+ * Modified to use iostreams throughout rather than the mixture of
+ * iostreams and stdio that we were previously using.
+ *
  * Revision 1.6  2005/10/08 21:05:26  dtrg
  * Fixed a security flaw in the call to syslog() that prevents the processing of bogus printf characters. I don't believe this could be used as a root exploit, but it could certainly crash Spey. Thanks to Joshua Drake for pointing this out.
  *

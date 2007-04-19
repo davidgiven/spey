@@ -221,7 +221,9 @@ Spey 0.4.1: 2007-04-18: Fixed yet *another* random-crash-at-infrequent-
 intervals (this one related to the new TLS support). Fixed an SQL injection
 issue; thanks to Frederic Vander Elst for pointing this out. Fixed a number
 of minor documentation issues. Fixed a race condition on threadlet destruction
-that could have led to yet more random crashes. A few other minor tweaks.
+that could have led to yet more random crashes. REUSEADDR is now used
+correctly, so the 'connection in use' errors when restarting spey should have
+gone. A few other minor tweaks.
 
 Spey 0.4.0: 2006-10-10: Lots of new features! SMTP AUTH proxying, TLS support,
 greet-pause support, RBL lookups. Lots of bugfixes and tweaks, including a
