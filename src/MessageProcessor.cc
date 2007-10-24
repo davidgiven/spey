@@ -197,7 +197,7 @@ void MessageProcessor::process()
 						_inside.deinit();
 					connected = false;
 					errorstate = false;
-					authenticated = true;
+					authenticated = false;
 					continue;
 				}
 #else
@@ -209,7 +209,8 @@ void MessageProcessor::process()
 			case SMTPCommand::EHLO:
 				try
 				{
-					verifydomain(_command.arg());
+					if (!authenticated && !trusted)
+						verifydomain(_command.arg());
 				}
 				catch (MalformedDomainException e)
 				{
@@ -490,7 +491,7 @@ void MessageProcessor::process()
 				if (!_response.issuccess())
 					break;
 
-				SMTPLog() << "transferring message body";
+				MessageLog() << "transferring message body";
 
 				/* Add our Received: header. */
 				{
@@ -513,7 +514,7 @@ void MessageProcessor::process()
 						break;
 				}
 
-				SMTPLog() << "body transferred";
+				MessageLog() << "body transferred";
 
 				readinside();
 				writeoutside();
@@ -553,6 +554,13 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.19  2007/04/18 22:39:28  dtrg
+ * Changed SQLQuery() to use SQLite's mprintf() function for constructing
+ * SQL queries rather than simple string concatenation. This makes the
+ * code considerably more concise and easier to read, and also removes
+ * the risk of SQL injection. Also modified the (broken) email address rules
+ * accordingly.
+ *
  * Revision 1.18  2007/02/10 20:59:16  dtrg
  * Added support for DNS-based RBLs.
  *
