@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <list>
 
-static pthread_mutex_t cpulock;
+static pthread_mutex_t cpulock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t selfkey;
 
 #define foreach(_collection, _iterator) \
@@ -33,14 +33,6 @@ void Threadlet::initialise()
 	 * running. */
 
 	(void) pthread_key_create(&selfkey, NULL);
-
-	/* Create the CPU lock. */
-
-	pthread_mutexattr_t attrs;
-	(void) pthread_mutexattr_init(&attrs);
-	(void) pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_RECURSIVE);
-	(void) pthread_mutex_init(&cpulock, &attrs);
-	pthread_mutexattr_destroy(&attrs);
 
 	/* Take the CPU lock. */
 
@@ -81,7 +73,7 @@ void* Threadlet::trampoline(void* user)
 	 * the destructor must run with the CPU lock held. */
 	
 	delete threadlet;
-	threadlet->releaseCPUlock();
+	Threadlet::releaseCPUlock();
 	return NULL;
 }
 
@@ -117,7 +109,7 @@ int Threadlet::halt()
 {
 	/* Sleeps forever. */
 
-	releaseCPUlock();
+	Threadlet::releaseCPUlock();
 	for (;;)
 		pause();
 	return 0;
@@ -139,6 +131,12 @@ Threadlet* Threadlet::current()
 	
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/04/18 22:37:16  dtrg
+ * Fixed a nasty race condition where the threadlet destructor was
+ * being called without the CPU lock held. Removed the call to
+ * pthread_mutexattr_setpshared(), because it seems to be
+ * unnecessary and also unportable.
+ *
  * Revision 1.6  2007/02/10 16:04:29  dtrg
  * Removed some extraneous debugging tracing.
  *

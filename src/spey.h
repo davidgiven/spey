@@ -19,6 +19,17 @@
 
 using namespace std;
 
+/* Any class that wishes to be uncopyable (no const constructor or assignment
+ * operator) should inherit from this. */
+ 
+struct uncopyable
+{
+	uncopyable() {};
+private:
+	uncopyable(const uncopyable&);
+	uncopyable& operator= (const uncopyable&);
+};
+
 #include "Logger.h"
 #include "Exception.h"
 #include "SQL.h"
@@ -56,6 +67,9 @@ extern bool rblcheck(uint32_t sender, string rbldomainlist);
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.6  2007/01/29 23:05:11  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use

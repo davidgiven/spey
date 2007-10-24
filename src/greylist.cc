@@ -92,6 +92,7 @@ GreylistResponse greylist(uint32_t sender, string fromaddress,
 		q.step();
 	}
 
+	DetailLog() << (failed ? "message already seen, still greylisted" : "message accepted");
 	return failed ? GreyListed : Accepted;
 
 notfound:
@@ -105,11 +106,15 @@ notfound:
 		q.step();
 	}
 
+	DetailLog() << "new message seen, greylisted";
 	return GreyListed;
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.10  2007/04/18 22:59:59  dtrg
+ * Fixed some SQL syntax typos.
+ *
  * Revision 1.9  2007/04/18 22:39:32  dtrg
  * Changed SQLQuery() to use SQLite's mprintf() function for constructing
  * SQL queries rather than simple string concatenation. This makes the

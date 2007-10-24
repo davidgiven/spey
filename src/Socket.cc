@@ -146,23 +146,22 @@ int Socket::read(void* buffer, int buflength, int timeoutdelta)
 
 	/* Read data in concurrent mode. */
 
-	Threadlet::releaseCPUlock();
-	for (;;) {
-		int delay = timeout - now();
-		if (delay < 0)
-		{
-			Threadlet::takeCPUlock();
-			throw NetworkTimeoutException();
+	{
+		Threadlet::Concurrent c;
+
+		for (;;) {
+			int delay = timeout - now();
+			if (delay < 0)
+				throw NetworkTimeoutException();
+	
+			struct pollfd p;
+			p.fd = _fd;
+			p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
+	
+			if (poll(&p, 1, delay) != 0)
+				break;
 		}
-
-		struct pollfd p;
-		p.fd = _fd;
-		p.events = POLLIN | POLLERR | POLLHUP | POLLPRI;
-
-		if (poll(&p, 1, delay) != 0)
-			break;
 	}
-	Threadlet::takeCPUlock();
 
 #ifdef GNUTLS
 	if (_issecure)
@@ -177,17 +176,14 @@ int Socket::write(void* buffer, int buflength)
 {
 	/* Wait in concurrent mode. */
 
-	Threadlet::releaseCPUlock();
-	int e;
+	Threadlet::Concurrent c;
+
 #ifdef GNUTLS
 	if (_issecure)
-		e = gnutls_record_send(_gnutls_session, buffer, buflength);
+		return gnutls_record_send(_gnutls_session, buffer, buflength);
 	else
 #endif
-		e = ::write(_fd, buffer, buflength);
-	Threadlet::takeCPUlock();
-
-	return e;
+		return ::write(_fd, buffer, buflength);
 }
 
 /* Read a line of text from the socket; doesn't include the newline (or CRLF)
@@ -328,9 +324,13 @@ void Socket::makesecure()
 	gnutls_transport_set_ptr(_gnutls_session, (gnutls_transport_ptr_t) _fd);
 	
 	MessageLog() << "Starting TLS handshake";
-	Threadlet::releaseCPUlock();
-	int e = gnutls_handshake(_gnutls_session);
-	Threadlet::takeCPUlock();
+	
+	int e;
+	{
+		Threadlet::Concurrent c;
+		e = gnutls_handshake(_gnutls_session);
+	}
+
 	MessageLog() << "Finished TLS handshake: "
 	             << gnutls_strerror(e); 
 
@@ -341,6 +341,12 @@ void Socket::makesecure()
 
 /* Revision history
  * $Log$
+ * Revision 1.12  2007/02/10 19:46:44  dtrg
+ * Added greet-pause support. Moved the trusted hosts check to right after
+ * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
+ * in the AUTH supported that meant that authenticated connections had no
+ * extra privileges (oops). Added the ability to reset all statistics on demand.
+ *
  * Revision 1.11  2007/02/10 00:24:35  dtrg
  * Added support for TLS connections using the GNUTLS library. A X509
  * certificate and private key must be supplied for most purposes, but if they

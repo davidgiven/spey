@@ -13,7 +13,8 @@
 #ifndef MESSAGEPROCESSOR_H
 #define MESSAGEPROCESSOR_H
 
-struct MessageProcessor: Threadlet {
+struct MessageProcessor: Threadlet
+{
 	MessageProcessor(int fd, SocketAddress& address);
 	virtual ~MessageProcessor();
 
@@ -43,6 +44,17 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/02/10 00:24:35  dtrg
+ * Added support for TLS connections using the GNUTLS library. A X509
+ * certificate and private key must be supplied for most purposes, but if they
+ * are not provided anonymous authentication will be used instead (which
+ * apparently only GNUTLS supports). Split the relay check up into two
+ * separate parts; the trustedhosts table now specifies machines that can be
+ * trusted to play nice, and can do relaying and be allowed to bypass the
+ * greylisting; and allowedrecipients, which specifies what email address we're
+ * expecting to receive. Also fixed some remaining niggles in the AUTH
+ * proxy support, but this remains largely untested.
+ *
  * Revision 1.5  2007/02/01 18:41:48  dtrg
  * Reworked the SMTP AUTH code so that spey automatically figures out what
  * authentication mechanisms there are by asking the downstream server. The

@@ -131,7 +131,7 @@ int SocketAddress::acceptfrom(int fd)
 	int r = accept(fd, (sockaddr*) &_sa, &i);
 	if (i != sizeof(_sa))
 		WarningLog() << "Warning: socket size changed from "
-			     << sizeof(_sa)
+			     << (int) sizeof(_sa)
 			     << " to "
 			     << i
 			     << " during call to accept()!";
@@ -179,6 +179,9 @@ SocketAddress::operator unsigned int () const
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2005/10/08 21:06:55  dtrg
+ * Fixed a minor potential security issue; if the socket length returned by gethostbyname() is setname() won't fit in a sockaddr_in, then a buffer overflow would occur. If this happens then I reckon the OS is fairly borked anyway, but the fix makes sure it never *can* happen and is more efficient to boot. Thanks to Joshua Drake for pointing this out.
+ *
  * Revision 1.5  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

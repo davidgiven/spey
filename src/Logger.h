@@ -13,7 +13,8 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-struct Logger {
+struct Logger : uncopyable
+{
 	Logger(int level, int type);
 	~Logger();
 
@@ -82,6 +83,10 @@ _LOG(SQLLog,        LOGLEVEL_SQL,       LOG_DEBUG);
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/04/19 14:13:09  dtrg
+ * Added SQL tracing. Made the verbosity levels actually match the documentation,
+ * and documented the trace format. Cleaned up the logger API a bit.
+ *
  * Revision 1.4  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the
