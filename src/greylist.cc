@@ -112,6 +112,11 @@ notfound:
 
 /* Revision history
  * $Log$
+ * Revision 1.11  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.10  2007/04/18 22:59:59  dtrg
  * Fixed some SQL syntax typos.
  *

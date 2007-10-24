@@ -179,6 +179,11 @@ SocketAddress::operator unsigned int () const
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.6  2005/10/08 21:06:55  dtrg
  * Fixed a minor potential security issue; if the socket length returned by gethostbyname() is setname() won't fit in a sockaddr_in, then a buffer overflow would occur. If this happens then I reckon the OS is fairly borked anyway, but the fix makes sure it never *can* happen and is more efficient to boot. Thanks to Joshua Drake for pointing this out.
  *
