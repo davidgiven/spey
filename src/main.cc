@@ -115,7 +115,12 @@ static int daemonmode(CLI& cli)
 		daemon(0, 0);
 		Logger::detach();
 	}
-	
+
+	/* The call to Threadlet::initialise() must occur after daemon(); daemon()
+	 * does a fork(), which causes nasty things to happen if there's a locked
+	 * mutex. */
+	 	
+	Threadlet::initialise();
 	Sql.open(cli.d());
 	FromAddress.set(cli.f());
 	ToAddress.set(cli.t());
@@ -140,6 +145,7 @@ static int daemonmode(CLI& cli)
 
 static int inetdmode(CLI& cli)
 {
+	Threadlet::initialise();
 	Sql.open(cli.d());
 	ToAddress.set(cli.t());
 
@@ -181,7 +187,6 @@ int main(int argc, char* argv[])
 	try {
 		CLI cli(argc, argv);
 		Logger::setlevel(cli.v());
-		Threadlet::initialise();
 		
 #ifdef GNUTLS
 		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
@@ -210,6 +215,11 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.13  2007/04/18 22:26:56  dtrg
+ * Fixed a bug where we were forgetting to tell gnutls that we were a
+ * multithreaded application, resulting in it stepping on gcrypt's toes
+ * and crashing at irregular intervals.
+ *
  * Revision 1.12  2007/02/10 00:24:35  dtrg
  * Added support for TLS connections using the GNUTLS library. A X509
  * certificate and private key must be supplied for most purposes, but if they
