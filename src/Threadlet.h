@@ -15,13 +15,19 @@
 
 #include <pthread.h>
 
-struct Threadlet {
+struct Threadlet : uncopyable
+{
 	static void initialise();
 	Threadlet();
 	virtual ~Threadlet();
 
 	// Called by the threadlet
 
+	struct Concurrent {
+		Concurrent() { Threadlet::releaseCPUlock(); }
+		~Concurrent() { Threadlet::takeCPUlock(); }
+	};
+	
 	static int takeCPUlock();
 	static int releaseCPUlock();
 	
@@ -47,6 +53,13 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2007/01/29 23:05:10  dtrg
+ * Due to various unpleasant incompatibilities with ucontext, the
+ * entire coroutine implementation has been rewritten to use
+ * pthreads instead of user-level scheduling. This should make
+ * things far more robust and portable, if a bit more heavyweight.
+ * It also has the side effect of drastically simplified threadlet code.
+ *
  * Revision 1.1  2004/05/30 01:55:13  dtrg
  * Numerous and major alterations to implement a system for processing more than
  * one message at a time, based around coroutines. Fairly hefty rearrangement of

@@ -22,25 +22,27 @@ bool rblcheck(uint32_t sender, string rbldomain)
 	  << rbldomain;
 	MessageLog() << "doing RBL check for " << s.str();
 
-	bool found = false;
-	
-	Threadlet::releaseCPUlock();
-	try
-	{	
-		SocketAddress sa;
-		sa.setname(s.str());
-		found = true;
-	}
-	catch (NetworkException e)
 	{
-		/* Do nothing --- we expected this if the host was not found. */
+		Threadlet::Concurrent c;
+		try
+		{	
+			SocketAddress sa;
+			sa.setname(s.str());
+			return true;
+		}
+		catch (NetworkException e)
+		{
+			/* Do nothing --- we expected this if the host was not found. */
+		}
+		return false;
 	}
-	Threadlet::takeCPUlock();
-	return found;
 }
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2007/02/10 21:15:54  dtrg
+ * Fixed a typo in some tracing.
+ *
  * Revision 1.1  2007/02/10 20:59:16  dtrg
  * Added support for DNS-based RBLs.
  */

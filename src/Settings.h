@@ -13,7 +13,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-struct Settings {
+struct Settings : uncopyable
+{
 	static string get(string key);
 	static void reload();
 
@@ -50,6 +51,9 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.7  2007/02/10 19:46:44  dtrg
  * Added greet-pause support. Moved the trusted hosts check to right after
  * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug

@@ -15,7 +15,7 @@
 
 #include <sqlite.h>
 
-struct SQL
+struct SQL : uncopyable
 {
 	SQL();
 	~SQL();
@@ -50,6 +50,13 @@ private:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2007/04/18 22:39:32  dtrg
+ * Changed SQLQuery() to use SQLite's mprintf() function for constructing
+ * SQL queries rather than simple string concatenation. This makes the
+ * code considerably more concise and easier to read, and also removes
+ * the risk of SQL injection. Also modified the (broken) email address rules
+ * accordingly.
+ *
  * Revision 1.2  2004/05/09 18:23:16  dtrg
  * SQL server now accessed asynchronously; backed out fix for mysterious SQL crash
  * and instead put in some code that should recover sanely from it. Don't know

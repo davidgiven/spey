@@ -13,7 +13,8 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-struct Statistics {
+struct Statistics : uncopyable
+{
 	static void malformedDomain();
 	static void malformedAddress();
 	static void illegalRelaying();
@@ -33,6 +34,9 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.4  2007/02/10 20:59:16  dtrg
+ * Added support for DNS-based RBLs.
+ *
  * Revision 1.3  2007/02/10 19:46:44  dtrg
  * Added greet-pause support. Moved the trusted hosts check to right after
  * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug

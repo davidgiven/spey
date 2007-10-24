@@ -15,7 +15,8 @@
 
 #include <vector>
 
-struct SMTPResponse {
+struct SMTPResponse
+{
 	SMTPResponse();
 	SMTPResponse(SMTPResponse& r);
 	SMTPResponse(int code, string parameter="");
@@ -58,6 +59,12 @@ inline Logger& operator << (Logger& s, SMTPResponse& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/02/01 18:41:49  dtrg
+ * Reworked the SMTP AUTH code so that spey automatically figures out what
+ * authentication mechanisms there are by asking the downstream server. The
+ * external-auth setting variable is now a boolean. Rearranged various
+ * other bits of code and fixed a lot of problems with the man pages.
+ *
  * Revision 1.4  2007/01/31 12:58:25  dtrg
  * Added basic support for upstream AUTH requests based on Juan José
  * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are

@@ -64,9 +64,12 @@ int SocketServer::accept(SocketAddress* address)
 	sockaddr_in sa;
 	socklen_t sas = sizeof(sa);
 
-	Threadlet::releaseCPUlock();
-	int fd = ::accept(_fd, (sockaddr*) &sa, &sas);
-	Threadlet::takeCPUlock();
+	int fd;
+	{
+		Threadlet::Concurrent c;
+		
+		fd = ::accept(_fd, (sockaddr*) &sa, &sas);
+	}
 
 	if (fd == -1)
 		throw NetworkException("accept() failed", errno);
@@ -76,6 +79,11 @@ int SocketServer::accept(SocketAddress* address)
 
 /* Revision history
  * $Log$
+ * Revision 1.7  2007/04/19 09:44:04  dtrg
+ * The socket is now properly marked with SO_REUSEADDR, so
+ * hopefully the connection-in-use errors when restarting spey should
+ * have gone away.
+ *
  * Revision 1.6  2007/01/29 23:05:10  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use

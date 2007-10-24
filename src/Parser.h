@@ -13,7 +13,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-struct Parser {
+struct Parser : uncopyable
+{
 	Parser(string data);
 
 	void seek(string::size_type i);
@@ -35,6 +36,12 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.2  2004/06/22 21:01:02  dtrg
+ * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
+ * closer to the C++ standard than 2.95 is; plus, the standard library is now
+ * rather different, which means that I'm not allowed to do things like have local
+ * variables called errno.)
+ *
  * Revision 1.1  2004/05/01 12:20:20  dtrg
  * Initial version.
  */

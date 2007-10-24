@@ -20,7 +20,8 @@
 
 struct SocketServer;
 
-struct Socket {
+struct Socket : uncopyable
+{
 	Socket();
 	~Socket();
 
@@ -67,6 +68,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.11  2007/04/19 09:46:12  dtrg
+ * Fixed a bug where we were forgetting to tell gnutls that we were a
+ * multithreaded application, resulting in it stepping on gcrypt's toes
+ * and crashing at irregular intervals.
+ *
  * Revision 1.10  2007/02/10 19:46:44  dtrg
  * Added greet-pause support. Moved the trusted hosts check to right after
  * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
