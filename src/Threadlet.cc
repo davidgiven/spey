@@ -131,6 +131,11 @@ Threadlet* Threadlet::current()
 	
 /* Revision history
  * $Log$
+ * Revision 1.8  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.7  2007/04/18 22:37:16  dtrg
  * Fixed a nasty race condition where the threadlet destructor was
  * being called without the CPU lock held. Removed the call to

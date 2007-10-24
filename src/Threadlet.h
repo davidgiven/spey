@@ -53,6 +53,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.2  2007/01/29 23:05:10  dtrg
  * Due to various unpleasant incompatibilities with ucontext, the
  * entire coroutine implementation has been rewritten to use

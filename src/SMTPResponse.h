@@ -59,6 +59,11 @@ inline Logger& operator << (Logger& s, SMTPResponse& sa)
 
 /* Revision history
  * $Log$
+ * Revision 1.6  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.5  2007/02/01 18:41:49  dtrg
  * Reworked the SMTP AUTH code so that spey automatically figures out what
  * authentication mechanisms there are by asking the downstream server. The

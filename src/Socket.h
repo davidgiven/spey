@@ -68,6 +68,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.12  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.11  2007/04/19 09:46:12  dtrg
  * Fixed a bug where we were forgetting to tell gnutls that we were a
  * multithreaded application, resulting in it stepping on gcrypt's toes

@@ -51,6 +51,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.8  2007/02/10 20:59:16  dtrg
  * Added support for DNS-based RBLs.
  *

@@ -111,6 +111,11 @@ struct ParseErrorException: Exception
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.4  2004/11/18 17:57:20  dtrg
  * Rewrote logging system so that it no longer tries to subclass stringstream,
  * that was producing bizarre results on gcc 3.3. Added version tracking to the

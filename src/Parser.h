@@ -36,6 +36,11 @@ protected:
 
 /* Revision history
  * $Log$
+ * Revision 1.3  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.2  2004/06/22 21:01:02  dtrg
  * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
  * closer to the C++ standard than 2.95 is; plus, the standard library is now

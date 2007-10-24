@@ -33,6 +33,11 @@ private:
 
 /* Revision history
  * $Log$
+ * Revision 1.5  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.4  2004/06/30 20:18:49  dtrg
  * Changed the way sockets are initialised; instead of doing it from the Socket
  * and SocketServer constructors, they're set up as zombies and initialised later

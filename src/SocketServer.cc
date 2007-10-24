@@ -79,6 +79,11 @@ int SocketServer::accept(SocketAddress* address)
 
 /* Revision history
  * $Log$
+ * Revision 1.8  2007/10/24 20:44:15  dtrg
+ * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
+ * objects are now marked as such and do not have copy constructors, and RAI is
+ * used for the threadlet mutex.
+ *
  * Revision 1.7  2007/04/19 09:44:04  dtrg
  * The socket is now properly marked with SO_REUSEADDR, so
  * hopefully the connection-in-use errors when restarting spey should
