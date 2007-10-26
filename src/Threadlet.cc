@@ -21,7 +21,7 @@
 #include <list>
 
 static pthread_mutex_t cpulock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_key_t selfkey;
+static pthread_key_t selfkey = NULL;
 
 #define foreach(_collection, _iterator) \
         for (typeof((_collection).begin()) _iterator = (_collection).begin(); \
@@ -126,11 +126,17 @@ int Threadlet::debugid()
 
 Threadlet* Threadlet::current()
 {
-	return (Threadlet*) pthread_getspecific(selfkey);
+	if (selfkey)
+		return (Threadlet*) pthread_getspecific(selfkey);
+	else
+		return NULL;
 }
 	
 /* Revision history
  * $Log$
+ * Revision 1.9  2007/10/24 22:50:56  dtrg
+ * Fixed the word wrap in the last CVS comment.
+ *
  * Revision 1.8  2007/10/24 20:44:15  dtrg
  * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
  * objects are now marked as such and do not have copy constructors, and RAI is
