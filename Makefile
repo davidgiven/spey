@@ -13,7 +13,7 @@
 
 PREFIX = /usr
 EXE = bin/spey
-OPTIMISATION = -g -Os
+OPTIMISATION = -g 
 CC = g++ -Wall
 
 # If you want GNUTLS support, set this to 'yes'.
@@ -32,7 +32,7 @@ EXTRALIBS = -L/usr/local/lib
 
 # You shouldn't need to touch anything below here.
 
-MAJORVERSION := 0.4.1
+MAJORVERSION := 0.4.2
 BUILDCOUNT := 1
 include version
 
@@ -70,7 +70,8 @@ OBJS = \
 	src/ServerProcessor.o \
 	src/greylist.o \
 	src/rbl.o \
-	src/main.o
+	src/main.o \
+	src/version.o
 
 all: $(EXE)
 
@@ -97,6 +98,8 @@ clean:
 src/CLI.cc src/CLI.h: src/CLI.gp
 	genparse -l c++ -o src/CLI -p CLI $<
 
+src/version.o: version
+
 src/spey.h: \
 	src/Exception.h \
 	src/Logger.h \
@@ -117,6 +120,10 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.12  2007/04/18 22:48:52  dtrg
+# Added options to allow extra library and include paths to be
+# specified. Updated the version number.
+#
 # Revision 1.11  2007/02/10 20:59:17  dtrg
 # Added support for DNS-based RBLs.
 #

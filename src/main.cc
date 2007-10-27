@@ -1,7 +1,7 @@
-/* main.cc
- * Main program.
+/* version.cc
+ * Contains the version number constants.
  *
- * Copyright (C) 2004 David Given
+ * Copyright (C) 2007 David Given
  * You may distribute under the terms of the GNU General Public
  * License version 2 as specified in the file COPYING that comes with the
  * Spey distribution.
@@ -107,6 +107,23 @@ abort:
 		throw Exception("Unable to drop root privileges --- terminating");
 }
 
+/* Everything in here must happen after any possible call to daemon().
+ * daemon() does a fork(), which causes nasty things to happen if there's a
+ * locked mutex. */
+
+static void initialise(CLI& cli)
+{
+	Threadlet::initialise();
+	Sql.open(cli.d());
+	FromAddress.set(cli.f());
+	ToAddress.set(cli.t());
+
+#ifdef GNUTLS
+	gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+	gnutls_global_init();
+#endif
+}
+
 static int daemonmode(CLI& cli)
 {
 	// Detach from the console.
@@ -115,19 +132,12 @@ static int daemonmode(CLI& cli)
 		daemon(0, 0);
 		Logger::detach();
 	}
-
-	/* The call to Threadlet::initialise() must occur after daemon(); daemon()
-	 * does a fork(), which causes nasty things to happen if there's a locked
-	 * mutex. */
 	 	
-	Threadlet::initialise();
-	Sql.open(cli.d());
-	FromAddress.set(cli.f());
-	ToAddress.set(cli.t());
-
 	DetailLog() << "------------- STARTUP ----------------";
-	DetailLog() << "Spey version " MAJORVERSION " build " BUILDCOUNT;
+	DetailLog() << "Spey version " << MajorVersion << " build " << BuildCount;
 
+	initialise(cli);
+	
 	SystemLog() << "listening on "
 		    << FromAddress;
 
@@ -136,7 +146,6 @@ static int daemonmode(CLI& cli)
 
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
-	Settings::reload();
 	drop_root_privileges();
 
 	Threadlet::halt();
@@ -145,13 +154,11 @@ static int daemonmode(CLI& cli)
 
 static int inetdmode(CLI& cli)
 {
-	Threadlet::initialise();
-	Sql.open(cli.d());
-	ToAddress.set(cli.t());
-
 	DetailLog() << "------------- INETD STARTUP ----------------";
-	DetailLog() << "Spey version " MAJORVERSION " build " BUILDCOUNT;
+	DetailLog() << "Spey version " << MajorVersion << " build " << BuildCount;
 
+	initialise(cli);
+	
 	try {
 		Settings::reload();
 		SocketAddress dummyaddress;
@@ -188,11 +195,6 @@ int main(int argc, char* argv[])
 		CLI cli(argc, argv);
 		Logger::setlevel(cli.v());
 		
-#ifdef GNUTLS
-		gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
-		gnutls_global_init();
-#endif
-
 		if (cli.i())
 			return inetdmode(cli);
 		else
@@ -215,6 +217,9 @@ int main(int argc, char* argv[])
 
 /* Revision history
  * $Log$
+ * Revision 1.14  2007/10/24 22:51:30  dtrg
+ * Finally fixed the horrible irreproducable mutex lockup bug.
+ *
  * Revision 1.13  2007/04/18 22:26:56  dtrg
  * Fixed a bug where we were forgetting to tell gnutls that we were a
  * multithreaded application, resulting in it stepping on gcrypt's toes
