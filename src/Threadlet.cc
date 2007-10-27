@@ -21,7 +21,7 @@
 #include <list>
 
 static pthread_mutex_t cpulock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_key_t selfkey = NULL;
+static pthread_key_t selfkey = 0;
 
 #define foreach(_collection, _iterator) \
         for (typeof((_collection).begin()) _iterator = (_collection).begin(); \
@@ -97,12 +97,18 @@ Threadlet::~Threadlet()
 
 int Threadlet::releaseCPUlock()
 {
-	return pthread_mutex_unlock(&cpulock);
+	int e = pthread_mutex_unlock(&cpulock);
+	if (e)
+		SystemLog() << "pthread_mutex_unlock() failed with " << e;
+	return e;
 }
 
 int Threadlet::takeCPUlock()
 {
-	return pthread_mutex_lock(&cpulock);
+	int e = pthread_mutex_lock(&cpulock);
+	if (e)
+		SystemLog() << "pthread_mutex_lock() failed with " << e;
+	return e;
 }
 
 int Threadlet::halt()
@@ -134,6 +140,10 @@ Threadlet* Threadlet::current()
 	
 /* Revision history
  * $Log$
+ * Revision 1.10  2007/10/26 22:20:00  dtrg
+ * Changed so that Threadlet::current() no longer returns garbage if the
+ * Threadlet system hasn't been set up yet.
+ *
  * Revision 1.9  2007/10/24 22:50:56  dtrg
  * Fixed the word wrap in the last CVS comment.
  *
