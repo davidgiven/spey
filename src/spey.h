@@ -46,6 +46,11 @@ private:
 #include "MessageProcessor.h"
 #include "ServerProcessor.h"
 
+/* Globals */
+
+extern char MajorVersion[];
+extern char BuildCount[];
+
 extern SQL Sql;
 extern SocketAddress FromAddress;
 extern SocketAddress ToAddress;
@@ -67,6 +72,9 @@ extern bool rblcheck(uint32_t sender, string rbldomainlist);
 
 /* Revision history
  * $Log$
+ * Revision 1.9  2007/10/24 22:50:57  dtrg
+ * Fixed the word wrap in the last CVS comment.
+ *
  * Revision 1.8  2007/10/24 20:44:15  dtrg
  * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
  * objects are now marked as such and do not have copy constructors, and RAI is
