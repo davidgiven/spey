@@ -171,6 +171,9 @@ void MessageProcessor::process()
 				writeoutside();
 				continue;
 
+			case SMTPCommand::QUIT:
+				return;
+				
 			case SMTPCommand::STARTTLS:
 #ifdef GNUTLS
 				if (Settings::externaltls())
@@ -554,6 +557,11 @@ void MessageProcessor::run()
 
 /* Revision history
  * $Log$
+ * Revision 1.20  2007/10/24 22:26:20  dtrg
+ * SSL connections are now no longer automatically considered
+ * authenticated. Domain name verification no longer happens on
+ * authenticated or trusted connections.
+ *
  * Revision 1.19  2007/04/18 22:39:28  dtrg
  * Changed SQLQuery() to use SQLite's mprintf() function for constructing
  * SQL queries rather than simple string concatenation. This makes the
