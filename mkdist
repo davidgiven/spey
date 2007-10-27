@@ -68,5 +68,6 @@ cp -a --parents \
 (cd .. && tar cvf $PACKAGE-$1.tar.bz2 --bzip2 $PACKAGE-$1)
 
 echo ""
-echo "Done --- but did you remember to update the version number in the README?"
+echo "Done --- but did you remember to update the version number in the README,"
+echo "speyctl, and the man pages?"
 

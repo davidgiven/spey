@@ -11,7 +11,7 @@
 
 function usage()
 {
-	print "speyctl 0.4.1 (c) 2004 David Given"
+	print "speyctl 0.4.2 (c) 2004 David Given"
 	print "Syntax: speyctl [<options>...] <command> [<parameters>...]"
 	print "Options:"
 	print "    --help    -h                   Displays this message."
