@@ -1,9 +1,9 @@
-                                   SPEY V0.4.1
+                                   SPEY V0.4.2
                                    ===========
 
                                   Beta release
                               (C) 2007 David Given
-                                   2007-04-18
+                                   2007-10-24
 
 INTRODUCTION
 ============
@@ -63,18 +63,27 @@ REQUIREMENTS
   installed in a strange place, or if you want to use a different awk anyway,
   you'll need to edit scripts/speyctl before installation.
 
+- genparse, any version. This is needed to build the command-line parser.
+
+- GNUTLS, version 1.4.4 or thereabouts (OPTIONAL). This is needed to make TLS
+  connections work. If you don't care about TLS, then set the GNUTLS setting
+  to NO in the makefile and spey will be built without it.
+
 Links:
 
-    sqlite: http://sqlite.org/
-    mawk:   http://freshmeat.net/projects/mawk/
+    sqlite:   http://sqlite.org/
+    mawk:     http://freshmeat.net/projects/mawk/
+    genparse: http://ftp.debian.org/debian/pool/main/g/genparse/genparse_0.5.2.orig.tar.gz
+    gnutls:   http://www.gnu.org/software/gnutls/
     
-Debian has both of these.
+Debian has all of these in the right versions (because that's where I do my
+development).
 
 
 CONFIGURATION
 =============
 
-Spey works by listening on one port, normally your convention SMTP port, and
+Spey works by listening on one port, normally your conventional SMTP port, and
 forwarding the connections to another port, where your real mail server is
 listening.  If you like you can run the mail server on another machine than you
 run Spey; Spey itself doesn't care.
@@ -164,8 +173,10 @@ bit of a waste of space.
 DOCUMENTATION
 =============
 
-Man pages are provided; see spey(8) and speyctl(8). They may or may not contain
-useful information.
+Man pages are provided; see spey(8) and speyctl(8). They contain useful
+information. While I'm completely happy to answer any queries people may have,
+it might be noted that most of my replies usually end in 'see the spey man
+page for more information'...
 
 
 BUGS
@@ -216,6 +227,13 @@ laid out by the GNU Public License, version 2 only (and explicitly not version
 
 REVISION HISTORY
 ================
+
+Spey 0.4.2: 2007-10-24: Finally fixed that horrible random-lockup-on-startup-
+problem that was manifesting itself on some libc/pthread combinations. Thanks
+go to Wojtek Swiatek for helping test this. Domain verification now no longer
+happens on trusted or authenticated sessions (which means it will now accept
+submissions from Outlook and Outlook Express, which are buggy). SSL sessions
+are no longer considered automatically authenticated.
 
 Spey 0.4.1: 2007-04-18: Fixed yet *another* random-crash-at-infrequent-
 intervals (this one related to the new TLS support). Fixed an SQL injection
