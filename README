@@ -1,5 +1,5 @@
-                                   SPEY V0.4.2
-                                   ===========
+                                  SPEY V0.4.2.1
+                                  =============
 
                                   Beta release
                               (C) 2007 David Given
@@ -227,6 +227,9 @@ laid out by the GNU Public License, version 2 only (and explicitly not version
 
 REVISION HISTORY
 ================
+
+Spey 0.4.2.1: 2007-11-06: Added a missing file to the 0.4.2 distribution that
+was preventing it from building.
 
 Spey 0.4.2: 2007-10-24: Finally fixed that horrible random-lockup-on-startup-
 problem that was manifesting itself on some libc/pthread combinations. Thanks
