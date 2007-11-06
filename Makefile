@@ -32,7 +32,7 @@ EXTRALIBS = -L/usr/local/lib
 
 # You shouldn't need to touch anything below here.
 
-MAJORVERSION := 0.4.2
+MAJORVERSION := 0.4.2.1
 BUILDCOUNT := 1
 include version
 
@@ -120,6 +120,12 @@ version:
 
 # Revision history
 # $Log$
+# Revision 1.13  2007/10/27 22:29:46  dtrg
+# Rearranged the startup sequence to be more thread-friendly. Moved
+# the version number into its own source file, so we no longer have
+# the embarrassing situation where different object files have different
+# build numbers compiled into them.
+#
 # Revision 1.12  2007/04/18 22:48:52  dtrg
 # Added options to allow extra library and include paths to be
 # specified. Updated the version number.
