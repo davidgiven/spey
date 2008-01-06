@@ -140,16 +140,25 @@ int SocketAddress::acceptfrom(int fd)
 
 string SocketAddress::getname() const
 {
-	struct hostent* he = gethostbyaddr(&_sa.sin_addr.s_addr,
-			sizeof(_sa.sin_addr.s_addr), AF_INET);
+	unsigned int addr = _sa.sin_addr.s_addr;
 	stringstream s;
-
-	if (he)
-		s << he->h_name;
-	else
+	bool validname = false;
+	
+	if (addr != 0x00000000)
 	{
-		unsigned int addr = _sa.sin_addr.s_addr;
-
+	
+		struct hostent* he = gethostbyaddr(&_sa.sin_addr.s_addr,
+				sizeof(_sa.sin_addr.s_addr), AF_INET);
+	
+		if (he)
+		{
+			s << he->h_name;
+			validname = true;
+		}
+	}
+	
+	if (!validname)
+	{
 		s << ((addr >>  0) & 0xFF)
 		  << '.'
 		  << ((addr >>  8) & 0xFF)
@@ -176,38 +185,3 @@ SocketAddress::operator unsigned int () const
 {
 	return ntohl(_sa.sin_addr.s_addr);
 }
-
-/* Revision history
- * $Log$
- * Revision 1.7  2007/10/24 20:44:15  dtrg
- * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
- * objects are now marked as such and do not have copy constructors, and RAI is
- * used for the threadlet mutex.
- *
- * Revision 1.6  2005/10/08 21:06:55  dtrg
- * Fixed a minor potential security issue; if the socket length returned by gethostbyname() is setname() won't fit in a sockaddr_in, then a buffer overflow would occur. If this happens then I reckon the OS is fairly borked anyway, but the fix makes sure it never *can* happen and is more efficient to boot. Thanks to Joshua Drake for pointing this out.
- *
- * Revision 1.5  2004/11/18 17:57:20  dtrg
- * Rewrote logging system so that it no longer tries to subclass stringstream,
- * that was producing bizarre results on gcc 3.3. Added version tracking to the
- * makefile; spey now knows what version and build number it is, and displays the
- * information in the startup banner. Now properly ignores SIGPIPE, which was
- * causing intermittent silent aborts.
- *
- * Revision 1.4  2004/06/08 19:58:04  dtrg
- * Fixed a bug where the address of incoming connections was thought to be the
- * address of *this* end of the connection, not the other end. In the process,
- * changed some this->blah instance variables to _blah.
- *
- * Revision 1.3  2004/05/14 23:11:44  dtrg
- * Added decent relaying support. Also converted SocketAddress to use references a
- * lot rather than pass-by-value, out of general tidiness and the hope that it
- * will improve performance a bit.
- *
- * Revision 1.2  2004/05/14 21:28:22  dtrg
- * Added the ability to create a Socket from a raw file descriptor (needed for
- * inetd mode, where we're going to have a socket passed to us on fd 0).
- *
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
