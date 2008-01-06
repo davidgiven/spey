@@ -19,8 +19,12 @@ This file lists some of the major service providers that whitelisting is
 required for. If you want to communicate with users at these providers, you'll
 have to add the entries to your whitelist.
 
+(In all the entries described below, replace MYDOMAIN with your local domain
+--- the contents of the 'identity' setting. In my case, it's dg@cowlark.com.)
+
 If you know of any more useful whitelist entries that should go in here,
 please send them to me (dg@cowlark.com).
+
 
 
 
@@ -34,4 +38,4 @@ violating the RFC. (The servers they use to actually send real email don't
 do this.) In order to subscribe to a Yahoo mailing list, you need the
 following whitelist entry:
 
-    %@returns.groups.yahoo.com : dg@cowlark.com
+    %@returns.groups.yahoo.com : %@MYDOMAIN
