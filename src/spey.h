@@ -30,6 +30,14 @@ private:
 	uncopyable& operator= (const uncopyable&);
 };
 
+/* AUTH modes. */
+
+enum AuthMode {
+	NoAuth,
+	ProxyAuth,
+	InternalAuth
+};
+
 #include "Logger.h"
 #include "Exception.h"
 #include "SQL.h"
@@ -70,47 +78,15 @@ extern GreylistResponse greylist(uint32_t sender,
 
 extern bool rblcheck(uint32_t sender, string rbldomainlist);
 
-/* Revision history
- * $Log$
- * Revision 1.9  2007/10/24 22:50:57  dtrg
- * Fixed the word wrap in the last CVS comment.
- *
- * Revision 1.8  2007/10/24 20:44:15  dtrg
- * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
- * objects are now marked as such and do not have copy constructors, and RAI is
- * used for the threadlet mutex.
- *
- * Revision 1.7  2007/02/10 20:59:16  dtrg
- * Added support for DNS-based RBLs.
- *
- * Revision 1.6  2007/01/29 23:05:11  dtrg
- * Due to various unpleasant incompatibilities with ucontext, the
- * entire coroutine implementation has been rewritten to use
- * pthreads instead of user-level scheduling. This should make
- * things far more robust and portable, if a bit more heavyweight.
- * It also has the side effect of drastically simplified threadlet code.
- *
- * Revision 1.5  2004/11/18 17:57:20  dtrg
- * Rewrote logging system so that it no longer tries to subclass stringstream,
- * that was producing bizarre results on gcc 3.3. Added version tracking to the
- * makefile; spey now knows what version and build number it is, and displays the
- * information in the startup banner. Now properly ignores SIGPIPE, which was
- * causing intermittent silent aborts.
- *
- * Revision 1.4  2004/06/21 23:11:15  dtrg
- * Added a fix for gcc 3.0, hopefully. Untested *on* gcc 3.0, but it still builds
- * on 2.95.
- *
- * Revision 1.3  2004/05/30 01:55:13  dtrg
- * Numerous and major alterations to implement a system for processing more than
- * one message at a time, based around coroutines. Fairly hefty rearrangement of
- * constructors and object ownership semantics. Assorted other structural
- * modifications.
- *
- * Revision 1.2  2004/05/14 21:33:25  dtrg
- * Added the ability to log through syslog, rather than just to stderr.
- *
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
+/* Base64 encode/decode. */
 
+extern string base64_encode(const void *data, int size);
+extern int base64_encode(const void *data, int size, char **str);
+extern int base64_decode(const string& str, void *data);
+extern int base64_decode(const char *str, void *data);
+
+/* Authentication systems. */
+
+typedef int Authenticator(Socket& stream, const string& initial);
+extern Authenticator auth_plain;
+extern Authenticator auth_login;

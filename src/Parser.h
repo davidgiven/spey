@@ -23,7 +23,7 @@ struct Parser : uncopyable
 	void expect(string s);
 	void whitespace();
 	int peek();
-	string getword(char delimiter=' ');
+	string getword(int (*predicate)(int) = NULL, char delimiter=' ');
 	void eol();
 
 protected:
@@ -33,21 +33,3 @@ protected:
 };
 
 #endif
-
-/* Revision history
- * $Log$
- * Revision 1.3  2007/10/24 20:44:15  dtrg
- * Did a lot of minor code cleanups and C++ style improvements: uncopyable C++
- * objects are now marked as such and do not have copy constructors, and RAI is
- * used for the threadlet mutex.
- *
- * Revision 1.2  2004/06/22 21:01:02  dtrg
- * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
- * closer to the C++ standard than 2.95 is; plus, the standard library is now
- * rather different, which means that I'm not allowed to do things like have local
- * variables called errno.)
- *
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
-

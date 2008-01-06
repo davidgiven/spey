@@ -14,7 +14,3 @@
 
 char MajorVersion[] = MAJORVERSION;
 char BuildCount[] = BUILDCOUNT;
-
-/* Revision history
- * $Log$
- */

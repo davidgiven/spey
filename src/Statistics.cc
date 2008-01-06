@@ -30,21 +30,3 @@ void Statistics::count(string name)
 	                  name.c_str());
 	q.step();
 }
-
-/* Revision history
- * $Log$
- * Revision 1.4  2007/02/10 20:59:16  dtrg
- * Added support for DNS-based RBLs.
- *
- * Revision 1.3  2007/02/10 19:46:44  dtrg
- * Added greet-pause support. Moved the trusted hosts check to right after
- * connection so that greet-pause doesn't apply to trusted hosts. Fixed a bug
- * in the AUTH supported that meant that authenticated connections had no
- * extra privileges (oops). Added the ability to reset all statistics on demand.
- *
- * Revision 1.2  2004/06/21 23:12:46  dtrg
- * Added blacklisting and whitelisting support.
- *
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
