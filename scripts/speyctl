@@ -9,9 +9,11 @@
 # $Source$
 # $State$
 
+VERSION = "0.4.3"
+
 function usage()
 {
-	print "speyctl 0.4.2 (c) 2004 David Given"
+	print "speyctl " VERSION " (c) 2004-2008 David Given"
 	print "Syntax: speyctl [<options>...] <command> [<parameters>...]"
 	print "Options:"
 	print "    --help    -h                   Displays this message."
@@ -27,6 +29,7 @@ function usage()
 	print "    recipient <cmd> [<spec>] Manipulate the allowed recipients table."
 	print "    whitelist <cmd> [<spec>] Manipulate the whitelist table."
 	print "    blacklist <cmd> [<spec>] Manipulate the blacklist table."
+	print "    user <cmd> [<spec>]      Manipulate the users table."
 	print "    stats                    List statistics."
 	print "    statsreset               Reset statistic counters to 0."
 	print "    showdb                   Show address database. (Warning --- can be large!)"
@@ -42,6 +45,11 @@ function error(s)
 function Xlistsyntaxerror(list, s)
 {
 	error("syntax error: speyctl " list " [add or sub or list] [<spec>]")
+}
+
+function usersyntaxerror()
+{
+	error("syntax error: speyctl user [set or list] [<username>] [<password>]")
 }
 
 function trim(s)
@@ -113,7 +121,9 @@ function cmd_init()
 		INSERT INTO settings VALUES             \
 		    ('runtime-user-id', 'spey:spey');   \
 		INSERT INTO settings VALUES             \
-		    ('greet-pause',     '2');           ")
+		    ('greet-pause',     '2');           \
+		INSERT INTO settings VALUES             \
+		    ('external-auth-mode', 'internal'); ")
 
 	sql("CREATE TABLE statistics (              \
 		    key VARCHAR PRIMARY KEY,            \
@@ -138,12 +148,16 @@ function cmd_init()
 		    ('blackholed',          0);         ")
 
 	sql("CREATE TABLE whitelist (               \
-			sender VARCHAR,                         \
-			recipient VARCHAR);")
+	    sender VARCHAR,                         \
+	    recipient VARCHAR);")
 
 	sql("CREATE TABLE blacklist (               \
-			sender VARCHAR,                         \
-			recipient VARCHAR);")
+	    sender VARCHAR,                         \
+	    recipient VARCHAR);")
+
+	sql("CREATE TABLE users (                   \
+	    username VARCHAR,                       \
+	    password VARCHAR);")
 
 	sqlend()
 }
@@ -206,7 +220,7 @@ function cmd_purge()
 				(SELECT value FROM settings WHERE	\
 					key = 'valid-expiry')		\
 				);")
-	sqlend();
+	sqlend("VACUUM;");
 }
 
 function cmd_trust(op, value)
@@ -318,6 +332,30 @@ function cmd_Xlist(op, list, value,    array, sender, recipient)
 	sqlend()
 }
 
+function cmd_user(op, key, value)
+{
+	if (op ~ /list/)
+	{
+		FS = ","
+		cmd = "sqlite -separator ',' " configfile " 'SELECT username, password FROM users'"
+		print "       Username   Password"
+		print "---------------   ---------------"
+		while (cmd|getline == 1)
+		{
+			printf "% 15s   %s\n", $1, $2
+		}
+		return
+	}
+
+	sqlstart()
+	sql("DELETE FROM users WHERE " \
+		"username='" key "';")
+	if (value != "")
+		sql("INSERT INTO users VALUES " \
+			"('" key "', '" value "');")
+	sqlend()
+}
+
 function cmd_statsreset()
 {
 	sqlstart()
@@ -325,7 +363,7 @@ function cmd_statsreset()
 	sqlend()
 }
 
-function parseargs(  i)
+function parseargs(  i, key, value)
 {
 	for (i=1; i<ARGC; i++)
 	{
@@ -368,6 +406,16 @@ function parseargs(  i)
 			if ((op != "list") && (op != "add") && (op != "sub"))
 				Xlistsyntaxerror(opt)
 			cmd_Xlist(op, opt, value)
+			exit(0)
+		}
+		else if (opt ~ /^user$/)
+		{
+			op = ARGV[++i]
+			key = ARGV[++i]
+			value = ARGV[++i]
+			if ((op != "list") && (op != "set"))
+				usersyntaxerror()
+			cmd_user(op, key, value)
 			exit(0)
 		}
 		else if (opt ~ /^stats$/)
