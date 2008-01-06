@@ -32,7 +32,7 @@ EXTRALIBS = -L/usr/local/lib
 
 # You shouldn't need to touch anything below here.
 
-MAJORVERSION := 0.4.2.1
+MAJORVERSION := 0.4.3
 BUILDCOUNT := 1
 include version
 
@@ -70,6 +70,8 @@ OBJS = \
 	src/ServerProcessor.o \
 	src/greylist.o \
 	src/rbl.o \
+	src/base64.o \
+	src/auth.o \
 	src/main.o \
 	src/version.o
 
@@ -117,72 +119,3 @@ src/spey.h: \
 version:
 	echo "MAJORVERSION := $(MAJORVERSION)" > version
 	echo "BUILDCOUNT := $(BUILDCOUNT)" >> version
-
-# Revision history
-# $Log$
-# Revision 1.13  2007/10/27 22:29:46  dtrg
-# Rearranged the startup sequence to be more thread-friendly. Moved
-# the version number into its own source file, so we no longer have
-# the embarrassing situation where different object files have different
-# build numbers compiled into them.
-#
-# Revision 1.12  2007/04/18 22:48:52  dtrg
-# Added options to allow extra library and include paths to be
-# specified. Updated the version number.
-#
-# Revision 1.11  2007/02/10 20:59:17  dtrg
-# Added support for DNS-based RBLs.
-#
-# Revision 1.10  2007/02/10 00:24:35  dtrg
-# Added support for TLS connections using the GNUTLS library. A X509
-# certificate and private key must be supplied for most purposes, but if they
-# are not provided anonymous authentication will be used instead (which
-# apparently only GNUTLS supports). Split the relay check up into two
-# separate parts; the trustedhosts table now specifies machines that can be
-# trusted to play nice, and can do relaying and be allowed to bypass the
-# greylisting; and allowedrecipients, which specifies what email address we're
-# expecting to receive. Also fixed some remaining niggles in the AUTH
-# proxy support, but this remains largely untested.
-#
-# Revision 1.9  2007/01/29 23:06:06  dtrg
-# Due to various unpleasant incompatibilities with ucontext, the
-# entire coroutine implementation has been rewritten to use
-# pthreads instead of user-level scheduling. This should make
-# things far more robust and portable, if a bit more heavyweight.
-# It also has the side effect of drastically simplified threadlet code.
-#
-# Revision 1.8  2005/10/31 22:20:36  dtrg
-# Added support for compiling with the Electric Fence memory debugger.
-#
-# Revision 1.7  2004/11/21 18:46:49  dtrg
-# Updated version numbering to 0.3.2.
-#
-# Revision 1.6  2004/11/18 17:57:19  dtrg
-# Rewrote logging system so that it no longer tries to subclass stringstream,
-# that was producing bizarre results on gcc 3.3. Added version tracking to the
-# makefile; spey now knows what version and build number it is, and displays the
-# information in the startup banner. Now properly ignores SIGPIPE, which was
-# causing intermittent silent aborts.
-#
-# Revision 1.5  2004/06/22 21:19:28  dtrg
-# Turned optimisation on.
-#
-# Revision 1.4  2004/06/22 21:00:59  dtrg
-# Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
-# closer to the C++ standard than 2.95 is; plus, the standard library is now
-# rather different, which means that I'm not allowed to do things like have local
-# variables called errno.)
-#
-# Revision 1.3  2004/05/30 01:55:13  dtrg
-# Numerous and major alterations to implement a system for processing more than
-# one message at a time, based around coroutines. Fairly hefty rearrangement of
-# constructors and object ownership semantics. Assorted other structural
-# modifications.
-#
-# Revision 1.2  2004/05/01 15:44:52  dtrg
-# Now strips binary before installing; creates missing bin directory when
-# linking.
-#
-# Revision 1.1  2004/05/01 12:20:20  dtrg
-# Initial version.
-#

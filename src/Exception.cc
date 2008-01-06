@@ -33,13 +33,3 @@ Exception::Exception(string reason, int errnum)
 	  << ")";
 	this->reason = s.str();
 }
-
-/* Revision history
- * $Log$
- * Revision 1.2  2004/05/01 12:19:49  dtrg
- * Adjusted boilerplate.
- *
- * Revision 1.1  2004/05/01 11:52:00  dtrg
- * Initial version.
- */
-

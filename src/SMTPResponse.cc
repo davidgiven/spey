@@ -183,7 +183,7 @@ void SMTPResponse::msgoverride(string message)
 	_msgoverride = message;
 }
 
-static char* statusMessage(int code)
+static const char* statusMessage(int code)
 {
 	switch (code)
 	{
@@ -195,7 +195,7 @@ static char* statusMessage(int code)
 		case 250: return "Requested mail action okay, completed";
 		case 251: return "User not local";
 		case 252: return "Cannot VRFY user, but will accept message "
-			  		"and attempt delivery";
+		                     "and attempt delivery";
 		case 334: return "";
 		case 354: return "Start mail input; end with <CRLF>.<CRLF>";
 		case 421: return "Service not available, closing transmission channel";
@@ -208,7 +208,9 @@ static char* statusMessage(int code)
 		case 502: return "Command not implemented";
 		case 503: return "Bad sequence of commands";
 		case 504: return "Command parameter not implemented";
+		case 534: return "Authentication mechanism is too weak";
 		case 535: return "SMTP Authentication unsuccessful/Bad username or password";
+		case 538: return "Encryption required for requested authentication mechanism";
 		case 550: return "Requested action not taken: mailbox unavailable";
 		case 551: return "User not local";
 		case 552: return "Requested mail action aborted: exceeded storage allocation";
@@ -263,35 +265,3 @@ bool SMTPResponse::iserror()
 {
 	return ((_code / 100) == 5);
 }
-
-/* Revision history
- * $Log$
- * Revision 1.5  2007/02/01 18:41:48  dtrg
- * Reworked the SMTP AUTH code so that spey automatically figures out what
- * authentication mechanisms there are by asking the downstream server. The
- * external-auth setting variable is now a boolean. Rearranged various
- * other bits of code and fixed a lot of problems with the man pages.
- *
- * Revision 1.4  2007/01/31 12:58:25  dtrg
- * Added basic support for upstream AUTH requests based on Juan José
- * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
- * proxied through to the downstream server. Parts of the code still need a
- * rethink but it should all work.
- *
- * Revision 1.3  2004/11/18 17:57:20  dtrg
- * Rewrote logging system so that it no longer tries to subclass stringstream,
- * that was producing bizarre results on gcc 3.3. Added version tracking to the
- * makefile; spey now knows what version and build number it is, and displays the
- * information in the startup banner. Now properly ignores SIGPIPE, which was
- * causing intermittent silent aborts.
- *
- * Revision 1.2  2004/06/22 21:01:02  dtrg
- * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
- * closer to the C++ standard than 2.95 is; plus, the standard library is now
- * rather different, which means that I'm not allowed to do things like have local
- * variables called errno.)
- *
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
-

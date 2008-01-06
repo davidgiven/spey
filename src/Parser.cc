@@ -79,7 +79,7 @@ int Parser::peek()
 	return data[index];
 }
 
-string Parser::getword(char delimiter)
+string Parser::getword(int (*predicate)(int), char delimiter)
 {
 	stringstream s;
 
@@ -92,7 +92,10 @@ string Parser::getword(char delimiter)
 		if (c == delimiter)
 			break;
 
-		s << (char)tolower(c);
+		if (predicate)
+			c = predicate(c);
+		
+		s << (char)c;
 		index++;
 	}
 
@@ -112,10 +115,3 @@ void Parser::eol()
 		index++;
 	}
 }
-
-/* Revision history
- * $Log$
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
-

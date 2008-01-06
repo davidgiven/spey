@@ -48,7 +48,7 @@ void SMTPCommand::set(Socket& in)
 
 	try {
 		Parser p(l);
-		string cmd = p.getword();
+		string cmd = p.getword(tolower);
 
 		if (cmd == "helo")
 		{
@@ -60,7 +60,7 @@ void SMTPCommand::set(Socket& in)
 			this->command = EHLO;
 		ehlo:
 			p.whitespace();
-			this->parameter = p.getword();
+			this->parameter = p.getword(tolower);
 			p.eol();
 		}
 		else if (cmd == "mail")
@@ -74,11 +74,11 @@ void SMTPCommand::set(Socket& in)
 			if (p.peek() == '<')
 			{
 				p.expect("<");
-				this->parameter = p.getword('>');
+				this->parameter = p.getword(tolower, '>');
 				p.expect(">");
 			}
 			else
-				this->parameter = p.getword();
+				this->parameter = p.getword(tolower);
 				
 			/* Ignore the rest of the line, to cope with broken mailers who
 			 * insist on sending the RFC1870 SIZE=1234 extension despite the
@@ -95,11 +95,11 @@ void SMTPCommand::set(Socket& in)
 			if (p.peek() == '<')
 			{
 				p.expect("<");
-				this->parameter = p.getword('>');
+				this->parameter = p.getword(tolower, '>');
 				p.expect(">");
 			}
 			else
-				this->parameter = p.getword();
+				this->parameter = p.getword(tolower);
 			p.eol();
 		}
 		else if (cmd == "data")
@@ -132,7 +132,7 @@ void SMTPCommand::set(Socket& in)
 			this->command = AUTH;
 
 			p.whitespace();
-			this->parameter = p.getword();
+			this->parameter = p.getword(tolower);
 
 			if (p.peek() == ' ')
 			{
@@ -215,32 +215,3 @@ SMTPCommand::operator string ()
 
 	return s.str();
 }
-
-/* Revision history
- * $Log$
- * Revision 1.5  2007/01/31 12:58:25  dtrg
- * Added basic support for upstream AUTH requests based on Juan José
- * Gutiérrez de Quevedoo (juanjo@iteisa.com's patch. AUTH requests are
- * proxied through to the downstream server. Parts of the code still need a
- * rethink but it should all work.
- *
- * Revision 1.4  2006/04/25 21:24:01  dtrg
- * Changed the parsing of MAIL FROM: lines to ignore any additional parameters after the email address. This is to cope with broken MTAs who insist on sending RFC1870 extensions (such as SIZE=....) even though we haven't declared ourselves as using them. Thanks to Claus Herwig for pointing this out.
- *
- * Revision 1.3  2004/11/18 17:57:20  dtrg
- * Rewrote logging system so that it no longer tries to subclass stringstream,
- * that was producing bizarre results on gcc 3.3. Added version tracking to the
- * makefile; spey now knows what version and build number it is, and displays the
- * information in the startup banner. Now properly ignores SIGPIPE, which was
- * causing intermittent silent aborts.
- *
- * Revision 1.2  2004/06/22 21:01:02  dtrg
- * Made a lot of minor tweaks so that spey now builds under gcc 3.3. (3.3 is a lot
- * closer to the C++ standard than 2.95 is; plus, the standard library is now
- * rather different, which means that I'm not allowed to do things like have local
- * variables called errno.)
- *
- * Revision 1.1  2004/05/01 12:20:20  dtrg
- * Initial version.
- */
-
