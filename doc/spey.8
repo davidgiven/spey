@@ -10,7 +10,7 @@
 .\" $Source$
 .\" $State$
 .\"
-.TH spey 8 "6 November 2007" "0.4.2.1" "SMTP proxy"
+.TH spey 8 "6 November 2007" "0.5" "SMTP proxy"
 .SH NAME
 spey \- a smart, spam-blocking SMTP proxy
 
@@ -290,18 +290,23 @@ authentication, which is not supported by most other SSL implementations.
 
 
 .TP
-.B external-auth
+.B external-auth-mode
 
-Enables use of AUTH by external users. An integer, either 0 or 1, defaulting
-to 0.
+Enables use of AUTH by external users. A string, which can be 'none', 'proxy'
+or 'internal', defaulting to 'none'.
 
-spey's AUTH support is very simple, and merely proxies the AUTH request to
+When set to 'none', SMTP AUTH is disabled.
+
+When set to 'proxy', spey will proxy the AUTH request to
 the internal server. If the authentication succeeds then any greylisting or
-blacklisting will be bypassed.
+blacklisting will be bypassed. Only authentication is supported. If a client
+tries to negotiate a security layer, spey will get very confused. It is
+recommended that you turn this feature off in your MTA.
 
-Only authentication is supported. If a client tries to negotiate a security
-layer, spey will get very confused. It is recommended that you turn this
-feature off in your MTA.
+When set to 'internal', spey will perform its own AUTH validation against
+its own list of users (see AUTHENTICATION). If the authentication succeeds
+then any greylisting or blacklisting will be bypassed. 
+
 
 
 .TP
@@ -323,7 +328,9 @@ communication with someone at, say, Google Mail, and your RBL provider
 decides on a whim to blacklist Google Mail's email servers, you will be out
 of luck. Choose your RBLs carefully.
 
-RBL lookups are not done for machines in the trusted list.
+RBL lookups are not done for machines in the trusted list, but are done for
+authenticated sessions (because RBL lookups happen before the client has had
+a chance to authenticate).
 
 
 
@@ -342,15 +349,20 @@ and contains zero or more keys of the form
 
 It is recommended that
 .B 127.0.0.1/32
-is added, so that mail may be sent from the local machine. The author has
-.B 10.0.0.0/8
-so that any machine in his private network can send mail.
-Another useful example is
+is added, so that mail may be sent from the local machine. You may also wish
+to add your private network address so that any machine in your private
+network can send mail:
+.BR 10.0.0.0/8
+or
 .BR 172.16.0.0/16 .
-.B 0.0.0.0/0
-will allow connections to be made from any host, disabling the relay checking
-completely. Don't do this unless you are absolutely sure about what you are
-doing!
+If you use
+.BR 0.0.0.0/0 ,
+spey will allow connections to be made from any host, disabling the relay
+checking completely. Don't do this unless you are absolutely sure about
+what you are doing!
+
+If you want to allow certain users to relay mail through spey, you probably
+want to use SMTP AUTH instead; see the AUTHENTICATION section.
 
 
 
@@ -377,6 +389,32 @@ will match all messages.
 
 Messages that are not addressed to a recipient on this table will be rejected
 out of hand.
+
+
+
+
+.SH "AUTHENTICATION"
+
+When the
+.B external-auth-mode
+configuration key is set to 'internal', spey handles its own AUTH management.
+
+spey currently supports the PLAIN and LOGIN regimes. Usernames
+and passwords are stored in the database, and may be modified with the
+.B speyctl(8)
+command. AUTH is only supported on encrypted sessions so you must have
+.B external-tls
+switched on and configured.
+
+.B Warning:
+Passwords are stored in plain text in the database, which means that any user
+who has access to the database file will be able to read them. What's more,
+with the right settings, passwords may appear in clear in the logfile. You
+should not use valuable passwords with spey.
+
+Once correctly authenticated, all further checks are disabled. The most
+common use for this is to allow users to relay mail via spey from external
+connections.
 
 
 
