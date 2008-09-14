@@ -44,7 +44,8 @@ void ServerProcessor::run()
 
 		try {
 			/* Automatically added to scheduler */
-			(void) new MessageProcessor(fd, address);
+			Threadlet* t = new MessageProcessor(fd, address);
+			t->start();
 		} catch (Exception e) {
 			MessageLog() << "unable to process connection from "
 				<< address << ": " << e;

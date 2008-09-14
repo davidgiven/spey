@@ -18,10 +18,11 @@
 #include <errno.h>
 #include <pthread.h>
 #include <assert.h>
+#include <signal.h>
 #include <list>
 
 static pthread_mutex_t cpulock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_key_t selfkey = 0;
+static pthread_key_t selfkey;
 
 #define foreach(_collection, _iterator) \
         for (typeof((_collection).begin()) _iterator = (_collection).begin(); \
@@ -38,20 +39,30 @@ void Threadlet::initialise()
 
 	Threadlet::takeCPUlock();
 }
-	
+
 void* Threadlet::trampoline(void* user)
 {
 	Threadlet* threadlet = (Threadlet*) user;
-	
+
+	/* Ensure we never get any SIGPIPEs, which we don't catch and will
+	 * cause an abort. By ignoring them, we ensure that read() and write()
+	 * return error codes instead. */
+
+	signal(SIGPIPE, SIG_IGN);
+
+	/* Set up the threadlet state. */
+
 	int e = pthread_setspecific(selfkey, threadlet);
 	if (e)
 	{
 		SystemLog() << "Unable to set up new threadlet!";
 		return NULL;
 	}
-	
+
 	/* Threadlet code runs with the CPU lock held. */
-	
+
+	DetailLog() << "threadlet " << (unsigned int) threadlet <<
+		" init";
 	threadlet->takeCPUlock();
 	try {
 		threadlet->run();
@@ -68,27 +79,36 @@ void* Threadlet::trampoline(void* user)
 	} catch (...) {
 		SystemLog() << "Uncaught exception in threadlet!";
 	}
-	
+
 	/* Finished. Delete the threadlet and exit. Remember that
 	 * the destructor must run with the CPU lock held. */
-	
+
 	delete threadlet;
 	Threadlet::releaseCPUlock();
 	return NULL;
 }
 
-Threadlet::Threadlet()
+Threadlet::Threadlet():
+	_thread(NULL)
 {
-	/* Create the underlying pthread for this threadlet. */
-	
-	int e = pthread_create(&_thread, NULL, Threadlet::trampoline, this);
-	if (e)
-		throw IOException("couldn't create new thread", e);
 }
 
 Threadlet::~Threadlet()
 {
-	pthread_detach(_thread);
+	if (_thread)
+		pthread_detach(_thread);
+}
+
+void Threadlet::start()
+{
+	/* Create and start the underlying pthread for this threadlet. */
+
+
+	DetailLog() << "create thread " << (unsigned int) this;
+	int e = pthread_create(&_thread, NULL, Threadlet::trampoline, this);
+	if (e)
+		throw IOException("couldn't create new thread", e);
+	DetailLog() << "thread created";
 }
 
 /* ======================================================================= */
@@ -120,20 +140,17 @@ int Threadlet::halt()
 		pause();
 	return 0;
 }
-	
+
 int Threadlet::debugid()
 {
 	return -1;
 }
-	
+
 /* ======================================================================= */
 /*                               UTILITIES                                 */
 /* ======================================================================= */
 
 Threadlet* Threadlet::current()
 {
-	if (selfkey)
-		return (Threadlet*) pthread_getspecific(selfkey);
-	else
-		return NULL;
+	return (Threadlet*) pthread_getspecific(selfkey);
 }
