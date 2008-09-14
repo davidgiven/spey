@@ -16,12 +16,13 @@
 #include <syslog.h>
 #include <string>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
 /* Any class that wishes to be uncopyable (no const constructor or assignment
  * operator) should inherit from this. */
- 
+
 struct uncopyable
 {
 	uncopyable() {};
@@ -38,6 +39,7 @@ enum AuthMode {
 	InternalAuth
 };
 
+#include "Threadlet.h"
 #include "Logger.h"
 #include "Exception.h"
 #include "SQL.h"
@@ -50,14 +52,13 @@ enum AuthMode {
 #include "Parser.h"
 #include "SMTPResponse.h"
 #include "SMTPCommand.h"
-#include "Threadlet.h"
 #include "MessageProcessor.h"
 #include "ServerProcessor.h"
 
 /* Globals */
 
-extern char MajorVersion[];
-extern char BuildCount[];
+extern const char MajorVersion[];
+extern const char BuildCount[];
 
 extern SQL Sql;
 extern SocketAddress FromAddress;

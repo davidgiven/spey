@@ -12,5 +12,5 @@
 
 #include "spey.h"
 
-char MajorVersion[] = MAJORVERSION;
-char BuildCount[] = BUILDCOUNT;
+const char MajorVersion[] = MAJORVERSION;
+const char BuildCount[] = BUILDCOUNT;
