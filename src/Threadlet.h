@@ -21,6 +21,10 @@ struct Threadlet : uncopyable
 	Threadlet();
 	virtual ~Threadlet();
 
+	// Called by the invoker
+
+	void start();
+
 	// Called by the threadlet
 
 	struct Concurrent {

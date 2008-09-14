@@ -137,12 +137,14 @@ static int daemonmode(CLI& cli)
 	DetailLog() << "Spey version " << MajorVersion << " build " << BuildCount;
 
 	initialise(cli);
+	Settings::reload();
 	
 	SystemLog() << "listening on "
 		    << FromAddress;
 
 	/* Create server thread. */
-	(void) new ServerProcessor();
+	Threadlet* t = new ServerProcessor();
+	t->start();
 
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
@@ -164,8 +166,9 @@ static int inetdmode(CLI& cli)
 		SocketAddress dummyaddress;
 
 		/* Create message thread. */
-		(void) new MessageProcessor(0, dummyaddress);
+		Threadlet* t = new MessageProcessor(0, dummyaddress);
 		drop_root_privileges();
+		t->start();
 
 		Threadlet::halt();
 	} catch (NetworkTimeoutException e) {
@@ -185,12 +188,6 @@ static int inetdmode(CLI& cli)
 
 int main(int argc, char* argv[])
 {
-	/* Ensure we never get any SIGPIPEs, which we don't catch and will
-	 * cause an abort. By ignoring them, we ensure that read() and write()
-	 * return error codes instead. */
-
-	signal(SIGPIPE, SIG_IGN);
-	
 	try {
 		CLI cli(argc, argv);
 		Logger::setlevel(cli.v());
