@@ -1,0 +1,189 @@
+-- © 2007 David Given.
+-- spey is licensed under the GPLv2 open source license. See the COPYING
+-- file in this distribution for the full text.
+--
+-- $Id$
+-- $URL: https://wordgrinder.svn.sf.net/svnroot/wordgrinder/wordgrinder/pmfile $
+
+include "pmlib/c.pm"
+include "pmlib/utils.pm"
+
+HOME = os.getenv("HOME")
+DATE = "8 September 2008"
+VERSION = "0.5.pre1"
+
+-----------------------------------------------------------------------------
+--                      USER CONFIGURABLE SETTINGS                         --
+-----------------------------------------------------------------------------
+
+-- Where do you want spey to live?
+
+PREFIX = "/tmp"
+--PREFIX = "/usr"
+
+-- If you want spey to be installed somewhere else, set this.
+
+IPREFIX = PREFIX
+-- IPREFIX = "/tmp"
+
+-- What build flags do you want to use?
+
+CBUILDFLAGS = {
+	'-g',
+	'-Os'
+}
+
+-- Do you want to use GNUTLS for encrypted sessions?
+-- (true or false.)
+
+GNUTLS = true
+
+-- Do you want to link against Electric Fence for assisted debugging?
+-- (true or false)
+
+ELECTRICFENCE = false
+
+-- If you're on a platform that needs extra include paths, put them here.
+
+CINCLUDES = {
+	'/usr/local/include'
+}
+
+-- Any other options at all.
+
+CEXTRAFLAGS = {
+	'-L/usr/local/lib'
+}
+
+-----------------------------------------------------------------------------
+--                      NO USER SETTINGS BELOW HERE                        --
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+-- Bump the build count every time the pmfile is run.
+
+do
+	local fp = io.open("version")
+	if fp then
+		BUILDCOUNT = tonumber(fp:read("*a")) + 1
+		fp:close()
+	else
+		BUILDCOUNT = 0
+	end
+		
+	fp = io.open("version", "w")
+	fp:write(BUILDCOUNT, "\n")
+	fp:close()
+end
+
+-----------------------------------------------------------------------------
+-- Configuration.
+
+CDEFINES = {
+	'MAJORVERSION="%VERSION%"'
+}
+
+CINCLUDES = {
+	".",
+	"src"
+}
+
+CLIBRARIES = {
+	"pthread",
+	"sqlite"
+}
+
+if GNUTLS then
+	CDEFINES = {
+		"GNUTLS",
+		unpack(CDEFINES)
+	}
+	
+	CLIBRARIES = {
+		"gnutls",
+		unpack(CLIBRARIES)
+	}
+end
+
+if ELECTRICFENCE then
+	CDEFINES = {
+		"ELECTRICFENCE",
+		unpack(CDEFINES)
+	}
+	
+	CLIBRARIES = {
+		"efence",
+		unpack(CLIBRARIES)
+	}
+end
+
+-----------------------------------------------------------------------------
+-- Build rules
+
+-- Rule to parameterise a man page or script.
+
+parameterise = simple {
+	class = "parameterise",
+	
+	command = {
+		"sed -e 's/@@@DATE@@@/%DATE%/g; s/@@@VERSION@@@/%VERSION%/g' %in% > %out%"
+	},
+	outputs = {"%U%-%I%"},
+}
+
+-- The application binary.
+
+spey_exe = cxxprogram {
+	cxxfile "src/auth.cc",
+	cxxfile "src/base64.cc",
+	cxxfile "src/CLI.cc",
+	cxxfile "src/Exception.cc",
+	cxxfile "src/greylist.cc",
+	cxxfile "src/Logger.cc",
+	cxxfile "src/main.cc",
+	cxxfile "src/MessageProcessor.cc",
+	cxxfile "src/Parser.cc",
+	cxxfile "src/rbl.cc",
+	cxxfile "src/ServerProcessor.cc",
+	cxxfile "src/Settings.cc",
+	cxxfile "src/SMTPCommand.cc",
+	cxxfile "src/SMTPResponse.cc",
+	cxxfile "src/Socket.cc",
+	cxxfile "src/SocketAddress.cc",
+	cxxfile "src/SocketServer.cc",
+	cxxfile "src/SQL.cc",
+	cxxfile "src/Statistics.cc",
+	cxxfile "src/Threadlet.cc",
+	cxxfile {
+		"src/version.cc",
+		CDEFINES = {PARENT, 'BUILDCOUNT="%BUILDCOUNT%"'}
+	},
+	
+	install = pm.install("bin/spey")
+}
+ 
+
+-- Once built, do the installation.
+
+install = simple {
+	outputs = {"dummy"},
+	command = {
+		"install -D -m 755 %in[1]% %IPREFIX%/sbin/spey",
+		"install -D -m 755 %in[2]% %IPREFIX%/sbin/speyctl",
+		"install -D -m 644 %in[3]% %IPREFIX%/man/man8/spey.8",
+		"install -D -m 644 %in[4]% %IPREFIX%/man/man8/speyctl.8",
+		"install -D -m 755 %in[5]% %IPREFIX%/etc/init.d/spey",
+		"install -D -m 644 %in[6]% %IPREFIX%/share/doc/spey/README",
+	},
+	
+	strip { spey_exe },
+	parameterise "scripts/speyctl",
+	parameterise "doc/spey.8",
+	parameterise "doc/speyctl.8",
+	file "scripts/init.d.script",
+	file "README"
+}
+
+-- Default is to build the application.
+
+default = spey_exe
