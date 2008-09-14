@@ -9,7 +9,7 @@
 # $Source$
 # $State$
 
-VERSION = "0.4.3"
+VERSION = "@@@VERSION@@@"
 
 function usage()
 {
@@ -123,7 +123,7 @@ function cmd_init()
 		INSERT INTO settings VALUES             \
 		    ('greet-pause',     '2');           \
 		INSERT INTO settings VALUES             \
-		    ('external-auth-mode', 'internal'); ")
+		    ('external-auth-mode', 'none'); ")
 
 	sql("CREATE TABLE statistics (              \
 		    key VARCHAR PRIMARY KEY,            \
