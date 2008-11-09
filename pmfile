@@ -9,7 +9,7 @@ include "pmlib/c.pm"
 include "pmlib/utils.pm"
 
 HOME = os.getenv("HOME")
-DATE = "8 September 2008"
+DATE = "9 November 2008"
 VERSION = "0.5.pre1"
 
 -----------------------------------------------------------------------------
@@ -18,8 +18,8 @@ VERSION = "0.5.pre1"
 
 -- Where do you want spey to live?
 
-PREFIX = "/tmp"
---PREFIX = "/usr"
+PREFIX = "/usr"
+-- PREFIX = "/tmp"
 
 -- If you want spey to be installed somewhere else, set this.
 
@@ -39,20 +39,22 @@ CBUILDFLAGS = {
 GNUTLS = true
 
 -- Do you want to link against Electric Fence for assisted debugging?
--- (true or false)
+-- (true or false.)
 
 ELECTRICFENCE = false
 
 -- If you're on a platform that needs extra include paths, put them here.
 
 CINCLUDES = {
-	'/usr/local/include'
+	'/usr/local/include',
+	-- '/some/other/path'
 }
 
 -- Any other options at all.
 
 CEXTRAFLAGS = {
-	'-L/usr/local/lib'
+	'-L/usr/local/lib',
+	-- '-L/some/other/path'
 }
 
 -----------------------------------------------------------------------------
@@ -172,7 +174,7 @@ install = simple {
 		"install -D -m 755 %in[2]% %IPREFIX%/sbin/speyctl",
 		"install -D -m 644 %in[3]% %IPREFIX%/man/man8/spey.8",
 		"install -D -m 644 %in[4]% %IPREFIX%/man/man8/speyctl.8",
-		"install -D -m 755 %in[5]% %IPREFIX%/etc/init.d/spey",
+		"install -D -m 755 %in[5]% %IPREFIX%/share/doc/spey/init.d/spey",
 		"install -D -m 644 %in[6]% %IPREFIX%/share/doc/spey/README",
 	},
 	
