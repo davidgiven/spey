@@ -61,48 +61,48 @@ static void drop_root_privileges()
 		string::size_type seperator = usergroupid.find(':');
 		if (seperator == string::npos)
 			goto abort;
-			
+
 		/* Extract the user and group name from the string. */
-		
+
 		string username = usergroupid.substr(0, seperator);
 		string groupname = usergroupid.substr(seperator+1);
 		DetailLog() << "Dropping root privileges; running as "
 		            << username
 		            << ":"
 		            << groupname;
-	
+
 		/* Look up the passwd and group fields. */
-	
+
 		uid_t userid = 0;
 		gid_t groupid = 0;
-		
+
 		struct passwd* pwd = getpwnam(username.c_str());
 		if (pwd)
 		{
 			userid = pwd->pw_uid;
 			endpwent();
 		}
-			
+
 		struct group* grp = getgrnam(groupname.c_str());
 		if (grp)
 		{
 			groupid = grp->gr_gid;
 			endgrent();
 		}
-		
+
 		if (!pwd || !grp)
 			goto abort;
-	
+
 		/* Drop privileges. */
-		
+
 		int result = setgid(groupid);
 		result |= setuid(userid);
 		if (result)
 			goto abort;
-			
+
 		return;
 	}
-	
+
 abort:
 		throw Exception("Unable to drop root privileges --- terminating");
 }
@@ -129,16 +129,17 @@ static int daemonmode(CLI& cli)
 	// Detach from the console.
 	if (!cli.x())
 	{
-		daemon(0, 0);
+		if (daemon(0, 0))
+			throw Exception("Unable to daemonise --- terminating");
 		Logger::detach();
 	}
-	 	
+
 	DetailLog() << "------------- STARTUP ----------------";
 	DetailLog() << "Spey version " << MajorVersion << " build " << BuildCount;
 
 	initialise(cli);
 	Settings::reload();
-	
+
 	SystemLog() << "listening on "
 		    << FromAddress;
 
@@ -160,7 +161,7 @@ static int inetdmode(CLI& cli)
 	DetailLog() << "Spey version " << MajorVersion << " build " << BuildCount;
 
 	initialise(cli);
-	
+
 	try {
 		Settings::reload();
 		SocketAddress dummyaddress;
@@ -191,7 +192,7 @@ int main(int argc, char* argv[])
 	try {
 		CLI cli(argc, argv);
 		Logger::setlevel(cli.v());
-		
+
 		if (cli.i())
 			return inetdmode(cli);
 		else

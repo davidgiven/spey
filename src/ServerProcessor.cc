@@ -58,7 +58,7 @@ void ServerProcessor::run()
 			string message = "421 " + Settings::identity() +
 				" Service not available, closing" +
 				" transmission channel\r\n";
-			(void) write(fd, message.c_str(), message.length());
+			ssize_t s = write(fd, message.c_str(), message.length());
 			(void) close(fd);
 		}
 	}
