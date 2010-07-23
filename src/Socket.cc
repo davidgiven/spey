@@ -296,7 +296,7 @@ void Socket::makesecure()
 		if (access(privatekeyfile.c_str(), R_OK) == -1)
 			throw NetworkException("TLS enabled, but private key is not readable");
 		string certificatefile = Settings::tlscertificatefile();
-		if (access(privatekeyfile.c_str(), R_OK) == -1)
+		if (access(certificatefile.c_str(), R_OK) == -1)
 			throw NetworkException("TLS enabled, but certificate is not readable");
 		int i = gnutls_certificate_set_x509_key_file(_gnutls_certificate_credentials,
 			certificatefile.c_str(), privatekeyfile.c_str(), GNUTLS_X509_FMT_PEM);
