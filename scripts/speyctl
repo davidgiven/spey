@@ -49,7 +49,7 @@ function Xlistsyntaxerror(list, s)
 
 function usersyntaxerror()
 {
-	error("syntax error: speyctl user [set or list] [<username>] [<password>]")
+	error("syntax error: speyctl user [add or sub or list] [<username>] [<password>]")
 }
 
 function trim(s)
@@ -71,11 +71,11 @@ function sql(s)
 	print s | sqlitecmd
 }
 
-function sqlend(tail)
+function sqlend(tail,  r)
 {
 	print "COMMIT;" | sqlitecmd
 	print tail | sqlitecmd
-	close(sqlitecmd)
+	r = close(sqlitecmd)
 }
 	
 function cmd_init()
@@ -332,7 +332,7 @@ function cmd_Xlist(op, list, value,    array, sender, recipient)
 	sqlend()
 }
 
-function cmd_user(op, key, value)
+function cmd_user(op, key, value,  exists)
 {
 	if (op ~ /list/)
 	{
@@ -347,13 +347,36 @@ function cmd_user(op, key, value)
 		return
 	}
 
-	sqlstart()
-	sql("DELETE FROM users WHERE " \
-		"username='" key "';")
-	if (value != "")
+	cmd = "sqlite " configfile \
+		" \"SELECT COUNT(*) FROM users WHERE username='" \
+		key "'\""
+	cmd | getline exists
+	close(cmd)
+	
+	if (op ~ /sub/)
+	{
+		if (value != "")
+			usersyntaxerror();
+		if (!exists)
+			error("the user '" key "' does not exist")
+			
+		sqlstart()
+		sql("DELETE FROM users WHERE " \
+			"username='" key "';")
+		sqlend()
+	}
+	else if (op ~ /add/)
+	{
+		if (value == "")
+			usersyntaxerror();
+		if (exists)
+			error("the user '" key "' already exists")
+
+		sqlstart();			 
 		sql("INSERT INTO users VALUES " \
 			"('" key "', '" value "');")
-	sqlend()
+		sqlend()
+	}
 }
 
 function cmd_statsreset()
@@ -369,7 +392,10 @@ function parseargs(  i, key, value)
 	{
 		opt = ARGV[i]
 		if (opt ~ /^(-h)|(--help)|(help)$/)
+		{
 			usage()
+			exit(0)
+		}
 		else if (opt ~ /^(-d)|(--db)$/)
 			configfile = ARGV[++i]
 		else if (opt ~ /^init$/)
@@ -413,7 +439,7 @@ function parseargs(  i, key, value)
 			op = ARGV[++i]
 			key = ARGV[++i]
 			value = ARGV[++i]
-			if ((op != "list") && (op != "set"))
+			if ((op != "list") && (op != "add") && (op != "sub"))
 				usersyntaxerror()
 			cmd_user(op, key, value)
 			exit(0)
@@ -449,6 +475,8 @@ function parseargs(  i, key, value)
 		else
 			error("unrecognised option (try --help)")
 	}
+	
+	error("you must specify a command! (try --help)")
 }
 
 BEGIN {

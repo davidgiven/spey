@@ -104,15 +104,16 @@ man page for more information on this.
 
 .I command
 should be one of
-.BR set \ or\  list .
+.BR add ,\  sub \ or\  list .
 If
-.BR set ,
-then the two arguments should be a username and optional password. If a
-password is provided, the username and password will be added to the
-table, removing any old record with the same username if it exists. If no
-password is provided, the record will be removed.
+.BR add ,
+then the two arguments should be a username and optional password. These will
+be added to the table. If
+.BR sub ,
+then the specified user will be removed. Trying to add a user that already
+exists or remove one that doesn't is an error.
 .B list
-will show the current able.
+will show the control table. 
 
 .B Warning:
 Passwords are stored in plain text, and are listed by the
