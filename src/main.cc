@@ -95,7 +95,8 @@ static void drop_root_privileges()
 
 		/* Drop privileges. */
 
-		int result = setgid(groupid);
+		int result = initgroups(username.c_str(), groupid);
+		result |= setgid(groupid);
 		result |= setuid(userid);
 		if (result)
 			goto abort;
@@ -104,8 +105,28 @@ static void drop_root_privileges()
 	}
 
 abort:
-		throw Exception("Unable to drop root privileges --- terminating");
+	throw Exception("Unable to drop root privileges --- terminating");
 }
+
+/* If external TLS is enabled, check that the private key is readable --- if
+ * it's not you'll get really annoying runtime errors later. */
+
+static void check_private_key()
+{
+	if (!Settings::externaltls())
+		return;
+
+	string tlsprivatekeyfile = Settings::tlsprivatekeyfile();
+	if (tlsprivatekeyfile == "")
+		return;
+
+	DetailLog() << "Checking readability of "
+		    << tlsprivatekeyfile;
+
+	if (access(tlsprivatekeyfile.c_str(), R_OK) == -1)
+		throw Exception("TLS is enabled but the private key is not readable --- terminating");
+}
+
 
 /* Everything in here must happen after any possible call to daemon().
  * daemon() does a fork(), which causes nasty things to happen if there's a
@@ -143,13 +164,13 @@ static int daemonmode(CLI& cli)
 	SystemLog() << "listening on "
 		    << FromAddress;
 
-	/* Create server thread. */
-	Threadlet* t = new ServerProcessor();
-	t->start();
-
 	ofstream("/var/run/spey.pid") << getpid() << endl;
 
+	/* Create server thread. */
+	Threadlet* t = new ServerProcessor();
 	drop_root_privileges();
+	check_private_key();
+	t->start();
 
 	Threadlet::halt();
 	return 0;
@@ -169,6 +190,7 @@ static int inetdmode(CLI& cli)
 		/* Create message thread. */
 		Threadlet* t = new MessageProcessor(0, dummyaddress);
 		drop_root_privileges();
+		check_private_key();
 		t->start();
 
 		Threadlet::halt();
