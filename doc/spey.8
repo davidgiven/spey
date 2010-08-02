@@ -273,6 +273,10 @@ Specifies the path of the SSL key to be used when TLS is enabled (the
 file). See
 .BR external-tls .
 
+This file must be readable at run time; if you're using
+.B runtime-user-id
+then ensure that user has appropriate privileges.
+
 
 .TP
 .B external-tls
