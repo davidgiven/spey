@@ -61,7 +61,7 @@ void* Threadlet::trampoline(void* user)
 
 	/* Threadlet code runs with the CPU lock held. */
 
-	DetailLog() << "threadlet " << (unsigned int) threadlet <<
+	DetailLog() << "threadlet " << (intptr_t) threadlet <<
 		" init";
 	threadlet->takeCPUlock();
 	try {
@@ -103,8 +103,7 @@ void Threadlet::start()
 {
 	/* Create and start the underlying pthread for this threadlet. */
 
-
-	DetailLog() << "create thread " << (unsigned int) this;
+	DetailLog() << "create thread " << (intptr_t) this;
 	int e = pthread_create(&_thread, NULL, Threadlet::trampoline, this);
 	if (e)
 		throw IOException("couldn't create new thread", e);
