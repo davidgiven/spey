@@ -382,8 +382,8 @@ It contains keys of the form
 .BR address@domain .
 
 Either the address or domain part may be blank, which acts as a wildcard.
-You will want at least one entry, otherwise you won't be able to receive email
-at all; the author has
+You probably want at least one entry, otherwise you won't be able to receive email
+at all (but see below); the author has
 .BR @cowlark.com ,
 meaning that all messages to an address at the
 .B cowlark.com
@@ -394,6 +394,12 @@ will match all messages.
 Messages that are not addressed to a recipient on this table will be rejected
 out of hand.
 
+If the recipient list is
+.IR empty ,
+then spey will, by default, refuse all email through. As this can be
+overridden if the user authenticates, this can be used to implement an
+authentication layer on top of another SMTP server, not using the greylisting
+functionality at all.
 
 
 
