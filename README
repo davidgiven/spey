@@ -145,8 +145,9 @@ Now all you need to do is to run Spey itself. As superuser, do this:
 
 	spey -f 0.0.0.0:25 -t localhost:2525 -v 999
 
-Spey will start up, with maximum logging to /var/log/mail.0, listing on all
-interfaces on port 25 and connecting to localhost:2525 (your real mail server).
+Spey will start up, with maximum logging to syslog's 'mail' channel, listening
+on all interfaces on port 25 and connecting to localhost:2525 (your real
+mail server).
 
 Step 3
 ------
@@ -230,7 +231,7 @@ okay?
 LEGAL STUFF
 ===========
 
-Spey is (C) 2004-2007 David Given. It is distributable under the conditions
+Spey is (C) 2004-2010 David Given. It is distributable under the conditions
 laid out by the GNU Public License, version 2 only (and explicitly not version
 3). You can find a copy of this license in the file COPYING.
 
