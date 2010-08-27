@@ -133,6 +133,10 @@ that corresponds to the connection. If the file descriptor is
 .B M
 then the message is referring to spey as a whole.
 
+Logging will be sent to the syslog 'mail' stream if running as a daemon;
+otherwise it will be sent to stderr.
+
+
 .TP
 .BI --inetd
 
