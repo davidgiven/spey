@@ -10,7 +10,8 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
+#include <string.h>
 
 Exception::Exception()
 {

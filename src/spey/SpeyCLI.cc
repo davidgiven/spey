@@ -1,4 +1,4 @@
-/* CLI.cc
+/* SpeyCLI.cc
  * Command line handle class
  *
  * Copyright (C) 2008 David Given
@@ -13,7 +13,7 @@
 #include "spey.h"
 #include <getopt.h>
 
-CLI::CLI(int argc, char* argv[]) throw (string) :
+SpeyCLI::SpeyCLI(int argc, char* argv[]):
 	_d("/var/lib/spey/spey.db"),
 	_f("0.0.0.0:25"),
 	_t("localhost:2525"),
@@ -61,7 +61,7 @@ CLI::CLI(int argc, char* argv[]) throw (string) :
 			case 'v':
 				_v = atoi(optarg);
 				if (_v < 0)
-					throw string("-v parameter must be >= 0");
+					throw InvocationException("-v parameter must be >= 0");
 				break;
 
 			case 'x':
@@ -85,11 +85,11 @@ CLI::CLI(int argc, char* argv[]) throw (string) :
 	_optind = optind;
 }
 
-void CLI::usage()
+void SpeyCLI::usage()
 {
 	cout << "Usage: spey [OPTION]...\n"
 	     << "SMTP greylisting proxy version " << MajorVersion << " build " << BuildCount << ".\n"
-	     << "(C) 2004-2008 David Given. This software is licensed under the\n"
+	     << "(C) 2004-2011 David Given. This software is licensed under the\n"
 	     << "terms of the GPLv2 open source license. See the COPYING file in\n"
 	     << "the distribution for the full text.\n"
 	     << "\n"

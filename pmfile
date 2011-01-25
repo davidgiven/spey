@@ -3,14 +3,16 @@
 -- file in this distribution for the full text.
 --
 -- $Id$
--- $URL: https://wordgrinder.svn.sf.net/svnroot/wordgrinder/wordgrinder/pmfile $
+-- $Source$
+-- $State$
 
 include "pmlib/c.pm"
 include "pmlib/utils.pm"
+include "pmlib/bin2c.pm"
 
 HOME = os.getenv("HOME")
-DATE = "9 November 2008"
-VERSION = "0.5.pre1"
+DATE = "25 January 2011"
+VERSION = "1.0.pre1"
 
 -----------------------------------------------------------------------------
 --                      USER CONFIGURABLE SETTINGS                         --
@@ -23,8 +25,8 @@ PREFIX = "/usr"
 
 -- If you want spey to be installed somewhere else, set this.
 
-IPREFIX = PREFIX
--- IPREFIX = "/tmp"
+-- IPREFIX = PREFIX
+IPREFIX = "/tmp"
 
 -- What build flags do you want to use?
 
@@ -133,29 +135,54 @@ parameterise = simple {
 	outputs = {"%U%-%I%"},
 }
 
+-- Rule to build an SQL file as a binary.
+
+sqlfile = cxxfile {
+		class = "sqlfile",
+		
+		bin2cxx {
+			symbol = "%SYMBOL%",
+			simple {
+				outputs = {"%U%-%I%.sql"},
+				command = {
+					"grep -v '^--' %in% > %out%"
+				},
+				file "%FILE%"
+			}
+		}
+	}
+
 -- The application binary.
 
 spey_exe = cxxprogram {
-	cxxfile "src/auth.cc",
-	cxxfile "src/base64.cc",
-	cxxfile "src/CLI.cc",
-	cxxfile "src/Exception.cc",
-	cxxfile "src/greylist.cc",
-	cxxfile "src/Logger.cc",
+	cxxfile "src/spey/auth.cc",
+	cxxfile "src/spey/SpeyCLI.cc",
+	cxxfile "src/spey/greylist.cc",
+	cxxfile "src/spey/main_spey.cc",
+	cxxfile "src/spey/MessageProcessor.cc",
+	cxxfile "src/spey/Parser.cc",
+	cxxfile "src/spey/rbl.cc",
+	cxxfile "src/spey/ServerProcessor.cc",
+	cxxfile "src/spey/SMTPCommand.cc",
+	cxxfile "src/spey/SMTPResponse.cc",
+	
+	cxxfile "src/speyctl/main_speyctl.cc",
+	cxxfile "src/speyctl/SpeyCtlCLI.cc",
+	sqlfile { SYMBOL="init_sql", FILE="src/speyctl/init.sql" },
+	sqlfile { SYMBOL="purge_sql", FILE="src/speyctl/purge.sql" },
+	sqlfile { SYMBOL="statsreset_sql", FILE="src/speyctl/statsreset.sql" },
+	
 	cxxfile "src/main.cc",
-	cxxfile "src/MessageProcessor.cc",
-	cxxfile "src/Parser.cc",
-	cxxfile "src/rbl.cc",
-	cxxfile "src/ServerProcessor.cc",
-	cxxfile "src/Settings.cc",
-	cxxfile "src/SMTPCommand.cc",
-	cxxfile "src/SMTPResponse.cc",
+	cxxfile "src/SQL.cc",
+	cxxfile "src/Logger.cc",
+	cxxfile "src/Threadlet.cc",
+	cxxfile "src/Statistics.cc",
+	cxxfile "src/Exception.cc",
 	cxxfile "src/Socket.cc",
 	cxxfile "src/SocketAddress.cc",
 	cxxfile "src/SocketServer.cc",
-	cxxfile "src/SQL.cc",
-	cxxfile "src/Statistics.cc",
-	cxxfile "src/Threadlet.cc",
+	cxxfile "src/Settings.cc",
+	cxxfile "src/base64.cc",
 	cxxfile {
 		"src/version.cc",
 		CDEFINES = {PARENT, 'BUILDCOUNT="%BUILDCOUNT%"'}
@@ -163,7 +190,6 @@ spey_exe = cxxprogram {
 	
 	install = pm.install("bin/spey")
 }
- 
 
 -- Once built, do the installation.
 
@@ -171,15 +197,14 @@ install = simple {
 	outputs = {"dummy"},
 	command = {
 		"install -D -m 755 %in[1]% %IPREFIX%/sbin/spey",
-		"install -D -m 755 %in[2]% %IPREFIX%/sbin/speyctl",
-		"install -D -m 644 %in[3]% %IPREFIX%/man/man8/spey.8",
-		"install -D -m 644 %in[4]% %IPREFIX%/man/man8/speyctl.8",
-		"install -D -m 755 %in[5]% %IPREFIX%/share/doc/spey/init.d/spey",
-		"install -D -m 644 %in[6]% %IPREFIX%/share/doc/spey/README",
+		"ln -s spey %IPREFIX%/sbin/speyctl",
+		"install -D -m 644 %in[2]% %IPREFIX%/man/man8/spey.8",
+		"install -D -m 644 %in[3]% %IPREFIX%/man/man8/speyctl.8",
+		"install -D -m 755 %in[4]% %IPREFIX%/share/doc/spey/init.d/spey",
+		"install -D -m 644 %in[5]% %IPREFIX%/share/doc/spey/README",
 	},
 	
 	strip { spey_exe },
-	parameterise "scripts/speyctl",
 	parameterise "doc/spey.8",
 	parameterise "doc/speyctl.8",
 	file "scripts/init.d.script",
@@ -189,3 +214,4 @@ install = simple {
 -- Default is to build the application.
 
 default = spey_exe
+

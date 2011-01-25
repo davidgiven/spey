@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 
 void Statistics::malformedDomain()     { count("malformed-domain"); }
 void Statistics::malformedAddress()    { count("malformed-address"); }

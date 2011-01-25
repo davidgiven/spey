@@ -15,6 +15,9 @@
 
 struct ServerProcessor: Threadlet
 {
+	static SocketAddress FromAddress;
+	static SocketAddress ToAddress;
+
 	ServerProcessor();
 	virtual ~ServerProcessor();
 

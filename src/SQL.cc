@@ -10,8 +10,10 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 #include <unistd.h>
+
+SQL Sql;
 
 static char* error;
 static void sqlerror(string msg)
@@ -20,6 +22,8 @@ static void sqlerror(string msg)
 	{
 		msg += ": ";
 		msg += error;
+		free(error);
+		error = NULL;
 	}
 	throw SQLException(msg);
 }
@@ -34,7 +38,7 @@ SQL::~SQL()
 	this->close();
 }
 
-void SQL::open(string filename)
+void SQL::open(const string& filename)
 {
 	if (this->handle)
 		sqlite_close(handle);
@@ -43,8 +47,7 @@ void SQL::open(string filename)
 		sqlerror("Database open failure");
 	sqlite_busy_timeout(this->handle, 1000);
 
-	SQLQuery q(*this, "PRAGMA synchronous=OFF;");
-	q.step();
+	exec("PRAGMA synchronous=OFF;");
 }
 
 void SQL::close()
@@ -53,13 +56,58 @@ void SQL::close()
 		sqlite_close(handle);
 }
 
-bool SQL::checktable(string name)
+bool SQL::checktable(const string& name)
 {
 	SQLQuery q(*this, "SELECT COUNT(*) FROM sqlite_master "
 		                "WHERE type='table' AND name=%Q;",
 		                name.c_str());
 	q.step();
 	return q.getint(0);
+}
+
+void SQL::exec(const string& sql, ...)
+{
+	va_list ap;
+	va_start(ap, sql);
+	char* s = sqlite_vmprintf(sql.c_str(), ap);
+	if (!s)
+		throw std::bad_alloc();
+	SQLLog() << s;
+
+	try
+	{
+		if (sqlite_exec(this->handle, s, NULL, NULL, &error))
+			sqlerror("SQL query execution failure");
+		sqlite_freemem(s);
+	}
+	catch (...)
+	{
+		/* Ensure that s is freed, even if an exception is thrown. */
+		sqlite_freemem(s);
+		throw;
+	}
+}
+
+/* --- SQL commit lock --------------------------------------------------- */
+
+SQLCommitLock::SQLCommitLock(SQL& sql):
+		_sql(sql),
+		_committed(false)
+{
+	_sql.exec("BEGIN;");
+}
+
+SQLCommitLock::~SQLCommitLock()
+{
+	if (_committed)
+		_sql.exec("COMMIT;");
+	else
+		_sql.exec("ROLLBACK;");
+}
+
+void SQLCommitLock::commit()
+{
+	_committed = true;
 }
 
 /* --- SQL query class --------------------------------------------------- */
@@ -122,7 +170,10 @@ string SQLQuery::getstring(int i)
 {
 	if ((i < 0) || (i >= this->columns) || !this->values)
 		return "";
-	string s = this->values[i];
+	const char* p = this->values[i];
+	if (!p)
+		return "";
+	string s = p;
 	SQLLog() << "-> (string) " << s;
 	return s;
 }
@@ -133,4 +184,12 @@ int SQLQuery::getint(int i)
 		return 0;
 	SQLLog() << "-> (int) " << this->values[i];
 	return atoi(this->values[i]);
+}
+
+unsigned SQLQuery::getunsigned(int i)
+{
+	if ((i < 0) || (i >= this->columns) || !this->values)
+		return 0;
+	SQLLog() << "-> (unsigned) " << this->values[i];
+	return strtoul(this->values[i], NULL, 10);
 }

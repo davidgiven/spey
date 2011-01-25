@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/poll.h>

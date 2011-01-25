@@ -10,6 +10,9 @@
  * $State$
  */
 
+#ifndef COMMON_H
+#define COMMON_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -43,17 +46,11 @@ enum AuthMode {
 #include "Logger.h"
 #include "Exception.h"
 #include "SQL.h"
-#include "CLI.h"
+#include "Statistics.h"
 #include "SocketAddress.h"
 #include "Socket.h"
 #include "SocketServer.h"
-#include "Statistics.h"
 #include "Settings.h"
-#include "Parser.h"
-#include "SMTPResponse.h"
-#include "SMTPCommand.h"
-#include "MessageProcessor.h"
-#include "ServerProcessor.h"
 
 /* Globals */
 
@@ -61,23 +58,6 @@ extern const char MajorVersion[];
 extern const char BuildCount[];
 
 extern SQL Sql;
-extern SocketAddress FromAddress;
-extern SocketAddress ToAddress;
-
-/* Greylist validation. */
-
-enum GreylistResponse {
-	Accepted,
-	BlackListed,
-	GreyListed
-};
-
-extern GreylistResponse greylist(uint32_t sender,
-		string fromaddress, string toaddress);
-
-/* RBL validation. */
-
-extern bool rblcheck(uint32_t sender, string rbldomainlist);
 
 /* Base64 encode/decode. */
 
@@ -86,8 +66,4 @@ extern int base64_encode(const void *data, int size, char **str);
 extern int base64_decode(const string& str, void *data);
 extern int base64_decode(const char *str, void *data);
 
-/* Authentication systems. */
-
-typedef int Authenticator(Socket& stream, const string& initial);
-extern Authenticator auth_plain;
-extern Authenticator auth_login;
+#endif

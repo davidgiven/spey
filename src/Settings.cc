@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 
 string Settings::_identity;
 int Settings::_intolerant;

@@ -337,7 +337,7 @@ void MessageProcessor::process()
 		{
 			try
 			{
-				_inside.init(ToAddress);
+				_inside.init(ServerProcessor::ToAddress);
 				_inside.timeout(Settings::sockettimeout());
 
 				/* Check it's okay. */

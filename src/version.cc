@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 
 const char MajorVersion[] = MAJORVERSION;
 const char BuildCount[] = BUILDCOUNT;
