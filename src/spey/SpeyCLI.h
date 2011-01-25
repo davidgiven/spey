@@ -10,15 +10,15 @@
  * $State$
  */
 
-#ifndef CLI_H
-#define CLI_H
+#ifndef SPEYCLI_H
+#define SPEYCLI_H
 
-struct CLI
+struct SpeyCLI
 {
 public:
   /* constructor and destructor */
-  CLI(int argc, char* argv[]) throw (string);
-  ~CLI(){}
+  SpeyCLI(int argc, char* argv[]);
+  ~SpeyCLI(){}
 
   void usage();
 

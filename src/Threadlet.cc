@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>

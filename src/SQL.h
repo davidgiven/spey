@@ -20,9 +20,10 @@ struct SQL : uncopyable
 	SQL();
 	~SQL();
 
-	void open(string filename);
+	void open(const string& filename);
 	void close();
-	bool checktable(string name);
+	bool checktable(const string& name);
+	void exec(const string& sql, ...);
 
 	operator sqlite* () { return this->handle; }
 
@@ -38,6 +39,7 @@ struct SQLQuery
 	bool step();
 	string getstring(int i);
 	int getint(int i);
+	unsigned getunsigned(int i);
 
 private:
 	sqlite_vm* handle;
@@ -45,5 +47,19 @@ private:
 	const char** values;
 	const char** types;
 };
+
+struct SQLCommitLock
+{
+	SQLCommitLock(SQL& sql);
+	~SQLCommitLock();
+
+	void commit();
+
+private:
+	SQL& _sql;
+	bool _committed : 1;
+};
+
+extern SQL Sql;
 
 #endif

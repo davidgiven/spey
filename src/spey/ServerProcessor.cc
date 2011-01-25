@@ -13,6 +13,9 @@
 #include "spey.h"
 #include <unistd.h>
 
+SocketAddress ServerProcessor::FromAddress;
+SocketAddress ServerProcessor::ToAddress;
+
 ServerProcessor::ServerProcessor()
 {
 	_mastersocket.init(FromAddress);

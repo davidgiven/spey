@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 #include <time.h>
 #include <sys/time.h>
 

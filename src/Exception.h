@@ -19,17 +19,24 @@ struct Exception
 	Exception(string reason);
 	Exception(string reason, int errnum);
 
-	operator string () { return this->reason; }
+	operator string () const { return this->reason; }
 
 protected:
 	string reason;
 };
 
-inline Logger& operator << (Logger& stream, Exception& e)
+inline Logger& operator << (Logger& stream, const Exception& e)
 {
 	stream << (string) e;
 	return stream;
 }
+
+struct InvocationException: Exception
+{
+	InvocationException(string reason): Exception(reason)
+	{
+	}
+};
 
 struct InternalException: Exception
 {

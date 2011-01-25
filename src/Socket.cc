@@ -10,7 +10,7 @@
  * $State$
  */
 
-#include "spey.h"
+#include "common.h"
 #include <stdint.h>
 #include <errno.h>
 #include <unistd.h>

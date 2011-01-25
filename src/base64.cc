@@ -43,7 +43,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "spey.h"
+#include "common.h"
 
 static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
