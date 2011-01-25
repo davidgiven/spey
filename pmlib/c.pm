@@ -1,6 +1,6 @@
 -- $Id$
--- $HeadURL: https://primemover.svn.sf.net/svnroot/primemover/pm/lib/c.pm $
--- $LastChangedDate: 2007-04-30 22:41:42 +0000 (Mon, 30 Apr 2007) $
+-- $Source$
+-- $State$
 
 -- pm includefile to compile *host* C programs.
 
