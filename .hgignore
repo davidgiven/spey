@@ -1,0 +1,9 @@
+
+syntax: regexp
+^version$
+syntax: regexp
+^\.pm-cache$
+syntax: regexp
+^\.settings$
+syntax: regexp
+^bin$
