@@ -25,8 +25,8 @@ PREFIX = "/usr"
 
 -- If you want spey to be installed somewhere else, set this.
 
--- IPREFIX = PREFIX
-IPREFIX = "/tmp"
+IPREFIX = PREFIX
+-- IPREFIX = "/tmp"
 
 -- What build flags do you want to use?
 
@@ -197,17 +197,19 @@ install = simple {
 	outputs = {"dummy"},
 	command = {
 		"install -D -m 755 %in[1]% %IPREFIX%/sbin/spey",
-		"ln -s spey %IPREFIX%/sbin/speyctl",
+		"ln -sf spey %IPREFIX%/sbin/speyctl",
 		"install -D -m 644 %in[2]% %IPREFIX%/man/man8/spey.8",
 		"install -D -m 644 %in[3]% %IPREFIX%/man/man8/speyctl.8",
 		"install -D -m 755 %in[4]% %IPREFIX%/share/doc/spey/init.d/spey",
-		"install -D -m 644 %in[5]% %IPREFIX%/share/doc/spey/README",
+		"install -D -m 755 %in[5]% %IPREFIX%/share/doc/spey/cron.d/spey",
+		"install -D -m 644 %in[6]% %IPREFIX%/share/doc/spey/README",
 	},
 	
 	strip { spey_exe },
 	parameterise "doc/spey.8",
 	parameterise "doc/speyctl.8",
 	file "scripts/init.d.script",
+	file "scripts/cron.d.script",
 	file "README"
 }
 
