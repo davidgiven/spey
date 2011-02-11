@@ -1,9 +1,9 @@
-                                  SPEY V0.5.pre1
-                                  =============
+                                  SPEY V1.0.pre1
+                                  ==============
 
                                   Beta release
-                              (C) 2008 David Given
-                                   2008-11-09
+                              (C) 2011 David Given
+                                   2011-01-25
 
 INTRODUCTION
 ============
@@ -24,9 +24,9 @@ so you'll need that before you can use it.
 IF YOU'VE USED SPEY BEFORE
 ==========================
 
-The database files used by 0.5 are NOT compatible with those used by 0.4. If
+The database files used by 1.0 are NOT compatible with those used by 0.4. If
 you're upgrading from 0.4 or earlier, you will have to delete the database
-and recreate it using speyctl (the new speyctl that comes with 0.5, of course).
+and recreate it using speyctl (the new speyctl that comes with 1.0, of course).
 If you try to run spey with an old configuration file... well, on your own
 head be it.
 
@@ -51,8 +51,11 @@ build and install in two stages by doing "./pm; ./pm install").
 It is now ready to use.
 
 If you want to start spey from init, the install procedure will have placed
-a suitable script in $IPREFIX/share/doc/spey/init.d/spey; you can copy this
-into /etc/init.d.
+an LSB-compliant script in $IPREFIX/share/doc/spey/init.d/spey; you can copy
+this into /etc/init.d. (If you're not on an LSB system and can't use the
+script, let me know and I'll put back the old, non-LSB one. I don't know of
+any inits these days which use init scripts like this which *aren't* LSB, but
+that doesn't mean there aren't any.)
 
 All the code should, ideally, use standard Posix and C++ features. There might
 be some Linuxisms or gccisms that have crept in; if you find any, these are
@@ -71,10 +74,6 @@ REQUIREMENTS
   *unsupported*. If you can get it to work, great (and please tell me). But I
   recommend staying with 2.8. Note that 2.4 *does not work*.
 
-- mawk, any version. This is needed for the speyctl program. If your mawk is
-  installed in a strange place, or if you want to use a different awk anyway,
-  you'll need to edit scripts/speyctl before installation.
-
 - GNUTLS, version 1.4.4 or thereabouts (OPTIONAL). This is needed to make TLS
   connections work. If you don't care about TLS, then set the GNUTLS setting
   to false in the makefile and spey will be built without it.
@@ -82,8 +81,6 @@ REQUIREMENTS
 Links:
 
     sqlite:   http://sqlite.org/
-    mawk:     http://freshmeat.net/projects/mawk/
-    genparse: http://ftp.debian.org/debian/pool/main/g/genparse/genparse_0.5.2.orig.tar.gz
     gnutls:   http://www.gnu.org/software/gnutls/
     
 Debian has all of these in the right versions (because that's where I do my
@@ -180,6 +177,11 @@ while this won't do any harm, and indeed you might want to keep it as a record
 (and it won't even slow Spey down much thanks to the magic of Sqlite), it is a
 bit of a waste of space.
 
+If you want to do this from cron, the install procedure will have placed
+a suitable script in $IPREFIX/share/doc/spey/cron.d/spey; you can copy this
+into /etc/cron.daily.
+
+
 
 DOCUMENTATION
 =============
@@ -212,7 +214,7 @@ These are the ones I know about and think are significant:
 DISCLAIMER
 ==========
 
-Spey is BETA SOFTWARE!
+Spey is FREE SOFTWARE!
 
 It is NOT RELIABLE!
 
@@ -231,13 +233,20 @@ okay?
 LEGAL STUFF
 ===========
 
-Spey is (C) 2004-2010 David Given. It is distributable under the conditions
+Spey is (C) 2004-2011 David Given. It is distributable under the conditions
 laid out by the GNU Public License, version 2 only (and explicitly not version
 3). You can find a copy of this license in the file COPYING.
 
 
 REVISION HISTORY
 ================
+
+Spey 1.0.pre1: 2011-01-25: Reengineered speyctl to be part of the spey binary
+to avoid the nasty mawk dependency. Fix serious bug where dropping root
+privileges wasn't working properly (thanks to Achim Latz for this). Corrected
+bugs in TLS certificate handling and compilation on 64-bit systems. Several
+documentation updates and improvements. Added the LSB init script and cron
+script.
 
 Spey 0.5.pre1: 2008-11-09: Added external auth support. Switched build system
 to Prime Mover because make was getting just too annoying. Fixed a few nasty
