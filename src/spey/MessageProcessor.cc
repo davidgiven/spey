@@ -203,10 +203,9 @@ void MessageProcessor::process()
 					authenticated = false;
 					continue;
 				}
-#else
-				deferrederror.set(500);
-				goto error;
 #endif
+				deferrederror.set(502);
+				goto error;
 					
 			case SMTPCommand::HELO:
 			case SMTPCommand::EHLO:
