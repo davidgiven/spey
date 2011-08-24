@@ -137,6 +137,13 @@ static uint64_t now()
 
 int Socket::read(void* buffer, int buflength, int timeoutdelta)
 {
+#ifdef GNUTLS
+	/* Any pending data in the GNUTLS buffer is returned immediately. */
+
+	if (_issecure && gnutls_record_check_pending(_gnutls_session))
+		return gnutls_record_recv(_gnutls_session, buffer, buflength);
+#endif
+
 	/* When does the timeout take place? */
 
 	if (timeoutdelta == -1)
