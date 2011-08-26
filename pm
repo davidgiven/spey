@@ -34,7 +34,7 @@ extract_section() {
 # If the bootstrap's built, run it.
 
 if [ "$PMEXEC" -nt "$0" ]; then
-	extract_section 1178   23145  | "$PMEXEC" /dev/stdin "$@"
+	extract_section 1178   23147  | "$PMEXEC" /dev/stdin "$@"
 	exit $?
 fi
 
@@ -48,13 +48,13 @@ else
 	CC="cc"
 fi
 
-extract_section 24323  157756 > /tmp/pm-$$.c
+extract_section 24325  157756 > /tmp/pm-$$.c
 $CC $CFILE -o "$PMEXEC" && exec "$0" "$@"
 
 echo "pm: bootstrap failed."
 exit 1
 #!/usr/bin/lua
-local VERSION="0.1.5"
+local VERSION="0.1.6.1"
 local stdin=io.stdin
 local stdout=io.stdout
 local stderr=io.stderr
