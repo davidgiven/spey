@@ -11,8 +11,8 @@ include "pmlib/utils.pm"
 include "pmlib/bin2c.pm"
 
 HOME = os.getenv("HOME")
-DATE = "25 January 2011"
-VERSION = "1.0.pre1"
+DATE = "26 August 2011"
+VERSION = "1.0.pre2"
 
 -----------------------------------------------------------------------------
 --                      USER CONFIGURABLE SETTINGS                         --

@@ -1,9 +1,9 @@
-                                  SPEY V1.0.pre1
+                                  SPEY V1.0.pre2
                                   ==============
 
                                   Beta release
                               (C) 2011 David Given
-                                   2011-01-25
+                                   2011-08-26
 
 INTRODUCTION
 ============
@@ -240,6 +240,11 @@ laid out by the GNU Public License, version 2 only (and explicitly not version
 
 REVISION HISTORY
 ================
+
+Spey 1.0.pre2: 2011-08-45: Fixed a bug where on some versions of GNUTLS the
+connection would hang immediately after handshake. Also, now if TLS is compiled
+in but not enabled the STARTTLS command is rejected rather than being passed
+to the downstream server (which doesn't work).
 
 Spey 1.0.pre1: 2011-01-25: Reengineered speyctl to be part of the spey binary
 to avoid the nasty mawk dependency. Fix serious bug where dropping root
